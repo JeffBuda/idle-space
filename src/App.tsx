@@ -10,8 +10,7 @@ interface State {
 export type Action = 
   { type: 'increment' } | 
   { type: 'decrement' } | 
-  { type: 'updateTime', payload: number } | 
-  { type: 'autoIncrementAndUpdateTime', payload: { count: number, time: number } };
+  { type: 'autoIncrement', payload: { time: number } };
 
 // Define the reducer function
 export const reducer = (state: State, action: Action): State => {
@@ -20,10 +19,13 @@ export const reducer = (state: State, action: Action): State => {
       return { ...state, count: state.count + 1 };
     case 'decrement':
       return { ...state, count: state.count - 1 };
-    case 'updateTime':
-      return { ...state, lastFrameTime: action.payload };
-    case 'autoIncrementAndUpdateTime':
-      return { ...state, count: state.count + action.payload.count, lastFrameTime: action.payload.time };
+    case 'autoIncrement':
+      const timeElapsed = action.payload.time - state.lastFrameTime;
+      if (timeElapsed >= 1000) {
+        const increments = Math.floor(timeElapsed / 1000);
+        return { ...state, count: state.count + increments, lastFrameTime: action.payload.time };
+      }
+      return { ...state, count: state.count, lastFrameTime: action.payload.time };
     default:
       return state;
   }
@@ -36,12 +38,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       const currentTime = performance.now();
-      const timeElapsed = currentTime - state.lastFrameTime;
-
-      if (timeElapsed >= 1000) {
-        const increments = Math.floor(timeElapsed / 1000);
-        dispatch({ type: 'autoIncrementAndUpdateTime', payload: { count: increments, time: currentTime } });
-      }
+      dispatch({ type: 'autoIncrement', payload: {time: currentTime }});
     }, 1000);
 
     intervalRef.current = interval;
@@ -55,9 +52,7 @@ const App: React.FC = () => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         const currentTime = performance.now();
-        const timeElapsed = currentTime - state.lastFrameTime;
-        const increments = Math.floor(timeElapsed / 1000);
-        dispatch({ type: 'autoIncrementAndUpdateTime', payload: { count: increments, time: currentTime } });
+        dispatch({ type: 'autoIncrement', payload: {time: currentTime }});
       }
     };
 
@@ -67,10 +62,6 @@ const App: React.FC = () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [state.lastFrameTime]);
-
-  useEffect(() => {
-    document.title = `✨ Score: ${state.count.toLocaleString()} ✨`;
-  }, [state.count]);
 
   return (
     <div className="container">

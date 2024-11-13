@@ -17,18 +17,23 @@ describe('reducer', () => {
     expect(newState.count).toBe(-1);
   });
 
-  it('should update the time', () => {
+  it('should update the time and increment the count based on elapsed time', () => {
+    const lastFrameTime = Date.now() - 5000; // 5 seconds ago
+    const initialState = { count: 0, lastFrameTime };
     const currentTime = Date.now();
-    const action: Action = { type: 'updateTime', payload: currentTime };
+    const action: Action = { type: 'autoIncrement', payload: { time: currentTime } };
     const newState = reducer(initialState, action);
+    expect(newState.count).toBe(5); // 5 seconds elapsed, so count should be incremented by 5
     expect(newState.lastFrameTime).toBe(currentTime);
   });
 
-  it('should auto increment the count and update the time', () => {
+  it('should update the time without incrementing the count if less than 1 second has elapsed', () => {
+    const lastFrameTime = Date.now() - 500; // 0.5 seconds ago
+    const initialState = { count: 0, lastFrameTime };
     const currentTime = Date.now();
-    const action: Action = { type: 'autoIncrementAndUpdateTime', payload: { count: 5, time: currentTime } };
+    const action: Action = { type: 'autoIncrement', payload: { time: currentTime } };
     const newState = reducer(initialState, action);
-    expect(newState.count).toBe(5);
+    expect(newState.count).toBe(0); // Less than 1 second elapsed, so count should not be incremented
     expect(newState.lastFrameTime).toBe(currentTime);
   });
 
