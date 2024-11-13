@@ -7,6 +7,11 @@
 
 /* App.css */
 
+h1 {
+  font-size: 2rem; /* Default font size */
+  margin: 0;
+}
+
 /* Mobile-first styles */
 body {
   margin: 0;
@@ -30,5 +35,12 @@ body {
   .container {
     flex-direction: column; /* Keep the controls stacked */
     padding: 40px;
+  }
+}
+
+/* Mobile-first styles */
+@media (max-width: 600px) {
+  .title {
+    font-size: 1.2rem; /* Smaller font size for mobile devices */
   }
 }
