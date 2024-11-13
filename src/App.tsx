@@ -66,7 +66,7 @@ const App: React.FC = () => {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [state.lastFrameTime]);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('count', state.count.toString());

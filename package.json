@@ -6,7 +6,7 @@
   "homepage": "https://JeffBuda.github.io/scoresceror",
   "scripts": {
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist",
+    "deploy": "npm run build && gh-pages -d dist",
     "start": "vite",
     "build": "vite build",
     "lint": "eslint .",
