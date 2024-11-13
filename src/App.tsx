@@ -25,7 +25,7 @@ export const reducer = (state: State, action: Action): State => {
     case 'autoIncrementAndUpdateTime':
       return { ...state, count: state.count + action.payload.count, lastFrameTime: action.payload.time };
     default:
-      throw new Error(`Unhandled action type: ${(action as any).type}`);
+      return state;
   }
 };
 
