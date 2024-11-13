@@ -24,12 +24,6 @@ describe('reducer', () => {
     expect(newState.lastFrameTime).toBe(currentTime);
   });
 
-  it('should auto increment the count', () => {
-    const action: Action = { type: 'autoIncrement', payload: 5 };
-    const newState = reducer(initialState, action);
-    expect(newState.count).toBe(5);
-  });
-
   it('should auto increment the count and update the time', () => {
     const currentTime = Date.now();
     const action: Action = { type: 'autoIncrementAndUpdateTime', payload: { count: 5, time: currentTime } };

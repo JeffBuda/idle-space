@@ -11,7 +11,6 @@ export type Action =
   { type: 'increment' } | 
   { type: 'decrement' } | 
   { type: 'updateTime', payload: number } | 
-  { type: 'autoIncrement', payload: number } | 
   { type: 'autoIncrementAndUpdateTime', payload: { count: number, time: number } };
 
 // Define the reducer function
@@ -23,36 +22,32 @@ export const reducer = (state: State, action: Action): State => {
       return { ...state, count: state.count - 1 };
     case 'updateTime':
       return { ...state, lastFrameTime: action.payload };
-    case 'autoIncrement':
-      return { ...state, count: state.count + action.payload };
     case 'autoIncrementAndUpdateTime':
       return { ...state, count: state.count + action.payload.count, lastFrameTime: action.payload.time };
     default:
-      return state;
+      throw new Error(`Unhandled action type: ${(action as any).type}`);
   }
 };
 
 const App: React.FC = () => {
   const [state, dispatch] = useReducer(reducer, { count: 0, lastFrameTime: performance.now() });
-  const requestRef = useRef<number>();
-
-  const animate = (time: number) => {
-    const timeElapsed = time - state.lastFrameTime;
-
-    if (timeElapsed >= 1000) {
-      const increments = Math.floor(timeElapsed / 1000);
-      dispatch({ type: 'autoIncrementAndUpdateTime', payload: { count: increments, time } });
-    }
-
-    requestRef.current = requestAnimationFrame(animate);
-  };
+  const intervalRef = useRef<number>();
 
   useEffect(() => {
-    requestRef.current = requestAnimationFrame(animate);
-    return () => {
-      if (requestRef.current) {
-        cancelAnimationFrame(requestRef.current);
+    const interval = setInterval(() => {
+      const currentTime = performance.now();
+      const timeElapsed = currentTime - state.lastFrameTime;
+
+      if (timeElapsed >= 1000) {
+        const increments = Math.floor(timeElapsed / 1000);
+        dispatch({ type: 'autoIncrementAndUpdateTime', payload: { count: increments, time: currentTime } });
       }
+    }, 1000);
+
+    intervalRef.current = interval;
+
+    return () => {
+      clearInterval(intervalRef.current);
     };
   }, [state.lastFrameTime]);
 
@@ -60,7 +55,9 @@ const App: React.FC = () => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         const currentTime = performance.now();
-        dispatch({ type: 'updateTime', payload: currentTime });
+        const timeElapsed = currentTime - state.lastFrameTime;
+        const increments = Math.floor(timeElapsed / 1000);
+        dispatch({ type: 'autoIncrementAndUpdateTime', payload: { count: increments, time: currentTime } });
       }
     };
 
@@ -69,7 +66,11 @@ const App: React.FC = () => {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []);
+  }, [state.lastFrameTime]);
+
+  useEffect(() => {
+    document.title = `✨ Score: ${state.count.toLocaleString()} ✨`;
+  }, [state.count]);
 
   return (
     <div className="container">
