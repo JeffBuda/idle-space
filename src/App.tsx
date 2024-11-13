@@ -73,11 +73,10 @@ const App: React.FC = () => {
 
   return (
     <div className="container">
-      <h1>Idle Game</h1>
-      <p>Welcome to your idle game!</p>
-      <p>Count: {state.count}</p>
-      <button onClick={() => dispatch({ type: 'increment' })}>Increment</button>
-      <button onClick={() => dispatch({ type: 'decrement' })}>Decrement</button>
+      <h1>🧙‍♂️ Scoresceror 🧙‍♀️</h1>
+      <p>Press the button to increase your score!</p>
+      <p>✨ Score: {state.count.toLocaleString()} ✨</p>
+      <button onClick={() => dispatch({ type: 'increment' })}>🪄 Increase score! 🪄</button>
       {/* Add more components and game logic here */}
     </div>
   );
