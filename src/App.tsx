@@ -32,13 +32,18 @@ export const reducer = (state: State, action: Action): State => {
 };
 
 const App: React.FC = () => {
-  const [state, dispatch] = useReducer(reducer, { count: 0, lastFrameTime: performance.now() });
+  const initialState = {
+    count: Number(localStorage.getItem('count')) || 0,
+    lastFrameTime: performance.now(),
+  };
+
+  const [state, dispatch] = useReducer(reducer, initialState);
   const intervalRef = useRef<number>();
 
   useEffect(() => {
     const interval = setInterval(() => {
       const currentTime = performance.now();
-      dispatch({ type: 'autoIncrement', payload: {time: currentTime }});
+      dispatch({ type: 'autoIncrement', payload: { time: currentTime } });
     }, 1000);
 
     intervalRef.current = interval;
@@ -52,7 +57,7 @@ const App: React.FC = () => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         const currentTime = performance.now();
-        dispatch({ type: 'autoIncrement', payload: {time: currentTime }});
+        dispatch({ type: 'autoIncrement', payload: { time: currentTime } });
       }
     };
 
@@ -62,6 +67,10 @@ const App: React.FC = () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [state.lastFrameTime]);
+
+  useEffect(() => {
+    localStorage.setItem('count', state.count.toString());
+  }, [state.count]);
 
   return (
     <div className="container">
