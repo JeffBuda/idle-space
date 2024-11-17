@@ -1,10 +1,14 @@
 import React, { useReducer, useEffect, useRef } from 'react';
 import './App.css';
+import Modal from './Modal';
 
 // Define the types for state and actions
 interface State {
   count: number;
   lastFrameTime: number;
+  isModalOpen: boolean;
+  elapsedTime: number;
+  points: number;
 }
 
 export type Action = 
@@ -12,7 +16,9 @@ export type Action =
   { type: 'decrement' } | 
   { type: 'updateScore', payload: { time: number } } |
   { type: 'storeTime', payload: { time: number } } |
-  { type: 'restoreTime', payload: { time: number } };
+  { type: 'restoreTime', payload: { time: number } } |
+  { type: 'openModal', payload: { elapsedTime: number, points: number } } |
+  { type: 'closeModal' };
 
 // Define the reducer function
 export const reducer = (state: State, action: Action): State => {
@@ -37,7 +43,23 @@ export const reducer = (state: State, action: Action): State => {
       const deltaTime = action.payload.time - lastInteractionTime;
       const deltaInSeconds = Math.floor(deltaTime / 1000);
       const previousScore = Number(localStorage.getItem('count')) || 0;
-      return { ...state, count: previousScore + deltaInSeconds, lastFrameTime: action.payload.time };
+      return { 
+        ...state, 
+        count: previousScore + deltaInSeconds, 
+        lastFrameTime: action.payload.time,
+        isModalOpen: true,
+        elapsedTime: deltaInSeconds,
+        points: deltaInSeconds
+      };
+    case 'openModal':
+      return { 
+        ...state, 
+        isModalOpen: true, 
+        elapsedTime: action.payload.elapsedTime, 
+        points: action.payload.points 
+      };
+    case 'closeModal':
+      return { ...state, isModalOpen: false };
     default:
       return state;
   }
@@ -46,7 +68,10 @@ export const reducer = (state: State, action: Action): State => {
 const App: React.FC = () => {
   const initialState: State = { 
     count: Number(localStorage.getItem('count')) || 0, 
-    lastFrameTime: performance.now() 
+    lastFrameTime: Number(localStorage.getItem('lastInteractionTime')),
+    isModalOpen: false,
+    elapsedTime: 0,
+    points: 0
   };
 
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -91,6 +116,14 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const currentTime = performance.now();
+    const lastInteractionTime = Number(localStorage.getItem('lastInteractionTime'));
+    if (lastInteractionTime) {
+      dispatch({ type: 'restoreTime', payload: { time: currentTime } });
+    }
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem('count', state.count.toString());
   }, [state.count]);
 
@@ -102,12 +135,22 @@ const App: React.FC = () => {
     dispatch({ type: 'increment' });
   };
 
+  const handleCloseModal = () => {
+    dispatch({ type: 'closeModal' });
+  };
+
   return (
     <div className="container">
       <h1>🧙‍♂️ Scoresceror 🧙‍♀️</h1>
       <p>Press the button to increase your score!</p>
       <p>✨ Score: {state.count.toLocaleString()} ✨</p>
       <button onClick={handleIncrement}>🪄 Increase score! 🪄</button>
+      <Modal 
+        isOpen={state.isModalOpen} 
+        onClose={handleCloseModal} 
+        elapsedTime={state.elapsedTime} 
+        points={state.points} 
+      />
       {/* Add more components and game logic here */}
     </div>
   );
