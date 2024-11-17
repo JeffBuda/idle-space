@@ -30,6 +30,22 @@ body {
   box-sizing: border-box;
 }
 
+.button-bar {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  padding: 10px;
+  text-align: center;
+}
+
+.button-bar button {
+  margin: 0 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
 /* Responsive styles for larger screens */
 @media (min-width: 768px) {
   .container {

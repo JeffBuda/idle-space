@@ -10,7 +10,9 @@ interface State {
 export type Action = 
   { type: 'increment' } | 
   { type: 'decrement' } | 
-  { type: 'autoIncrement', payload: { time: number } };
+  { type: 'updateScore', payload: { time: number } } |
+  { type: 'storeTime', payload: { time: number } } |
+  { type: 'restoreTime', payload: { time: number } };
 
 // Define the reducer function
 export const reducer = (state: State, action: Action): State => {
@@ -19,22 +21,32 @@ export const reducer = (state: State, action: Action): State => {
       return { ...state, count: state.count + 1 };
     case 'decrement':
       return { ...state, count: state.count - 1 };
-    case 'autoIncrement':
+    case 'updateScore':
       const timeElapsed = action.payload.time - state.lastFrameTime;
       if (timeElapsed >= 1000) {
         const increments = Math.floor(timeElapsed / 1000);
         return { ...state, count: state.count + increments, lastFrameTime: action.payload.time };
       }
-      return { ...state, count: state.count, lastFrameTime: action.payload.time };
+      return { ...state, lastFrameTime: action.payload.time };
+    case 'storeTime':
+      localStorage.setItem('lastInteractionTime', action.payload.time.toString());
+      localStorage.setItem('count', state.count.toString());
+      return state;
+    case 'restoreTime':
+      const lastInteractionTime = Number(localStorage.getItem('lastInteractionTime'));
+      const deltaTime = action.payload.time - lastInteractionTime;
+      const deltaInSeconds = Math.floor(deltaTime / 1000);
+      const previousScore = Number(localStorage.getItem('count')) || 0;
+      return { ...state, count: previousScore + deltaInSeconds, lastFrameTime: action.payload.time };
     default:
       return state;
   }
 };
 
 const App: React.FC = () => {
-  const initialState = {
-    count: Number(localStorage.getItem('count')) || 0,
-    lastFrameTime: performance.now(),
+  const initialState: State = { 
+    count: Number(localStorage.getItem('count')) || 0, 
+    lastFrameTime: performance.now() 
   };
 
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -43,7 +55,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       const currentTime = performance.now();
-      dispatch({ type: 'autoIncrement', payload: { time: currentTime } });
+      dispatch({ type: 'updateScore', payload: { time: currentTime } });
     }, 1000);
 
     intervalRef.current = interval;
@@ -57,14 +69,24 @@ const App: React.FC = () => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         const currentTime = performance.now();
-        dispatch({ type: 'autoIncrement', payload: { time: currentTime } });
+        dispatch({ type: 'restoreTime', payload: { time: currentTime } });
+      } else {
+        const currentTime = performance.now();
+        dispatch({ type: 'storeTime', payload: { time: currentTime } });
       }
     };
 
+    const handleBeforeUnload = () => {
+      const currentTime = performance.now();
+      dispatch({ type: 'storeTime', payload: { time: currentTime } });
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
 
@@ -72,12 +94,20 @@ const App: React.FC = () => {
     localStorage.setItem('count', state.count.toString());
   }, [state.count]);
 
+  useEffect(() => {
+    document.title = `✨ Score: ${state.count.toLocaleString()} ✨`;
+  }, [state.count]);
+
+  const handleIncrement = () => {
+    dispatch({ type: 'increment' });
+  };
+
   return (
     <div className="container">
       <h1>🧙‍♂️ Scoresceror 🧙‍♀️</h1>
       <p>Press the button to increase your score!</p>
       <p>✨ Score: {state.count.toLocaleString()} ✨</p>
-      <button onClick={() => dispatch({ type: 'increment' })}>🪄 Increase score! 🪄</button>
+      <button onClick={handleIncrement}>🪄 Increase score! 🪄</button>
       {/* Add more components and game logic here */}
     </div>
   );
