@@ -53,7 +53,8 @@ export const reducer = (state: State, action: Action): State => {
         ...state,
         score: state.score + idlePoints,
         idleTimeMs,
-        idlePoints
+        idlePoints,
+        updateTimeMs: action.payload.nowMs
       };
     case 'closeModal':
       return {
