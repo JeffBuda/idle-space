@@ -21,7 +21,7 @@ describe('reducer', () => {
     const lastFrameTime = Date.now() - 5000; // 5 seconds ago
     const initialState = { count: 0, lastFrameTime };
     const currentTime = Date.now();
-    const action: Action = { type: 'autoIncrement', payload: { time: currentTime } };
+    const action: Action = { type: 'autoIncrement', payload: { nowMs: currentTime } };
     const newState = reducer(initialState, action);
     expect(newState.count).toBe(5); // 5 seconds elapsed, so count should be incremented by 5
     expect(newState.lastFrameTime).toBe(currentTime);
@@ -31,7 +31,7 @@ describe('reducer', () => {
     const lastFrameTime = Date.now() - 500; // 0.5 seconds ago
     const initialState = { count: 0, lastFrameTime };
     const currentTime = Date.now();
-    const action: Action = { type: 'autoIncrement', payload: { time: currentTime } };
+    const action: Action = { type: 'autoIncrement', payload: { nowMs: currentTime } };
     const newState = reducer(initialState, action);
     expect(newState.count).toBe(0); // Less than 1 second elapsed, so count should not be incremented
     expect(newState.lastFrameTime).toBe(currentTime);
