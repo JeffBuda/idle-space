@@ -166,7 +166,7 @@ const App: React.FC = () => {
       <button onClick={handleIncrement}>🪄 Increase score! 🪄</button>
       <Modal
         isOpen={state.isModalOpen}
-        elapsedTimeSeconds={Math.floor((state.idleTimeMs || 0) / 1000)}
+        elapsedTimeMs={Math.floor((state.idleTimeMs || 0))}
         points={state.idlePoints || 0}
         onClose={handleCloseModal}
       />
