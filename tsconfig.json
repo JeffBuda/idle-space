@@ -1,4 +1,15 @@
 {
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "sourceMap": true // Ensure source maps are generated
+  },
   "files": [],
   "references": [
     { "path": "./tsconfig.app.json" },

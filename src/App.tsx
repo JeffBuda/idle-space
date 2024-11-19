@@ -18,7 +18,7 @@ export enum LocalStorageKeys { score = 'score', updateTimeMs = 'updateTimeMs' };
 
 export type Action =
   { type: 'increment' } |
-  { type: 'openModal', payload: { nowMs: number } } |
+  { type: 'openModal'} |
   { type: 'closeModal' } |
   { type: 'updateTime', payload: { nowMs: number } } |
   { type: 'calculateIdlePoints', payload: { nowMs: number } } |
@@ -92,7 +92,7 @@ export function restoreState(): State {
 const App: React.FC = () => {
   const initialState: State = restoreState();
   const [state, dispatch] = useReducer(reducer, initialState);
-  const intervalRef = useRef<number>();
+  const intervalRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -115,7 +115,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (state.idlePoints && !state.isModalOpen) {
-      dispatch({ type: 'openModal', payload: { nowMs: Date.now() } });
+      dispatch({ type: 'openModal' });
     }
   },
   [state.idlePoints, state.isModalOpen]);

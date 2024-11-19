@@ -1,45 +1,72 @@
 import { describe, it, expect } from 'vitest';
-import { Action, reducer } from './App';
+import { Action, reducer, calculatePoints } from './App';
 
 // Define the initial state
-const initialState = { count: 0, lastFrameTime: Date.now() };
+const emptyInitialState = {
+  score: 0,
+  updateTimeMs: 0,
+  isModalOpen: false,
+  idleTimeMs: 0,
+  idlePoints: 0,
+};
 
 describe('reducer', () => {
-  it('should increment the count', () => {
+  it('should increment the score', () => {
     const action: Action = { type: 'increment' };
-    const newState = reducer(initialState, action);
-    expect(newState.count).toBe(1);
+    const newState = reducer(emptyInitialState, action);
+    expect(newState.score).toBe(1);
   });
 
-  it('should decrement the count', () => {
-    const action: Action = { type: 'decrement' };
-    const newState = reducer(initialState, action);
-    expect(newState.count).toBe(-1);
-  });
-
-  it('should update the time and increment the count based on elapsed time', () => {
-    const lastFrameTime = Date.now() - 5000; // 5 seconds ago
-    const initialState = { count: 0, lastFrameTime };
+  it('should update the time and increment the score based on elapsed time', () => {
+    const lastUpdateTimeMs = Date.now() - 5000; // 5 seconds ago
+    const initialState = { ...emptyInitialState, updateTimeMs: lastUpdateTimeMs };
     const currentTime = Date.now();
-    const action: Action = { type: 'autoIncrement', payload: { nowMs: currentTime } };
+    const action: Action = { type: 'updateTime', payload: { nowMs: currentTime } };
     const newState = reducer(initialState, action);
-    expect(newState.count).toBe(5); // 5 seconds elapsed, so count should be incremented by 5
-    expect(newState.lastFrameTime).toBe(currentTime);
+    const expectedPoints = calculatePoints(currentTime - lastUpdateTimeMs);
+    expect(newState.score).toBe(expectedPoints);
+    expect(newState.updateTimeMs).toBe(currentTime);
   });
 
-  it('should update the time without incrementing the count if less than 1 second has elapsed', () => {
-    const lastFrameTime = Date.now() - 500; // 0.5 seconds ago
-    const initialState = { count: 0, lastFrameTime };
+  it('should open the modal', () => {
+    const action: Action = { type: 'openModal' };
+    const newState = reducer(emptyInitialState, action);
+    expect(newState.isModalOpen).toBe(true);
+  });
+
+  it('should close the modal', () => {
+    const initialStateWithModalOpen = { ...emptyInitialState, isModalOpen: true };
+    const action: Action = { type: 'closeModal' };
+    const newState = reducer(initialStateWithModalOpen, action);
+    expect(newState.isModalOpen).toBe(false);
+  });
+
+  it('should calculate idle points and update the state', () => {
+    const lastUpdateTimeMs = Date.now() - 5000; // 5 seconds ago
+    const initialState = { ...emptyInitialState, updateTimeMs: lastUpdateTimeMs };
     const currentTime = Date.now();
-    const action: Action = { type: 'autoIncrement', payload: { nowMs: currentTime } };
+    const action: Action = { type: 'calculateIdlePoints', payload: { nowMs: currentTime } };
     const newState = reducer(initialState, action);
-    expect(newState.count).toBe(0); // Less than 1 second elapsed, so count should not be incremented
-    expect(newState.lastFrameTime).toBe(currentTime);
+    const expectedPoints = calculatePoints(currentTime - lastUpdateTimeMs);
+    expect(newState.idlePoints).toBe(expectedPoints);
+    expect(newState.idleTimeMs).toBe(currentTime - lastUpdateTimeMs);
+    expect(newState.updateTimeMs).toBe(currentTime);
+  });
+
+  it('should award idle points and update the time', () => {
+    const lastUpdateTimeMs = Date.now() - 5000; // 5 seconds ago
+    const initialState = { ...emptyInitialState, updateTimeMs: lastUpdateTimeMs, idlePoints: 5, score: 10 };
+    const currentTime = Date.now();
+    const action: Action = { type: 'awardIdlePoints', payload: { nowMs: currentTime } };
+    const newState = reducer(initialState, action);
+    expect(newState.score).toBe(15); // 10 + 5 idle points
+    expect(newState.idlePoints).toBe(0);
+    expect(newState.updateTimeMs).toBe(currentTime);
   });
 
   it('should return the initial state for unknown action types', () => {
-    const action = { type: 'unknown' } as any;
-    const newState = reducer(initialState, action);
-    expect(newState).toBe(initialState);
+    const action: Action = { type: 'unknown' } as any;
+    const newState = reducer(emptyInitialState, action);
+    expect(newState).toBe(emptyInitialState);
   });
 });
