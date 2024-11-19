@@ -21,6 +21,7 @@ export type Action =
   { type: 'openModal', payload: { nowMs: number } } |
   { type: 'closeModal' } |
   { type: 'updateTime', payload: { nowMs: number } } |
+  { type: 'calculateIdlePoints', payload: { nowMs: number } } |
   { type: 'awardIdlePoints', payload: { nowMs: number } };
 
 // Define the reducer function
@@ -40,8 +41,8 @@ export const reducer = (state: State, action: Action): State => {
         ...state,
         isModalOpen: true,
       };
-    case 'awardIdlePoints':
-      if (state.updateTimeMs === 0 || state.score === 0) {
+    case 'calculateIdlePoints':
+      if (!state.score) {
         // first time ever load of game
         return { ...state, score: 0, idlePoints: 0, idleTimeMs: 0, updateTimeMs: action.payload.nowMs };
       }
@@ -51,11 +52,17 @@ export const reducer = (state: State, action: Action): State => {
       const idlePoints = calculatePoints(idleTimeMs);
       return {
         ...state,
-        score: state.score + idlePoints,
         idleTimeMs,
         idlePoints,
         updateTimeMs: action.payload.nowMs
       };
+    case 'awardIdlePoints':
+      return { 
+        ...state, 
+        idlePoints: 0,
+        score: state.score + state.idlePoints,
+        updateTimeMs: action.payload.nowMs
+      }
     case 'closeModal':
       return {
         ...state,
@@ -100,54 +107,26 @@ const App: React.FC = () => {
     };
   }, []);
 
+  useEffect(
+    () => {
+      dispatch({ type: 'calculateIdlePoints', payload: { nowMs: Date.now() } });
+    },
+    []);
+
+  useEffect(() => {
+    if (state.idlePoints && !state.isModalOpen) {
+      dispatch({ type: 'openModal', payload: { nowMs: Date.now() } });
+    }
+  },
+  [state.idlePoints, state.isModalOpen]);
+
   // store state in local storage
   useEffect(
     () => {
       localStorage.setItem(LocalStorageKeys.score, state.score.toString());
       localStorage.setItem(LocalStorageKeys.updateTimeMs, state.updateTimeMs.toString());
     },
-    [state.score]);
-
-  // open the modal when the app is first opened
-  useEffect(
-    () => {
-      dispatch({ type: 'awardIdlePoints', payload: { nowMs: Date.now() } });
-      dispatch({ type: 'openModal', payload: { nowMs: Date.now() } });
-    },
-    []);
-
-  // useEffect(() => {
-  //   const handleVisibilityChange = () => {
-  //     if (document.visibilityState === 'visible') {
-  //       const currentTime = performance.now();
-  //       dispatch({ type: 'restoreState', payload: { time: currentTime } });
-  //     } else {
-  //       const currentTime = performance.now();
-  //       dispatch({ type: 'saveState', payload: { time: currentTime } });
-  //     }
-  //   };
-
-  //   const handleBeforeUnload = () => {
-  //     const currentTime = performance.now();
-  //     dispatch({ type: 'saveState', payload: { time: currentTime } });
-  //   };
-
-  //   document.addEventListener('visibilitychange', handleVisibilityChange);
-  //   window.addEventListener('beforeunload', handleBeforeUnload);
-
-  //   return () => {
-  //     document.removeEventListener('visibilitychange', handleVisibilityChange);
-  //     window.removeEventListener('beforeunload', handleBeforeUnload);
-  //   };
-  // }, []);
-
-  // useEffect(() => {
-  //   const currentTime = performance.now();
-  //   const lastInteractionTime = Number(localStorage.getItem('lastInteractionTime'));
-  //   if (lastInteractionTime) {
-  //     dispatch({ type: 'restoreState', payload: { time: currentTime } });
-  //   }
-  // }, []);
+    [state.score, state.updateTimeMs]);
 
   const handleIncrement = () => {
     dispatch({ type: 'increment' });
@@ -155,8 +134,8 @@ const App: React.FC = () => {
 
   const handleCloseModal = () => {
     dispatch({ type: 'closeModal' });
+    dispatch({ type: 'awardIdlePoints', payload: { nowMs: Date.now() } });
   };
-
 
   return (
     <div className="container">
