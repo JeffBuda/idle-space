@@ -15,7 +15,7 @@ interface State {
   idlePoints: number;
 }
 
-export enum LocalStorageKeys { score = 'score', updateTimeMs = 'updateTimeMs' };
+export enum LocalStorageKeys { score = 'idle-space-score', updateTimeMs = 'idle-space-updateTimeMs' };
 
 export type Action =
   { type: 'increment' } |
