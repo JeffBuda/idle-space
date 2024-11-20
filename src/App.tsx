@@ -1,6 +1,7 @@
-import React, { useReducer, useEffect, useRef } from 'react';
+import React, { useReducer, useEffect, useRef, useState } from 'react';
 import './App.css';
 import Modal from './Modal';
+import SpaceBackground from './SpaceBackground';
 
 // Define the types for state and actions
 interface State {
@@ -93,6 +94,7 @@ const App: React.FC = () => {
   const initialState: State = restoreState();
   const [state, dispatch] = useReducer(reducer, initialState);
   const intervalRef = useRef<NodeJS.Timeout>();
+  const [stars, setStars] = useState<{ x: string; y: string }[]>([]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -128,6 +130,18 @@ const App: React.FC = () => {
     },
     [state.score, state.updateTimeMs]);
 
+  useEffect(() => {
+    const generateStars = () => {
+      const newStars = Array.from({ length: 100 }).map(() => ({
+        x: Math.random() * 100 + '%',
+        y: Math.random() * 100 + '%',
+      }));
+      setStars(newStars);
+    };
+
+    generateStars();
+  }, []);
+
   const handleIncrement = () => {
     dispatch({ type: 'increment' });
   };
@@ -139,11 +153,12 @@ const App: React.FC = () => {
 
   return (
     <div className="container">
+      <SpaceBackground stars={stars} setStars={setStars} />
       <h1>🚀 Idle Space 🚀</h1>
       <p>Press the button to increase your score!</p>
       <p>🎉 Score: {state.score.toLocaleString()} 🎉</p>
-      <p>🚀 Distance Traveled: {state.score.toLocaleString()} 🚀</p>
-      <button onClick={handleIncrement}>🪄 Increase score! 🪄</button>
+      <p>🚀 Distance Traveled: {state.score.toLocaleString()} </p>
+      <button onClick={handleIncrement}>Fly further!</button>
       <Modal
         isOpen={state.isModalOpen}
         elapsedTimeMs={Math.floor((state.idleTimeMs || 0))}
