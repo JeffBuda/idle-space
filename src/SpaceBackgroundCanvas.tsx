@@ -45,9 +45,60 @@ const SpaceBackgroundCanvas: React.FC = () => {
       });
     };
 
+    const drawSpaceship = () => {
+      if (!context || !canvas) return;
+
+      const spaceshipWidth = 50;
+      const spaceshipHeight = 100;
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+
+      // Draw the cone top
+      context.fillStyle = 'silver';
+      context.beginPath();
+      context.moveTo(centerX, centerY - spaceshipHeight / 2);
+      context.lineTo(centerX - spaceshipWidth / 2, centerY - spaceshipHeight / 4);
+      context.lineTo(centerX + spaceshipWidth / 2, centerY - spaceshipHeight / 4);
+      context.closePath();
+      context.fill();
+
+      // Create gradient for the cylindrical body
+      const gradient = context.createLinearGradient(
+        centerX - spaceshipWidth / 2,
+        centerY - spaceshipHeight / 4,
+        centerX + spaceshipWidth / 2,
+        centerY - spaceshipHeight / 4
+      );
+      gradient.addColorStop(0, 'darkgray');
+      gradient.addColorStop(0.5, 'lightgray');
+      gradient.addColorStop(1, 'darkgray');
+
+      // Draw the cylindrical body with gradient
+      context.fillStyle = gradient;
+      context.fillRect(centerX - spaceshipWidth / 2, centerY - spaceshipHeight / 4, spaceshipWidth, spaceshipHeight / 2);
+
+      // Draw the fire
+      context.fillStyle = 'orange';
+      context.beginPath();
+      context.moveTo(centerX, centerY + spaceshipHeight / 4);
+      context.lineTo(centerX - spaceshipWidth / 4, centerY + spaceshipHeight / 2);
+      context.lineTo(centerX + spaceshipWidth / 4, centerY + spaceshipHeight / 2);
+      context.closePath();
+      context.fill();
+
+      context.fillStyle = 'red';
+      context.beginPath();
+      context.moveTo(centerX, centerY + spaceshipHeight / 4);
+      context.lineTo(centerX - spaceshipWidth / 8, centerY + spaceshipHeight / 2);
+      context.lineTo(centerX + spaceshipWidth / 8, centerY + spaceshipHeight / 2);
+      context.closePath();
+      context.fill();
+    };
+
     const animate = () => {
       updateStars();
       drawStars();
+      drawSpaceship();
       requestAnimationFrame(animate);
     };
 
