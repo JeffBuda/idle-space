@@ -1,7 +1,7 @@
 import React, { useReducer, useEffect, useRef, useState } from 'react';
 import './App.css';
 import Modal from './Modal';
-import SpaceBackground from './SpaceBackground';
+import SpaceBackgroundCanvas from './SpaceBackgroundCanvas';
 
 // Define the types for state and actions
 interface State {
@@ -153,7 +153,7 @@ const App: React.FC = () => {
 
   return (
     <div className="container">
-      <SpaceBackground stars={stars} setStars={setStars} />
+      <SpaceBackgroundCanvas />
       <h1>🚀 Idle Space 🚀</h1>
       <p>Press the button to increase your score!</p>
       <p>🎉 Score: {state.score.toLocaleString()} 🎉</p>
