@@ -43,14 +43,13 @@ describe('reducer', () => {
 
   it('should calculate idle points and update the state', () => {
     const lastUpdateTimeMs = Date.now() - 5000; // 5 seconds ago
-    const initialState = { ...emptyInitialState, updateTimeMs: lastUpdateTimeMs };
+    const initialState = { ...emptyInitialState, score: 1, updateTimeMs: lastUpdateTimeMs };
     const currentTime = Date.now();
-    const action: Action = { type: 'calculateIdlePoints', payload: { nowMs: currentTime } };
-    const newState = reducer(initialState, action);
+    let state = reducer(initialState, { type: 'calculateIdlePoints', payload: { nowMs: currentTime } });
     const expectedPoints = calculatePoints(currentTime - lastUpdateTimeMs);
-    expect(newState.idlePoints).toBe(expectedPoints);
-    expect(newState.idleTimeMs).toBe(currentTime - lastUpdateTimeMs);
-    expect(newState.updateTimeMs).toBe(currentTime);
+    expect(state.idlePoints).toBe(expectedPoints);
+    expect(state.idleTimeMs).toBe(currentTime - lastUpdateTimeMs);
+    expect(state.updateTimeMs).toBe(currentTime);
   });
 
   it('should award idle points and update the time', () => {
