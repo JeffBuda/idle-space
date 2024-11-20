@@ -139,9 +139,10 @@ const App: React.FC = () => {
 
   return (
     <div className="container">
-      <h1>🧙‍♂️ Scoresceror 🧙‍♀️</h1>
+      <h1>🚀 Idle Space 🚀</h1>
       <p>Press the button to increase your score!</p>
-      <p>✨ Score: {state.score.toLocaleString()} ✨</p>
+      <p>🎉 Score: {state.score.toLocaleString()} 🎉</p>
+      <p>🚀 Distance Traveled: {state.score.toLocaleString()} 🚀</p>
       <button onClick={handleIncrement}>🪄 Increase score! 🪄</button>
       <Modal
         isOpen={state.isModalOpen}

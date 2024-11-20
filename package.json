@@ -1,9 +1,9 @@
 {
-  "name": "idle-power",
+  "name": "Idle Space",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://JeffBuda.github.io/scoresceror",
+  "homepage": "https://JeffBuda.github.io/idle-space",
   "scripts": {
     "predeploy": "npm run build",
     "deploy": "npm run build && gh-pages -d dist",
