@@ -91,8 +91,7 @@ export function restoreState(): State {
 }
 
 const App: React.FC = () => {
-  const initialState: State = restoreState();
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = useReducer(reducer, restoreState());
   const intervalRef = useRef<NodeJS.Timeout>();
   const [stars, setStars] = useState<{ x: string; y: string }[]>([]);
 
@@ -153,19 +152,17 @@ const App: React.FC = () => {
 
   return (
     <div className="container">
-      <SpaceBackgroundCanvas />
-      <h1>🚀 Idle Space 🚀</h1>
-      <p>Press the button to increase your score!</p>
-      <p>🎉 Score: {state.score.toLocaleString()} 🎉</p>
-      <p>🚀 Distance Traveled: {state.score.toLocaleString()} </p>
-      <button onClick={handleIncrement}>Fly further!</button>
+      <SpaceBackgroundCanvas
+        score={state.score}
+        distance={state.score}
+        onIncrement={handleIncrement}
+      />
       <Modal
         isOpen={state.isModalOpen}
         elapsedTimeMs={Math.floor((state.idleTimeMs || 0))}
         points={state.idlePoints || 0}
         onClose={handleCloseModal}
       />
-      {/* Add more components and game logic here */}
     </div>
   );
 };

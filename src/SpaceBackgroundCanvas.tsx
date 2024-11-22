@@ -5,7 +5,13 @@ interface Star {
   y: number;
 }
 
-const SpaceBackgroundCanvas: React.FC = () => {
+interface SpaceBackgroundCanvasProps {
+  score: number;
+  distance: number;
+  onIncrement: () => void;
+}
+
+const SpaceBackgroundCanvas: React.FC<SpaceBackgroundCanvasProps> = ({ score, distance, onIncrement }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const starsRef = useRef<Star[]>([]);
 
@@ -95,10 +101,53 @@ const SpaceBackgroundCanvas: React.FC = () => {
       context.fill();
     };
 
+    const drawText = () => {
+      if (!context || !canvas) return;
+
+      context.fillStyle = 'white';
+      context.font = '20px Arial';
+      context.fillText(`Score: ${score}`, 20, 30);
+      context.fillText(`Distance: ${distance}`, 20, 60);
+    };
+
+    const drawButton = () => {
+      if (!context || !canvas) return;
+
+      const buttonX = canvas.width - 120;
+      const buttonY = canvas.height - 60;
+      const buttonWidth = 100;
+      const buttonHeight = 40;
+
+      context.fillStyle = 'blue';
+      context.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
+
+      context.fillStyle = 'white';
+      context.font = '20px Arial';
+      context.fillText('Fly!', buttonX + 25, buttonY + 25);
+    };
+
+    const handleCanvasClick = (event: MouseEvent) => {
+      const rect = canvas?.getBoundingClientRect();
+      if (!rect) return;
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      const buttonX = canvas.width - 120;
+      const buttonY = canvas.height - 60;
+      const buttonWidth = 100;
+      const buttonHeight = 40;
+
+      if (x >= buttonX && x <= buttonX + buttonWidth && y >= buttonY && y <= buttonY + buttonHeight) {
+        onIncrement();
+      }
+    };
+
     const animate = () => {
       updateStars();
       drawStars();
       drawSpaceship();
+      drawText();
+      drawButton();
       requestAnimationFrame(animate);
     };
 
@@ -110,14 +159,16 @@ const SpaceBackgroundCanvas: React.FC = () => {
     };
 
     window.addEventListener('resize', resizeCanvas);
+    canvas?.addEventListener('click', handleCanvasClick);
     resizeCanvas();
     generateStars();
     animate();
 
     return () => {
       window.removeEventListener('resize', resizeCanvas);
+      canvas?.removeEventListener('click', handleCanvasClick);
     };
-  }, []);
+  }, [score, distance, onIncrement]);
 
   return <canvas ref={canvasRef} className="space-background-canvas" />;
 };
