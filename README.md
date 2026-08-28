@@ -1,50 +1,51 @@
-# React + TypeScript + Vite
+# Space Exploration Idle PWA
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A Progressive Web App (PWA) built with **React 18**, **TypeScript**, and **Vite**, designed for offline play via service worker caching and IndexedDB persistence.
 
-Currently, two official plugins are available:
+## Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+This project is the Phase 1 foundation of the Space Exploration Idle game. It includes:
 
-## Expanding the ESLint configuration
+- **PWA Shell** — Standalone display mode, Web App Manifest, and service worker via `vite-plugin-pwa`.
+- **Testing Pyramid**:
+  - **Unit** — Vitest with pure logic tests (`src/engine/`).
+  - **Component** — Vitest + React Testing Library + jsdom (`src/App.test.tsx`).
+  - **E2E** — Playwright (Chromium + WebKit) (`tests/e2e/`).
+- **CI/CD** — GitHub Actions pipeline that runs all tests and deploys to GitHub Pages.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Getting Started
 
-- Configure the top-level `parserOptions` property like this:
+```bash
+# Install dependencies
+npm install
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+# Start the development server
+npm run dev
+
+# Run unit + component tests
+npm run test
+
+# Run E2E tests (requires browsers)
+npx playwright test
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## Build & Deploy
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+```bash
+npm run build      # Production build to dist/
+npm run preview    # Serve production build locally
 ```
+
+Pushing to `main` triggers the CI/CD pipeline which builds, tests, and deploys to GitHub Pages automatically.
+
+## Technologies
+
+| Category       | Tool                                      |
+|----------------|-------------------------------------------|
+| Framework      | React 18, TypeScript (strict)             |
+| Build          | Vite 5                                    |
+| PWA            | vite-plugin-pwa, idb (IndexedDB)          |
+| Unit Tests     | Vitest 2, jsdom                           |
+| Component Tests| @testing-library/react, @testing-library/user-event |
+| E2E Tests      | Playwright (Chromium + WebKit)            |
+| CI/CD          | GitHub Actions, GitHub Pages              |

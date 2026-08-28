@@ -1,62 +1,105 @@
-#root {
-  max-width: 100%;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
-
-/* App.css */
-
-h1 {
-  font-size: 2rem; /* Default font size */
-  margin: 0;
-}
-
-/* Mobile-first styles */
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-.container {
+.app {
+  min-height: 100vh;
+  background-color: #0d1117;
+  color: rgba(255, 255, 255, 0.87);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  height: 100vh;
-  padding: 20px;
-  box-sizing: border-box;
 }
 
-.button-bar {
-  position: fixed;
-  bottom: 0;
+.app-header {
   width: 100%;
-  background-color: rgba(0, 0, 0, 0.8);
-  padding: 10px;
   text-align: center;
+  padding: 2rem 1rem;
 }
 
-.button-bar button {
-  margin: 0 10px;
-  padding: 10px 20px;
-  font-size: 16px;
-  cursor: pointer;
+.app-header h1 {
+  font-size: 2rem;
+  margin: 0;
+  color: #ffffff;
 }
 
-/* Responsive styles for larger screens */
-@media (min-width: 768px) {
-  .container {
-    flex-direction: column; /* Keep the controls stacked */
-    padding: 40px;
-  }
+main {
+  width: 100%;
+  max-width: 600px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-/* Mobile-first styles */
+.status-card {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: left;
+}
+
+.status-card h2 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  color: #ffffff;
+}
+
+.status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.status-item:last-child {
+  border-bottom: none;
+}
+
+.label {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.value {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.status-item .value.active {
+  color: #4ade80;
+}
+
+.status-item .value.inactive {
+  color: #f87171;
+}
+
+.time-delta {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.time-delta h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: #ffffff;
+}
+
+.time-delta p {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
 @media (max-width: 600px) {
-  .title {
-    font-size: 1.2rem; /* Smaller font size for mobile devices */
+  .app-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .status-card {
+    padding: 1rem;
+  }
+
+  .time-delta {
+    padding: 1rem;
   }
 }

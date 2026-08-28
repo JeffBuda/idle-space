@@ -1,168 +1,99 @@
-import React, { useReducer, useEffect, useRef, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { initDB } from './db';
 import './App.css';
-import Modal from './Modal';
-import SpaceBackgroundCanvas from './SpaceBackgroundCanvas';
 
-// Define the types for state and actions
-interface State {
-  // persisted
-  score: number;
-  updateTimeMs: number;
+const App = () => {
+  const [swStatus, setSwStatus] = useState<'Active' | 'Inactive'>('Inactive');
+  const [dbStatus, setDbStatus] = useState<'Connected' | 'Disconnected'>(
+    'Disconnected'
+  );
+  const [installReady, setInstallReady] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
-  // transient
-  isModalOpen: boolean;
-  idleTimeMs: number;
-  idlePoints: number;
-}
-
-export enum LocalStorageKeys { score = 'idle-space-score', updateTimeMs = 'idle-space-updateTimeMs' };
-
-export type Action =
-  { type: 'increment' } |
-  { type: 'openModal'} |
-  { type: 'closeModal' } |
-  { type: 'updateTime', payload: { nowMs: number } } |
-  { type: 'calculateIdlePoints', payload: { nowMs: number } } |
-  { type: 'awardIdlePoints', payload: { nowMs: number } };
-
-// Define the reducer function
-export const reducer = (state: State, action: Action): State => {
-  switch (action.type) {
-    case 'increment':
-      return { ...state, score: state.score + 1 };
-    case 'updateTime':
-      const timeElapsedMs = action.payload.nowMs - (state.updateTimeMs || 0)
-      return {
-        ...state,
-        score: state.score + calculatePoints(timeElapsedMs),
-        updateTimeMs: action.payload.nowMs
-      };
-    case 'openModal':
-      return {
-        ...state,
-        isModalOpen: true,
-      };
-    case 'calculateIdlePoints':
-      if (!state.score) {
-        // first time ever load of game
-        return { ...state, score: 0, idlePoints: 0, idleTimeMs: 0, updateTimeMs: action.payload.nowMs };
-      }
-
-      //resume saved game
-      const idleTimeMs = action.payload.nowMs - state.updateTimeMs;
-      const idlePoints = calculatePoints(idleTimeMs);
-      return {
-        ...state,
-        idleTimeMs,
-        idlePoints,
-        updateTimeMs: action.payload.nowMs
-      };
-    case 'awardIdlePoints':
-      return { 
-        ...state, 
-        idlePoints: 0,
-        score: state.score + state.idlePoints,
-        updateTimeMs: action.payload.nowMs
-      }
-    case 'closeModal':
-      return {
-        ...state,
-        isModalOpen: false
-      };
-    default:
-      return state;
-  }
-};
-
-export function calculatePoints(deltaTimeMs: number): number {
-  return Math.floor(deltaTimeMs / 1000);
-}
-
-export function restoreState(): State {
-  const updateTimeMs = Number(localStorage.getItem(LocalStorageKeys.updateTimeMs) || 0);
-  const score = Number(localStorage.getItem(LocalStorageKeys.score) || 0);
-  return {
-    score,
-    updateTimeMs,
-    isModalOpen: false,
-    idleTimeMs: 0,
-    idlePoints: 0,
-  };
-}
-
-const App: React.FC = () => {
-  const [state, dispatch] = useReducer(reducer, restoreState());
-  const intervalRef = useRef<NodeJS.Timeout>();
-  const [stars, setStars] = useState<{ x: string; y: string }[]>([]);
-
+  // ---- Service Worker registration status ----
   useEffect(() => {
-    const interval = setInterval(() => {
-      const currentTime = Date.now();
-      dispatch({ type: 'updateTime', payload: { nowMs: currentTime } });
-    }, 1000);
+    if ('serviceWorker' in navigator) {
+      const sw = navigator.serviceWorker;
 
-    intervalRef.current = interval;
+      const updateStatus = () => {
+        setSwStatus(sw.controller ? 'Active' : 'Inactive');
+      };
 
-    return () => {
-      clearInterval(intervalRef.current);
-    };
-  }, []);
+      // Check immediately
+      updateStatus();
 
-  useEffect(
-    () => {
-      dispatch({ type: 'calculateIdlePoints', payload: { nowMs: Date.now() } });
-    },
-    []);
+      // Listen for controller changes
+      sw.addEventListener('controllerchange', updateStatus);
 
-  useEffect(() => {
-    if (state.idlePoints && !state.isModalOpen) {
-      dispatch({ type: 'openModal' });
+      // Fallback: poll every second for up to 5 seconds
+      const interval = setInterval(updateStatus, 1000);
+
+      return () => {
+        sw.removeEventListener('controllerchange', updateStatus);
+        clearInterval(interval);
+      };
     }
-  },
-  [state.idlePoints, state.isModalOpen]);
-
-  // store state in local storage
-  useEffect(
-    () => {
-      localStorage.setItem(LocalStorageKeys.score, state.score.toString());
-      localStorage.setItem(LocalStorageKeys.updateTimeMs, state.updateTimeMs.toString());
-    },
-    [state.score, state.updateTimeMs]);
-
-  useEffect(() => {
-    const generateStars = () => {
-      const newStars = Array.from({ length: 100 }).map(() => ({
-        x: Math.random() * 100 + '%',
-        y: Math.random() * 100 + '%',
-      }));
-      setStars(newStars);
-    };
-
-    generateStars();
   }, []);
 
-  const handleIncrement = () => {
-    dispatch({ type: 'increment' });
-  };
+  // ---- IndexedDB persistence status ----
+  useEffect(() => {
+    initDB()
+      .then(() => setDbStatus('Connected'))
+      .catch(() => setDbStatus('Disconnected'));
+  }, []);
 
-  const handleCloseModal = () => {
-    dispatch({ type: 'closeModal' });
-    dispatch({ type: 'awardIdlePoints', payload: { nowMs: Date.now() } });
-  };
+  // ---- PWA installation readiness ----
+  useEffect(() => {
+    const manifestLink = document.querySelector('link[rel="manifest"]');
+    setInstallReady('serviceWorker' in navigator && manifestLink !== null);
+  }, []);
+
+  // ---- Time-delta placeholder (pure state updates) ----
+  useEffect(() => {
+    const start = Date.now();
+    const interval = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - start) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <div className="container">
-      <SpaceBackgroundCanvas
-        score={state.score}
-        distance={state.score}
-        onIncrement={handleIncrement}
-      />
-      <Modal
-        isOpen={state.isModalOpen}
-        elapsedTimeMs={Math.floor((state.idleTimeMs || 0))}
-        points={state.idlePoints || 0}
-        onClose={handleCloseModal}
-      />
+    <div className="app">
+      <header className="app-header">
+        <h1>Space Exploration Idle PWA</h1>
+      </header>
+
+      <main>
+        <section className="status-card">
+          <h2>Application Status</h2>
+          <div className="status-item">
+            <span className="label">Service Worker</span>
+            <span data-testid="sw-status" className="value">
+              {swStatus}
+            </span>
+          </div>
+          <div className="status-item">
+            <span className="label">IndexedDB</span>
+            <span data-testid="db-status" className="value">
+              {dbStatus}
+            </span>
+          </div>
+          <div className="status-item">
+            <span className="label">Install Ready</span>
+            <span data-testid="install-status" className="value">
+              {installReady ? 'Yes' : 'No'}
+            </span>
+          </div>
+        </section>
+
+        <section className="time-delta">
+          <h2>Engine</h2>
+          <p>
+            Elapsed time:{' '}
+            <span data-testid="elapsed-time">{elapsedSeconds}</span>s
+          </p>
+        </section>
+      </main>
     </div>
   );
 };
