@@ -109,5 +109,16 @@ describe('App', () => {
     expect(screen.getByTestId('total-travel-time')).toBeInTheDocument();
     expect(screen.getByTestId('total-distance')).toBeInTheDocument();
   });
+
+  it('renders the build information card with version and build date', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+    expect(screen.getByText('Build Information')).toBeInTheDocument();
+    expect(screen.getByTestId('app-version')).toBeInTheDocument();
+    expect(screen.getByTestId('build-date')).toBeInTheDocument();
+    expect(screen.getByTestId('app-version').textContent).toMatch(/\d+\.\d+\.\d+/);
+    expect(screen.getByTestId('build-date').textContent).not.toBe('');
+  });
 });
 
