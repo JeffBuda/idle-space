@@ -88,7 +88,24 @@ cat dist/manifest.webmanifest | node -e "const m=JSON.parse(require('fs').readFi
 
 ---
 
-## 4. Cross-references
+## 4. Testing Conventions
+
+### Unit & Component Tests
+- **Command**: `npm run test` (`vitest run`)
+- **Location**: `src/**/*.test.{ts,tsx}`
+- **Framework**: Vitest + jsdom + @testing-library/react v14
+- All tests must pass before considering a task complete.
+
+### E2E / Playwright Tests
+- **Command**: `npx playwright test`
+- **Location**: `tests/e2e/`
+- **Browsers**: Chromium + WebKit
+- **⚠️ Required**: Always run Playwright tests locally BEFORE marking a task complete. E2E tests often fail in CI/CD due to environment differences, but local runs catch real issues.
+- If Playwright tests fail locally, investigate and fix them — do not ignore E2E failures.
+
+---
+
+## 5. Cross-references
 
 - `README.md` — project overview, getting started, tech stack table
 - `MEMORY.md` — detailed feature development notes (testing conventions, file
