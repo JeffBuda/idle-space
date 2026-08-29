@@ -1,10 +1,11 @@
 // src/useGameState.ts
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { calculateElapsedSeconds } from './utils/time';
-import { processIdleProgression } from './engine/time';
-import { getGameState, saveGameState, initGameState, type GameState } from './db';
+import { processIdleProgression, type GameState } from './engine/time';
+import { getGameState, saveGameState, initGameState, initDB } from './db';
 
 const OFFLINE_THRESHOLD_SECONDS = 60;
+const TICK_INTERVAL_MS = 1000;
 
 export interface UseGameStateResult {
   gameState: GameState | null;
@@ -18,9 +19,13 @@ export const useGameState = (): UseGameStateResult => {
   const [offlineSeconds, setOfflineSeconds] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const saveIntervalRef = useRef<number | null>(null);
+  const tickIntervalRef = useRef<number | null>(null);
 
   const handleWake = useCallback(async () => {
     try {
+      // Ensure IndexedDB is initialized first
+      await initDB();
+      
       let savedState = await getGameState();
       
       if (!savedState) {
@@ -57,12 +62,10 @@ export const useGameState = (): UseGameStateResult => {
         setGameState(stateToSave);
       } else {
         // Save current timestamp even if we haven't loaded state yet
+        const defaultState = await initGameState();
         await saveGameState({
+          ...defaultState,
           lastTimestamp: Date.now(),
-          elapsedSeconds: 0,
-          rngSeed: Math.random().toString(36).substring(2, 15),
-          totalDistanceKm: 0,
-          version: '0.1.0',
         });
       }
     } catch (error) {
@@ -82,6 +85,15 @@ export const useGameState = (): UseGameStateResult => {
     setOfflineSeconds(null);
   }, []);
 
+  // Real-time tick to update elapsed seconds while app is active
+  const handleTick = useCallback(() => {
+    if (gameState) {
+      const now = Date.now();
+      const newState = processIdleProgression(gameState, now);
+      setGameState(newState);
+    }
+  }, [gameState]);
+
   useEffect(() => {
     // Listen for tab switching and backgrounding
     document.addEventListener('visibilitychange', onVisibilityChange);
@@ -94,7 +106,7 @@ export const useGameState = (): UseGameStateResult => {
     // Debounced Auto-Save every 10 seconds to catch unexpected terminations
     // (e.g., iOS force-killing the app without a pagehide event)
     saveIntervalRef.current = window.setInterval(() => {
-      if (document.visibilityState === 'visible' && gameState) {
+      if (gameState) {
         const stateToSave = {
           ...gameState,
           lastTimestamp: Date.now(),
@@ -104,18 +116,28 @@ export const useGameState = (): UseGameStateResult => {
       }
     }, 10000);
 
+    // Real-time tick to update elapsed seconds every second while active
+    tickIntervalRef.current = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        handleTick();
+      }
+    }, TICK_INTERVAL_MS);
+
     return () => {
       document.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('pagehide', handleSuspend);
       if (saveIntervalRef.current) {
         clearInterval(saveIntervalRef.current);
       }
+      if (tickIntervalRef.current) {
+        clearInterval(tickIntervalRef.current);
+      }
       // Final save on unmount
       if (gameState) {
         handleSuspend();
       }
     };
-  }, [onVisibilityChange, handleSuspend, handleWake, gameState]);
+  }, [onVisibilityChange, handleSuspend, handleWake, handleTick, gameState]);
 
   return { gameState, offlineSeconds, clearOfflineSeconds, isLoading };
 };

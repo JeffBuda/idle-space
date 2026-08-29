@@ -27,6 +27,7 @@ export interface SpaceIdleDB extends DBSchema {
 }
 
 export const DB_NAME = 'space_idle_db';
+export const DB_VERSION = 2; // Bumped to trigger upgrade for game_state store
 export const APP_STATUS_KEY = 'app_status';
 export const GAME_STATE_KEY = 'game_state';
 
@@ -50,7 +51,7 @@ const GAME_STATE_DEFAULT: GameState = {
  * exist it is seeded with a default value.
  */
 export async function initDB(): Promise<AppStatus> {
-  const db = await openDB<SpaceIdleDB>(DB_NAME, 1, {
+  const db = await openDB<SpaceIdleDB>(DB_NAME, DB_VERSION, {
     upgrade(database) {
       if (!database.objectStoreNames.contains('keyval')) {
         database.createObjectStore('keyval');
@@ -70,13 +71,13 @@ export async function initDB(): Promise<AppStatus> {
 }
 
 export async function getAppStatus(): Promise<AppStatus | undefined> {
-  const db = await openDB<SpaceIdleDB>(DB_NAME, 1);
+  const db = await openDB<SpaceIdleDB>(DB_NAME, DB_VERSION);
   const value = await db.get('keyval', APP_STATUS_KEY);
   return value as AppStatus | undefined;
 }
 
 export async function setAppStatus(status: AppStatus): Promise<void> {
-  const db = await openDB<SpaceIdleDB>(DB_NAME, 1);
+  const db = await openDB<SpaceIdleDB>(DB_NAME, DB_VERSION);
   await db.put('keyval', status, APP_STATUS_KEY);
 }
 
@@ -85,7 +86,7 @@ export async function setAppStatus(status: AppStatus): Promise<void> {
  * Returns undefined if no game state has been saved yet.
  */
 export async function getGameState(): Promise<GameState | undefined> {
-  const db = await openDB<SpaceIdleDB>(DB_NAME, 1);
+  const db = await openDB<SpaceIdleDB>(DB_NAME, DB_VERSION);
   return await db.get('game_state', GAME_STATE_KEY);
 }
 
@@ -93,19 +94,32 @@ export async function getGameState(): Promise<GameState | undefined> {
  * Saves the current game state to IndexedDB.
  */
 export async function saveGameState(state: GameState): Promise<void> {
-  const db = await openDB<SpaceIdleDB>(DB_NAME, 1);
+  const db = await openDB<SpaceIdleDB>(DB_NAME, DB_VERSION);
   await db.put('game_state', state, GAME_STATE_KEY);
 }
 
 /**
  * Initializes a default game state if none exists in IndexedDB.
  * Returns the existing state or creates a new one.
+ * Ensures the game_state object store exists before accessing it.
  */
 export async function initGameState(): Promise<GameState> {
-  const existing = await getGameState();
+  // First ensure the database and stores are properly initialized
+  const db = await openDB<SpaceIdleDB>(DB_NAME, DB_VERSION, {
+    upgrade(database) {
+      if (!database.objectStoreNames.contains('keyval')) {
+        database.createObjectStore('keyval');
+      }
+      if (!database.objectStoreNames.contains('game_state')) {
+        database.createObjectStore('game_state');
+      }
+    },
+  });
+
+  const existing = await db.get('game_state', GAME_STATE_KEY);
   if (existing) {
     return existing;
   }
-  await saveGameState(GAME_STATE_DEFAULT);
+  await db.put('game_state', GAME_STATE_DEFAULT, GAME_STATE_KEY);
   return GAME_STATE_DEFAULT;
 }

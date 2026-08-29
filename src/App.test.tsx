@@ -29,6 +29,7 @@ vi.mock('./db', () => ({
     version: '0.1.0',
   }),
   DB_NAME: 'space_idle_db',
+  DB_VERSION: 2,
   APP_STATUS_KEY: 'app_status',
   GAME_STATE_KEY: 'game_state',
 }));
@@ -125,7 +126,7 @@ describe('App', () => {
     });
   });
 
-      it('renders the engine section with game state information', async () => {
+  it('renders the engine section with game state information', async () => {
     await act(async () => {
       render(<App />);
     });
