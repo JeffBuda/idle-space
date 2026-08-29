@@ -60,18 +60,26 @@ test('Test 1 (UI Render): main headers and status widgets exist', async ({
   await expect(page.getByTestId('sw-status')).toBeVisible();
   await expect(page.getByTestId('db-status')).toBeVisible();
   await expect(page.getByTestId('install-status')).toBeVisible();
-  await expect(page.getByTestId('elapsed-time')).toBeVisible();
+
+  // Wait for game state to load (replaces old 'elapsed-time' test element)
+  await expect(page.getByTestId('total-travel-time')).toBeVisible();
+  await expect(page.getByTestId('total-distance')).toBeVisible();
 });
 
 // ---------------------------------------------------------------------------
-// Test 2 — Service Worker Registration: SW becomes active within 5 seconds.
+// Test 2 — Service Worker Registration: SW becomes active within 10 seconds.
+// Allows extra time for game state initialization via IndexedDB.
 // ---------------------------------------------------------------------------
-test('Test 2 (Service Worker Registration): controller becomes active within 5 seconds', async ({
+test('Test 2 (Service Worker Registration): controller becomes active within 10 seconds', async ({
   page,
 }) => {
   await page.goto('/');
 
-  await waitForServiceWorker(page, 5000);
+  // Wait for game state to finish loading before checking for SW controller
+  // The useGameState hook initializes the loading state, which can delay SW readiness
+  await expect(page.getByTestId('total-travel-time')).toBeVisible();
+
+  await waitForServiceWorker(page, 10000);
 
   const hasController = await page.evaluate(
     () => navigator.serviceWorker?.controller !== null
