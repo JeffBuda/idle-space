@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { initDB } from './db';
+import { IOSInstallBanner } from './IOSInstallBanner';
 import './App.css';
 
 const App = () => {
@@ -94,6 +95,9 @@ const App = () => {
           </p>
         </section>
       </main>
+
+      {/* iOS "Add to Home Screen" install banner — globally visible on the landing page shell */}
+      <IOSInstallBanner />
     </div>
   );
 };
