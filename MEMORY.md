@@ -242,3 +242,17 @@ export const IOS_INSTALL_PROMPT_DISMISSED_KEY = 'iosInstallPromptDismissed';
 6. Use forward slashes in `editor` tool paths on this Windows environment.
 7. Omit `.ts`/`.tsx` extensions in imports — Vite + `allowImportingTsExtensions`
    resolves them.
+
+
+---
+
+## Agent Documentation
+
+See the following files for comprehensive agent instructions:
+- **AGENTS.md** — Cross-tool global instructions and project identity
+- **ARCHITECTURE.md** — System design, data flow, and architecture decisions
+- **.clinerules/core.md** — Always-active core constraints (editor bugs, shell gotchas)
+- **.clinerules/engine.md** — Rules for game engine and persistence code
+- **.clinerules/ui.md** — Rules for React UI components
+- **.clinerules/e2e.md** — Playwright E2E testing rules
+- **.clinerules/unit.md** — Vitest unit/component testing rules
