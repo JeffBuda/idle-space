@@ -23,18 +23,18 @@ export default defineConfig(({ mode }) => {
           short_name: 'Space Idle',
           description: 'A space exploration idle game built as a Progressive Web App',
           display: 'standalone',
-          start_url: '/',
+          start_url: '.',
           background_color: '#0d1117',
           theme_color: '#0d1117',
           icons: [
             {
-              src: '/icons/pwa-192x192.png',
+              src: 'icons/pwa-192x192.png',
               sizes: '192x192',
               type: 'image/png',
               purpose: 'maskable any',
             },
             {
-              src: '/icons/pwa-512x512.png',
+              src: 'icons/pwa-512x512.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'maskable any',
