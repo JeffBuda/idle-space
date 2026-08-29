@@ -1,5 +1,11 @@
 import { test, expect, type Page } from '@playwright/test';
 
+/** Minimal snapshot of persisted game state read from IndexedDB. */
+interface GameStateSnapshot {
+  elapsedSeconds: number;
+  [key: string]: unknown;
+}
+
 test.use({ viewport: { width: 1280, height: 720 } });
 
 async function getGameStateFromIDB(page: Page): Promise<unknown | null> {
@@ -36,7 +42,7 @@ async function setGameTimestamp(page: Page, msAgo: number): Promise<void> {
     });
     const tx = db.transaction(['game_state'], 'readwrite');
     const store = tx.objectStore('game_state');
-    const existing = await new Promise<any>((resolve, reject) => {
+    const existing = await new Promise<Record<string, unknown>>((resolve, reject) => {
       const getReq = store.get('game_state');
       getReq.onsuccess = () => resolve(getReq.result);
       getReq.onerror = () => reject(getReq.error);
@@ -129,7 +135,7 @@ test.describe.serial('Game State Interaction Tests', () => {
     // Verify game state was updated (elapsedSeconds should be > 0)
     const gameState = await getGameStateFromIDB(page);
     expect(gameState).not.toBeNull();
-    expect((gameState as any).elapsedSeconds).toBeGreaterThan(0);
+    expect((gameState as GameStateSnapshot).elapsedSeconds).toBeGreaterThan(0);
   });
 
   test('Test 8 (Real-Time Elapsed Time): travel time increments in real-time', async ({ page }) => {

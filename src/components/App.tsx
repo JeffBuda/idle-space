@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
-import { initDB } from './db';
 import { IOSInstallBanner } from './IOSInstallBanner';
-import { useGameState } from './useGameState';
-import { formatElapsedTime } from './utils/time';
+import { useGameState } from '../hooks/useGameState';
+import { useDbStatus } from '../hooks/useDbStatus';
+import { formatElapsedTime } from '../utils/time';
 import OfflineGreeting from './OfflineGreeting';
 import './App.css';
 
 const App = () => {
   const [swStatus, setSwStatus] = useState<'Active' | 'Inactive'>('Inactive');
-  const [dbStatus, setDbStatus] = useState<'Connected' | 'Disconnected'>(
-    'Disconnected'
-  );
+  const dbStatus = useDbStatus();
   const [installReady, setInstallReady] = useState(false);
 
   // ---- Service Worker registration status ----
@@ -36,14 +34,7 @@ const App = () => {
         clearInterval(interval);
       };
     }
-  }, []);
-
-  // ---- IndexedDB persistence status ----
-  useEffect(() => {
-    initDB()
-      .then(() => setDbStatus('Connected'))
-      .catch(() => setDbStatus('Disconnected'));
-  }, []);
+    }, []);
 
   // ---- PWA installation readiness ----
   useEffect(() => {

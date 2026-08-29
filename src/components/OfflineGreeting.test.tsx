@@ -2,7 +2,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { OfflineGreeting } from './OfflineGreeting';
-import { formatElapsedTime } from './utils/time';
+import { formatElapsedTime } from '../utils/time';
 
 describe('OfflineGreeting', () => {
   const mockOnDismiss = vi.fn();

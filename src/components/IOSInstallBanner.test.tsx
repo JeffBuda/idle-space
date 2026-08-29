@@ -6,7 +6,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { IOSInstallBanner } from './IOSInstallBanner';
-import { IOS_INSTALL_PROMPT_DISMISSED_KEY } from './useIOSInstallPrompt';
+import { IOS_INSTALL_PROMPT_DISMISSED_KEY } from '../hooks/useIOSInstallPrompt';
 
 // ── User-agent strings ────────────────────────────────────────────
 const IOS_IPHONE_UA =

@@ -4,7 +4,7 @@
 // PWA to their Home Screen via the native Share sheet.  Visible only on
 // iOS devices running in standard browser mode (not standalone).
 import React from 'react';
-import { useIOSInstallPrompt } from './useIOSInstallPrompt';
+import { useIOSInstallPrompt } from '../hooks/useIOSInstallPrompt';
 import './IOSInstallBanner.css';
 
 export const IOSInstallBanner: React.FC = () => {
