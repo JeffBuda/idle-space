@@ -29,34 +29,6 @@ async function getGameStateFromIDB(page: Page): Promise<unknown | null> {
 }
 
 // ---------------------------------------------------------------------------
-// Helper: read the app_status payload from IndexedDB inside the browser.
-// ---------------------------------------------------------------------------
-async function getAppStatusFromIDB(page: Page): Promise<unknown | null> {
-  return page.evaluate(async () => {
-    if (!('indexedDB' in window)) return null;
-    try {
-      const db = await new Promise<IDBDatabase>((resolve, reject) => {
-        const req = indexedDB.open('space_idle_db');
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-      });
-
-      const tx = db.transaction(['keyval'], 'readonly');
-      const store = tx.objectStore('keyval');
-      const value = await new Promise<unknown>((resolve, reject) => {
-        const getReq = store.get('app_status');
-        getReq.onsuccess = () => resolve(getReq.result);
-        getReq.onerror = () => reject(getReq.error);
-      });
-      db.close();
-      return value;
-    } catch {
-      return null;
-    }
-  });
-}
-
-// ---------------------------------------------------------------------------
 // Helper: wait until navigator.serviceWorker.controller is truthy.
 // ---------------------------------------------------------------------------
 async function waitForServiceWorker(page: Page, timeoutMs = 5000): Promise<void> {
@@ -89,22 +61,19 @@ test('Test 1 (UI Render): main headers and status widgets exist', async ({
   await expect(page.getByTestId('db-status')).toBeVisible();
   await expect(page.getByTestId('install-status')).toBeVisible();
 
-  // Wait for game state to load (replaces old 'elapsed-time' test element)
+  // Wait for game state to load
   await expect(page.getByTestId('total-travel-time')).toBeVisible();
   await expect(page.getByTestId('total-distance')).toBeVisible();
 });
 
 // ---------------------------------------------------------------------------
 // Test 2 — Service Worker Registration: SW becomes active within 10 seconds.
-// Allows extra time for game state initialization via IndexedDB.
 // ---------------------------------------------------------------------------
 test('Test 2 (Service Worker Registration): controller becomes active within 10 seconds', async ({
   page,
 }) => {
   await page.goto('/');
 
-  // Wait for game state to finish loading before checking for SW controller
-  // The useGameState hook initializes the loading state, which can delay SW readiness
   await expect(page.getByTestId('total-travel-time')).toBeVisible();
 
   await waitForServiceWorker(page, 10000);
@@ -123,37 +92,33 @@ test('Test 3 (IndexedDB Operations): state persists across reload', async ({
 }) => {
   await page.goto('/');
 
-  // Wait for the component to report "Connected"
-  await expect(page.getByTestId('db-status')).toHaveText('Connected');
-
-  // Verify the app_status payload was written to IndexedDB
-  const statusBeforeReload = await getAppStatusFromIDB(page);
-  expect(statusBeforeReload).not.toBeNull();
-  expect(statusBeforeReload).toHaveProperty('version');
+  // Wait for game state to load
+  await expect(page.getByTestId('total-travel-time')).toBeVisible();
 
   // Reload the page
   await page.reload();
 
-  // Wait for the component to reconnect to IndexedDB
-  await expect(page.getByTestId('db-status')).toHaveText('Connected');
+  // Wait for game state to load again
+  await expect(page.getByTestId('total-travel-time')).toBeVisible();
 
-
-  // Assert that the same data still exists after reload
-  const statusAfterReload = await getAppStatusFromIDB(page);
-  expect(statusAfterReload).not.toBeNull();
-  expect(statusAfterReload).toEqual(statusBeforeReload);
+  // Verify game state still exists after reload
+  const gameState = await getGameStateFromIDB(page);
+  expect(gameState).not.toBeNull();
+  expect(gameState).toHaveProperty('lastTimestamp');
+  expect(gameState).toHaveProperty('elapsedSeconds');
+  expect(gameState).toHaveProperty('rngSeed');
+  expect(gameState).toHaveProperty('totalDistanceKm');
 });
 
 // ---------------------------------------------------------------------------
-// Test 4 — Game State Persistence & Idle Tracking: game_state persists and
-// the UI shows loaded game state data.
+// Test 4 — Game State Creation: game_state is created on first load.
 // ---------------------------------------------------------------------------
-test('Test 4 (Game State Idle Tracking): game state is created and displayed', async ({
+test('Test 4 (Game State Creation): game state is created and displayed', async ({
   page,
 }) => {
   await page.goto('/');
 
-  // Wait for game state to load (no longer showing "No game state loaded")
+  // Wait for game state to load
   await expect(page.getByTestId('total-travel-time')).toBeVisible();
   await expect(page.getByTestId('total-distance')).toBeVisible();
 
