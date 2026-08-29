@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { initDB } from './db';
 import { IOSInstallBanner } from './IOSInstallBanner';
+import { useGameState } from './useGameState';
+import { formatElapsedTime } from './utils/time';
+import OfflineGreeting from './OfflineGreeting';
 import './App.css';
 
 const App = () => {
@@ -9,7 +12,6 @@ const App = () => {
     'Disconnected'
   );
   const [installReady, setInstallReady] = useState(false);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   // ---- Service Worker registration status ----
   useEffect(() => {
@@ -49,14 +51,25 @@ const App = () => {
     setInstallReady('serviceWorker' in navigator && manifestLink !== null);
   }, []);
 
-  // ---- Time-delta placeholder (pure state updates) ----
-  useEffect(() => {
-    const start = Date.now();
-    const interval = setInterval(() => {
-      setElapsedSeconds(Math.floor((Date.now() - start) / 1000));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
+  // Idle progression & offline tracking
+  const { gameState, offlineSeconds, clearOfflineSeconds, isLoading } = useGameState();
+
+  const handleCollectRewards = () => {
+    clearOfflineSeconds();
+  };
+
+  if (isLoading) {
+    return (
+      <div className="app">
+        <header className="app-header">
+          <h1>Space Exploration Idle PWA</h1>
+        </header>
+        <main>
+          <p>Loading game state...</p>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="app">
@@ -89,12 +102,33 @@ const App = () => {
 
         <section className="time-delta">
           <h2>Engine</h2>
-          <p>
-            Elapsed time:{' '}
-            <span data-testid="elapsed-time">{elapsedSeconds}</span>s
-          </p>
+          {gameState ? (
+            <>
+              <div className="status-item">
+                <span className="label">Total Travel Time</span>
+                <span data-testid="total-travel-time" className="value">
+                  {formatElapsedTime(gameState.elapsedSeconds)}
+                </span>
+              </div>
+              <div className="status-item">
+                <span className="label">Distance Traveled</span>
+                <span data-testid="total-distance" className="value">
+                  {Math.round(gameState.totalDistanceKm).toLocaleString()} km
+                </span>
+              </div>
+            </>
+          ) : (
+            <p>No game state loaded</p>
+          )}
         </section>
       </main>
+
+      {/* Offline greeting modal — shows when user returns after >60s */}
+      <OfflineGreeting
+        offlineSeconds={offlineSeconds}
+        onDismiss={clearOfflineSeconds}
+        onCollectRewards={handleCollectRewards}
+      />
 
       {/* iOS "Add to Home Screen" install banner — globally visible on the landing page shell */}
       <IOSInstallBanner />

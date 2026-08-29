@@ -13,8 +13,44 @@ vi.mock('./db', () => ({
   }),
   getAppStatus: vi.fn(),
   setAppStatus: vi.fn(),
+  getGameState: vi.fn().mockResolvedValue({
+    lastTimestamp: Date.now(),
+    elapsedSeconds: 0,
+    rngSeed: 'test-seed',
+    totalDistanceKm: 0,
+    version: '0.1.0',
+  }),
+  saveGameState: vi.fn().mockResolvedValue(undefined),
+  initGameState: vi.fn().mockResolvedValue({
+    lastTimestamp: Date.now(),
+    elapsedSeconds: 0,
+    rngSeed: 'test-seed',
+    totalDistanceKm: 0,
+    version: '0.1.0',
+  }),
   DB_NAME: 'space_idle_db',
   APP_STATUS_KEY: 'app_status',
+  GAME_STATE_KEY: 'game_state',
+}));
+
+// ---------------------------------------------------------------------------
+// Mock the useGameState hook so tests don't depend on real IDB/visibility events
+// ---------------------------------------------------------------------------
+const mockGameStateData = {
+  lastTimestamp: Date.now(),
+  elapsedSeconds: 100,
+  rngSeed: 'test-seed',
+  totalDistanceKm: 1000,
+  version: '0.1.0',
+};
+
+vi.mock('./useGameState', () => ({
+  useGameState: () => ({
+    gameState: mockGameStateData,
+    offlineSeconds: null,
+    clearOfflineSeconds: vi.fn(),
+    isLoading: false,
+  }),
 }));
 
 // ---------------------------------------------------------------------------
@@ -89,12 +125,13 @@ describe('App', () => {
     });
   });
 
-  it('renders the time-delta placeholder', async () => {
+      it('renders the engine section with game state information', async () => {
     await act(async () => {
       render(<App />);
     });
-    expect(screen.getByText(/Elapsed time:/)).toBeInTheDocument();
-    expect(screen.getByTestId('elapsed-time')).toBeInTheDocument();
+    expect(screen.getByText('Engine')).toBeInTheDocument();
+    expect(screen.getByTestId('total-travel-time')).toBeInTheDocument();
+    expect(screen.getByTestId('total-distance')).toBeInTheDocument();
   });
 });
 

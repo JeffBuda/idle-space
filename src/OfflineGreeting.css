@@ -1,0 +1,132 @@
+/* src/OfflineGreeting.css */
+/*
+ * Styles for the offline greeting modal.
+ *
+ * Visual language matches the rest of the PWA:
+ *   - Dark theme background (#0d1117 / #1a202c)
+ *   - Subtle borders: rgba(255, 255, 255, 0.1)
+ *   - Accent green: #4ade80
+ *   - border-radius: 12-16px card style
+ *   - Responsive at <= 600px
+ */
+
+.offline-greeting-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(13, 17, 23, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 1rem;
+}
+
+.offline-greeting-modal {
+  background-color: #1a202c;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+
+.offline-greeting__content {
+  margin-bottom: 1.5rem;
+}
+
+.offline-greeting__title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 1rem 0;
+}
+
+.offline-greeting__message {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 0.5rem 0;
+}
+
+.offline-greeting__time {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #4ade80;
+  margin: 0.5rem 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.offline-greeting__subtext {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
+.offline-greeting__actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn {
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 140px;
+}
+
+.btn--primary {
+  background-color: #4ade80;
+  color: #0d1117;
+}
+
+.btn--primary:hover {
+  background-color: #68d368;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(74, 222, 128, 0.3);
+}
+
+.btn--secondary {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn--secondary:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .offline-greeting-modal {
+    padding: 1.5rem;
+  }
+
+  .offline-greeting__title {
+    font-size: 1.5rem;
+  }
+
+  .offline-greeting__time {
+    font-size: 1.75rem;
+  }
+
+  .offline-greeting__actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .btn {
+    min-width: 100%;
+  }
+}
