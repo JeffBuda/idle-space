@@ -19,6 +19,7 @@
 | **Lint**            | `npm run lint` (ESLint flat config)                                        |
 | **Type check**      | `npm run build` (Vite build includes tsc). Or `npx tsc --noEmit`           |
 | **E2E**             | Playwright (Chromium + WebKit) — `npx playwright test`                      |
+| **GitHub CLI (gh)** | Installed at `C:\Program Files\GitHub CLI\gh.exe`. Auth credentials stored in Windows Credential Manager. Use `gh pr create` to create PRs. |
 | **File layout**     | Flat in `src/`. No `components/` or `hooks/` subdirs.                        |
 | **TS strict rules** | `strict`, `noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch` |
 | **Test selectors**  | `data-testid` attributes. `@testing-library/jest-dom` matchers.              |
