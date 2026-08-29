@@ -4,7 +4,7 @@
 // exact offline time elapsed formatted in Days, Hours, Minutes, Seconds.
 // Visible when the user was away for more than 60 seconds.
 import React from 'react';
-import { formatElapsedTime } from './utils/time';
+import { formatElapsedTime } from '../utils/time';
 import './OfflineGreeting.css';
 
 export interface OfflineGreetingProps {

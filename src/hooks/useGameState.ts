@@ -1,8 +1,8 @@
 // src/useGameState.ts
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { calculateElapsedSeconds } from './utils/time';
-import { processIdleProgression, type GameState } from './engine/time';
-import { getGameState, saveGameState, initGameState, initDB } from './db';
+import { calculateElapsedSeconds } from '../utils/time';
+import { processIdleProgression, type GameState } from '../engine/time';
+import { getGameState, saveGameState, initGameState, initDB } from '../db';
 
 const OFFLINE_THRESHOLD_SECONDS = 60;
 const TICK_INTERVAL_MS = 1000;

@@ -3,35 +3,10 @@ import { render, screen, waitFor, act } from '@testing-library/react';
 import App from './App';
 
 // ---------------------------------------------------------------------------
-// Mock the IndexedDB helper (src/db.ts) so tests do not require a real IDB.
+// Mock the useDbStatus hook so tests don't require a real IDB.
 // ---------------------------------------------------------------------------
-vi.mock('./db', () => ({
-  initDB: vi.fn().mockResolvedValue({
-    installed: false,
-    firstVisit: Date.now(),
-    version: '0.1.0',
-  }),
-  getAppStatus: vi.fn(),
-  setAppStatus: vi.fn(),
-  getGameState: vi.fn().mockResolvedValue({
-    lastTimestamp: Date.now(),
-    elapsedSeconds: 0,
-    rngSeed: 'test-seed',
-    totalDistanceKm: 0,
-    version: '0.1.0',
-  }),
-  saveGameState: vi.fn().mockResolvedValue(undefined),
-  initGameState: vi.fn().mockResolvedValue({
-    lastTimestamp: Date.now(),
-    elapsedSeconds: 0,
-    rngSeed: 'test-seed',
-    totalDistanceKm: 0,
-    version: '0.1.0',
-  }),
-  DB_NAME: 'space_idle_db',
-  DB_VERSION: 2,
-  APP_STATUS_KEY: 'app_status',
-  GAME_STATE_KEY: 'game_state',
+vi.mock('../hooks/useDbStatus', () => ({
+  useDbStatus: vi.fn().mockReturnValue('Connected'),
 }));
 
 // ---------------------------------------------------------------------------
@@ -45,7 +20,7 @@ const mockGameStateData = {
   version: '0.1.0',
 };
 
-vi.mock('./useGameState', () => ({
+vi.mock('../hooks/useGameState', () => ({
   useGameState: () => ({
     gameState: mockGameStateData,
     offlineSeconds: null,
