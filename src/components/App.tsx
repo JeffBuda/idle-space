@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { IOSInstallBanner } from './IOSInstallBanner';
 import { useGameState } from '../hooks/useGameState';
 import { useDbStatus } from '../hooks/useDbStatus';
+import { APP_VERSION, BUILD_TIME } from '../config';
 import { formatElapsedTime } from '../utils/time';
 import OfflineGreeting from './OfflineGreeting';
 import './App.css';
@@ -111,6 +112,22 @@ const App = () => {
           ) : (
             <p>No game state loaded</p>
           )}
+        </section>
+
+        <section className="status-card">
+          <h2>Build Information</h2>
+          <div className="status-item">
+            <span className="label">Version</span>
+            <span data-testid="app-version" className="value">
+              {APP_VERSION}
+            </span>
+          </div>
+          <div className="status-item">
+            <span className="label">Build Date</span>
+            <span data-testid="build-date" className="value">
+              {new Date(BUILD_TIME).toLocaleString()}
+            </span>
+          </div>
         </section>
       </main>
 
