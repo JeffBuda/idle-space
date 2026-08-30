@@ -15,7 +15,13 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        // CI needs no-sandbox for headless Chrome on Linux
+        launchOptions: process.env.CI
+          ? { args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'] }
+          : undefined,
+      },
     },
     {
       name: 'webkit',

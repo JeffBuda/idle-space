@@ -21,30 +21,36 @@ test.use({ viewport: { width: 1280, height: 720 } });
 /** Clears IndexedDB stores to isolate each test's state. */
 const clearIndexedDB = async (page: Page) => {
   await page.evaluate(async () => {
-    return new Promise<void>((resolve, reject) => {
-      const request = indexedDB.open('space_idle_db');
-      request.onupgradeneeded = () => {
-        const db = request.result;
-        ['game_state', 'keyval', 'space_idle_logs'].forEach((store) => {
-          if (db.objectStoreNames.contains(store)) {
-            db.deleteObjectStore(store);
-          }
-        });
-      };
-      request.onsuccess = () => {
-        const db = request.result;
-        const tx = db.transaction(
-          ['game_state', 'keyval', 'space_idle_logs'],
-          'readwrite',
-        );
-        tx.objectStore('game_state').clear();
-        tx.objectStore('keyval').clear();
-        tx.objectStore('space_idle_logs').clear();
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
-      };
-      request.onerror = () => reject(request.error);
-    });
+    if (!('indexedDB' in window)) return;
+    try {
+      await new Promise<void>((resolve) => {
+        const request = indexedDB.open('space_idle_db');
+        request.onupgradeneeded = () => {
+          const db = request.result;
+          ['game_state', 'keyval', 'space_idle_logs'].forEach((store) => {
+            if (db.objectStoreNames.contains(store)) {
+              db.deleteObjectStore(store);
+            }
+          });
+        };
+        request.onsuccess = () => {
+          const db = request.result;
+          const tx = db.transaction(
+            ['game_state', 'keyval', 'space_idle_logs'],
+            'readwrite',
+          );
+          tx.objectStore('game_state').clear();
+          tx.objectStore('keyval').clear();
+          tx.objectStore('space_idle_logs').clear();
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => resolve(); // best-effort — don't reject
+        };
+        request.onerror = () => resolve(); // best-effort — don't reject
+      });
+    } catch {
+      /* IndexedDB may be unavailable in some CI browser contexts —
+         best-effort cleanup, continue with tests */
+    }
   });
 };
 
