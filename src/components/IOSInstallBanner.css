@@ -3,9 +3,9 @@
  * Styles for the iOS "Add to Home Screen" install banner.
  *
  * The visual language intentionally matches the rest of the PWA:
- *   - Dark theme background (#1a202c / #0d1117)
- *   - Subtle borders: rgba(255, 255, 255, 0.1)
- *   - Accent green: #4ade80 (used for the SVG "Add" arrow)
+ *   - Dark theme background (var(--color-surface) / var(--color-bg))
+ *   - Subtle borders: var(--color-border)
+ *   - Accent green: var(--color-accent) (used for the SVG "Add" arrow)
  *   - border-radius: 12-16px card style
  *   - Responsive at <= 600px
  */
@@ -16,21 +16,21 @@
   left: 0;
   width: 100%;
   max-width: 100%;
-  background-color: #1a202c;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.4);
-  padding: 1.25rem;
-  z-index: 9999;
-  color: rgba(255, 255, 255, 0.87);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-top-left-radius: var(--radius-modal);
+  border-top-right-radius: var(--radius-modal);
+  box-shadow: var(--shadow-ios);
+  padding: var(--space-1p25);
+  z-index: var(--z-ios-banner);
+  color: var(--color-text);
 }
 
 .ios-install-banner__inner {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  max-width: 480px;
+  gap: var(--space-lg);
+  max-width: var(--width-ios-banner);
   margin: 0 auto;
 }
 
@@ -43,55 +43,55 @@
 }
 
 .ios-install-banner__title {
-  font-size: 1.125rem;
+  font-size: var(--font-size-1125);
   font-weight: 700;
-  color: #ffffff;
-  margin: 0 0 0.25rem 0;
+  color: var(--color-white);
+  margin: 0 0 var(--space-xs) 0;
 }
 
 .ios-install-banner__desc {
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: var(--font-size-875);
+  color: var(--color-text-secondary);
   line-height: 1.4;
   margin: 0;
 }
 
 .ios-install-banner__desc strong {
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--color-text-strong);
 }
 
 .ios-install-banner__dismiss {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--color-text-muted);
   cursor: pointer;
-  font-size: 1.25rem;
+  font-size: var(--font-size-125);
   font-weight: bold;
   line-height: 1;
-  padding: 0.25rem;
+  padding: var(--space-xs);
   transition: color 0.2s ease;
   flex-shrink: 0;
 }
 
 .ios-install-banner__dismiss:hover {
-  color: rgba(255, 255, 255, 0.87);
+  color: var(--color-text);
 }
 
 /* Responsive: shrink on narrower viewports */
 @media (max-width: 600px) {
   .ios-install-banner {
-    padding: 1rem;
+    padding: var(--space-lg);
   }
 
   .ios-install-banner__inner {
-    gap: 0.75rem;
+    gap: var(--space-md);
   }
 
   .ios-install-banner__title {
-    font-size: 1rem;
+    font-size: var(--font-size-1);
   }
 
   .ios-install-banner__desc {
-    font-size: 0.8125rem;
+    font-size: var(--font-size-8125);
   }
 }

@@ -28,4 +28,5 @@ Before beginning complex architectural tasks, read `ARCHITECTURE.md` to understa
 ## Supplementary Documentation
 
 - **MEMORY.md** — Detailed implementation notes, gotchas, and development history. Read for context on prior decisions.
+- **docs/DESIGN_BIBLE.md** — Design system specification (tokens, components, conventions). ALWAYS read before implementing any UI or component change.
 - **tests/e2e/** — Playwright E2E test conventions and user flow documentation.

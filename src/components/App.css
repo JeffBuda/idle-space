@@ -1,7 +1,7 @@
 .app {
   min-height: 100vh;
-  background-color: #0d1117;
-  color: rgba(255, 255, 255, 0.87);
+  background-color: var(--color-bg);
+  color: var(--color-text);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -9,48 +9,48 @@
 
 .app-header {
   width: 100%;
-  padding: 2rem 1rem;
+  padding: var(--space-2xl) var(--space-lg);
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-sm);
 }
 
 .app-header h1 {
-  font-size: 2rem;
+  font-size: var(--font-size-2);
   margin: 0;
-  color: #ffffff;
+  color: var(--color-white);
 }
 
 main {
   width: 100%;
-  max-width: 600px;
-  padding: 1rem;
+  max-width: var(--width-json-viewer);
+  padding: var(--space-lg);
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--space-xl);
 }
 
 .status-card {
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 1.5rem;
+  background-color: var(--color-border-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-xl);
   text-align: left;
 }
 
 .status-card h2 {
-  font-size: 1.25rem;
-  margin-bottom: 1rem;
-  color: #ffffff;
+  font-size: var(--font-size-125);
+  margin-bottom: var(--space-lg);
+  color: var(--color-white);
 }
 
 .status-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: var(--space-md) 0;
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .status-item:last-child {
@@ -58,51 +58,51 @@ main {
 }
 
 .label {
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: var(--font-size-1);
+  color: var(--color-text-secondary);
 }
 
 .value {
   font-weight: 600;
-  font-size: 1rem;
+  font-size: var(--font-size-1);
 }
 
 .status-item .value.active {
-  color: #4ade80;
+  color: var(--color-accent);
 }
 
 .status-item .value.inactive {
-  color: #f87171;
+  color: var(--color-negative);
 }
 
 .time-delta {
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 1.5rem;
+  background-color: var(--color-border-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-xl);
 }
 
 .time-delta h2 {
-  font-size: 1.25rem;
-  margin-bottom: 0.5rem;
-  color: #ffffff;
+  font-size: var(--font-size-125);
+  margin-bottom: var(--space-sm);
+  color: var(--color-white);
 }
 
 .time-delta p {
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: var(--font-size-1);
+  color: var(--color-text-secondary);
 }
 
 @media (max-width: 600px) {
   .app-header h1 {
-    font-size: 1.5rem;
+    font-size: var(--font-size-15);
   }
 
   .status-card {
-    padding: 1rem;
+    padding: var(--space-lg);
   }
 
   .time-delta {
-    padding: 1rem;
+    padding: var(--space-lg);
   }
 }

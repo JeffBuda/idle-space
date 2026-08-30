@@ -5,16 +5,16 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 40vh;
-  max-height: 480px;
-  background-color: #0d1117;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px 12px 0 0;
-  z-index: 200;
+  height: var(--height-debug-viewport);
+  max-height: var(--height-debug-max);
+  background-color: var(--color-bg);
+  border-top: 1px solid var(--color-border);
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  z-index: var(--z-console);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-console);
   animation: slide-up 0.3s ease-out;
 }
 
@@ -31,159 +31,159 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: var(--space-lg) var(--space-xl);
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .debug-header h3 {
-  font-size: 1.1rem;
+  font-size: var(--font-size-11);
   margin: 0;
-  color: #ffffff;
+  color: var(--color-white);
 }
 
 .debug-close {
   background: none;
   border: none;
-  font-size: 1.1rem;
+  font-size: var(--font-size-11);
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.7);
-  padding: 0.25rem 0.5rem;
+  color: var(--color-text-secondary);
+  padding: var(--space-xs) var(--space-sm);
   line-height: 1;
   transition: color 0.2s ease;
 }
 
 .debug-close:hover {
-  color: #ffffff;
+  color: var(--color-white);
 }
 
 .debug-close:focus-visible {
-  outline: 2px solid #4a9eff;
+  outline: 2px solid var(--color-focus-outline);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: var(--radius-small);
 }
 
 .debug-controls {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-xl);
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .debug-filter {
-  padding: 0.375rem 0.75rem;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background-color: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.87);
-  font-size: 0.85rem;
+  padding: var(--space-3xs) var(--space-md);
+  border-radius: var(--radius-input);
+  border: 1px solid var(--color-border-interactive);
+  background-color: var(--color-border-subtle);
+  color: var(--color-text);
+  font-size: var(--font-size-85);
   cursor: pointer;
 }
 
 .debug-filter:focus {
-  outline: 2px solid #4a9eff;
+  outline: 2px solid var(--color-focus-outline);
   outline-offset: 1px;
 }
 
 .debug-btn {
-  padding: 0.375rem 0.875rem;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background-color: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.87);
-  font-size: 0.85rem;
+  padding: var(--space-3xs) var(--space-sm-plus);
+  border-radius: var(--radius-input);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-border-subtle);
+  color: var(--color-text);
+  font-size: var(--font-size-85);
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
 .debug-btn:hover {
-  background-color: rgba(255, 255, 255, 0.08);
+  background-color: var(--color-fill-hover);
 }
 
 .debug-btn:focus-visible {
-  outline: 2px solid #4a9eff;
+  outline: 2px solid var(--color-focus-outline);
   outline-offset: 1px;
 }
 
 .debug-entries {
   flex: 1;
   overflow-y: auto;
-  padding: 0.5rem;
+  padding: var(--space-sm);
 }
 
 .log-entry {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .log-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-sm) var(--space-md);
   cursor: pointer;
   transition: background-color 0.2s ease;
-  font-size: 0.8rem;
+  font-size: var(--font-size-8);
 }
 
 .log-meta:hover {
-  background-color: rgba(255, 255, 255, 0.03);
+  background-color: var(--color-fill-hover-subtle);
 }
 
 .log-timestamp {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--color-text-dark);
   font-family: monospace;
 }
 
 .log-action {
-  color: rgba(100, 200, 255, 0.8);
+  color: var(--color-debug-cyan);
   font-weight: 600;
 }
 
 .log-category {
-  color: rgba(255, 165, 0, 0.8);
+  color: var(--color-debug-orange);
   font-weight: 500;
 }
 
 .log-duration {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--color-text-muted);
   font-family: monospace;
 }
 
 .log-diff {
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-sm) var(--space-md);
 }
 
 .log-diff pre {
-  font-size: 0.75rem;
+  font-size: var(--font-size-75);
   font-family: monospace;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--color-text-dim);
   white-space: pre-wrap;
   word-break: break-word;
 }
 
 .debug-loading,
 .debug-empty {
-  padding: 1rem 1.5rem;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.9rem;
+  padding: var(--space-lg) var(--space-xl);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-9);
   text-align: center;
 }
 
 @media (max-width: 600px) {
   .debug-console {
-    height: 50vh;
-    max-height: 100vh;
+    height: var(--height-debug-mobile-viewport);
+    max-height: var(--height-full-viewport);
   }
 
   .debug-controls {
     flex-wrap: wrap;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-lg);
   }
 
   .log-meta {
     flex-wrap: wrap;
-    gap: 0.5rem;
-    font-size: 0.75rem;
+    gap: var(--space-sm);
+    font-size: var(--font-size-75);
   }
 }
