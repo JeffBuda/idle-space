@@ -5,12 +5,16 @@ import { useDbStatus } from '../hooks/useDbStatus';
 import { APP_VERSION, BUILD_TIME } from '../config';
 import { formatElapsedTime } from '../utils/time';
 import OfflineGreeting from './OfflineGreeting';
+import { SettingsMenu } from './SettingsMenu';
+import { DebugConsole } from './DebugConsole';
 import './App.css';
 
 const App = () => {
   const [swStatus, setSwStatus] = useState<'Active' | 'Inactive'>('Inactive');
   const dbStatus = useDbStatus();
   const [installReady, setInstallReady] = useState(false);
+  const [debugConsoleVisible, setDebugConsoleVisible] = useState(false);
+  const toggleDebugConsole = () => setDebugConsoleVisible(!debugConsoleVisible);
 
   // ---- Service Worker registration status ----
   useEffect(() => {
@@ -55,6 +59,10 @@ const App = () => {
       <div className="app">
         <header className="app-header">
           <h1>Space Exploration Idle PWA</h1>
+          <SettingsMenu
+            debugConsoleVisible={debugConsoleVisible}
+            onToggleDebugConsole={toggleDebugConsole}
+          />
         </header>
         <main>
           <p>Loading game state...</p>
@@ -67,6 +75,10 @@ const App = () => {
     <div className="app">
       <header className="app-header">
         <h1>Space Exploration Idle PWA</h1>
+        <SettingsMenu
+          debugConsoleVisible={debugConsoleVisible}
+          onToggleDebugConsole={toggleDebugConsole}
+        />
       </header>
 
       <main>
@@ -140,6 +152,12 @@ const App = () => {
 
       {/* iOS "Add to Home Screen" install banner — globally visible on the landing page shell */}
       <IOSInstallBanner />
+
+      {/* Diagnostic logging console — toggled from SettingsMenu */}
+      <DebugConsole
+        visible={debugConsoleVisible}
+        onClose={() => setDebugConsoleVisible(false)}
+      />
     </div>
   );
 };

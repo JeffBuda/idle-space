@@ -1,0 +1,189 @@
+/* src/components/DebugConsole.css */
+
+.debug-console {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40vh;
+  max-height: 480px;
+  background-color: #0d1117;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px 12px 0 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5);
+  animation: slide-up 0.3s ease-out;
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.debug-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.debug-header h3 {
+  font-size: 1.1rem;
+  margin: 0;
+  color: #ffffff;
+}
+
+.debug-close {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 0.25rem 0.5rem;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.debug-close:hover {
+  color: #ffffff;
+}
+
+.debug-close:focus-visible {
+  outline: 2px solid #4a9eff;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.debug-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.debug-filter {
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.87);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.debug-filter:focus {
+  outline: 2px solid #4a9eff;
+  outline-offset: 1px;
+}
+
+.debug-btn {
+  padding: 0.375rem 0.875rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.87);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.debug-btn:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.debug-btn:focus-visible {
+  outline: 2px solid #4a9eff;
+  outline-offset: 1px;
+}
+
+.debug-entries {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.log-entry {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.log-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 0.8rem;
+}
+
+.log-meta:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.log-timestamp {
+  color: rgba(255, 255, 255, 0.4);
+  font-family: monospace;
+}
+
+.log-action {
+  color: rgba(100, 200, 255, 0.8);
+  font-weight: 600;
+}
+
+.log-category {
+  color: rgba(255, 165, 0, 0.8);
+  font-weight: 500;
+}
+
+.log-duration {
+  color: rgba(255, 255, 255, 0.5);
+  font-family: monospace;
+}
+
+.log-diff {
+  padding: 0.5rem 0.75rem;
+}
+
+.log-diff pre {
+  font-size: 0.75rem;
+  font-family: monospace;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.debug-loading,
+.debug-empty {
+  padding: 1rem 1.5rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .debug-console {
+    height: 50vh;
+    max-height: 100vh;
+  }
+
+  .debug-controls {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .log-meta {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+  }
+}

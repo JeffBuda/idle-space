@@ -1,0 +1,76 @@
+/* src/components/SettingsMenu.css */
+
+.settings-menu {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.settings-gear {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.87);
+  transition: color 0.2s ease;
+}
+
+.settings-gear:hover {
+  color: #ffffff;
+}
+
+.settings-gear:focus-visible {
+  outline: 2px solid #4a9eff;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.settings-card {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  min-width: 200px;
+  padding: 1rem;
+  background-color: #1a1d24;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+}
+
+.settings-title {
+  font-size: 1rem;
+  margin: 0 0 0.75rem 0;
+  color: #ffffff;
+}
+
+.settings-toggle {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.87);
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.2s ease;
+}
+
+.settings-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.settings-on {
+  border-color: #4ade80;
+  color: #4ade80;
+}
+
+.settings-off {
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+}

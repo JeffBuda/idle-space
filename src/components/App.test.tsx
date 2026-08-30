@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
 import App from './App';
 
 // ---------------------------------------------------------------------------
@@ -26,6 +26,16 @@ vi.mock('../hooks/useGameState', () => ({
     offlineSeconds: null,
     clearOfflineSeconds: vi.fn(),
     isLoading: false,
+  }),
+}));
+
+// Mock the useDebugLogs hook so App tests don't require a real IDB
+vi.mock('../hooks/useDebugLogs', () => ({
+  useDebugLogs: () => ({
+    logs: [],
+    isLoading: false,
+    refresh: vi.fn(),
+    clear: vi.fn(),
   }),
 }));
 
@@ -118,7 +128,18 @@ describe('App', () => {
     expect(screen.getByTestId('app-version')).toBeInTheDocument();
     expect(screen.getByTestId('build-date')).toBeInTheDocument();
     expect(screen.getByTestId('app-version').textContent).toMatch(/\d+\.\d+\.\d+/);
-    expect(screen.getByTestId('build-date').textContent).not.toBe('');
+        expect(screen.getByTestId('build-date').textContent).not.toBe('');
+  });
+
+  it('renders the gear icon in the header', () => {
+    render(<App />);
+    expect(screen.getByTestId('settings-gear')).toBeInTheDocument();
+  });
+
+  it('opens settings card when gear icon is clicked', () => {
+    render(<App />);
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    expect(screen.getByTestId('settings-card')).toBeInTheDocument();
   });
 });
 

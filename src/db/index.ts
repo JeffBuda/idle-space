@@ -15,6 +15,24 @@ export interface GameState {
   version: string;
 }
 
+/**
+ * A single diagnostic log entry persisted to the `space_idle_logs`
+ * object store. Created by the withLogging interceptor
+ * (src/logging/logger.ts) and consumed by the DebugConsole overlay.
+ *
+ * This type is self-contained — it does NOT reference GameState from
+ * the engine layer, preserving the db layer's architectural isolation.
+ */
+export interface LogEntry {
+  id: string;
+  timestamp: number;
+  actionType: string;
+  category: string;
+  executionTimeMs: number;
+  stateDiff: Array<{ key: string; from: unknown; to: unknown }>;
+  seed: string;
+}
+
 export interface SpaceIdleDB extends DBSchema {
   keyval: {
     key: string;
@@ -24,12 +42,19 @@ export interface SpaceIdleDB extends DBSchema {
     key: string;
     value: GameState;
   };
+  space_idle_logs: {
+    key: string;
+    value: LogEntry[];
+  };
 }
 
 export const DB_NAME = 'space_idle_db';
-export const DB_VERSION = 2; // Bumped to trigger upgrade for game_state store
+export const DB_VERSION = 3; // Bumped to add the space_idle_logs object store
 export const APP_STATUS_KEY = 'app_status';
 export const GAME_STATE_KEY = 'game_state';
+export const LOGS_STORE_NAME = 'space_idle_logs';
+export const LOGS_KEY = 'logs';
+export const LOG_ENTRY_LIMIT = 1000;
 
 const APP_STATUS_DEFAULT: AppStatus = {
   installed: false,
@@ -58,6 +83,9 @@ export async function initDB(): Promise<AppStatus> {
       }
       if (!database.objectStoreNames.contains('game_state')) {
         database.createObjectStore('game_state');
+      }
+      if (!database.objectStoreNames.contains(LOGS_STORE_NAME)) {
+        database.createObjectStore(LOGS_STORE_NAME);
       }
     },
   });
@@ -113,6 +141,9 @@ export async function initGameState(): Promise<GameState> {
       if (!database.objectStoreNames.contains('game_state')) {
         database.createObjectStore('game_state');
       }
+      if (!database.objectStoreNames.contains(LOGS_STORE_NAME)) {
+        database.createObjectStore(LOGS_STORE_NAME);
+      }
     },
   });
 
@@ -122,4 +153,31 @@ export async function initGameState(): Promise<GameState> {
   }
   await db.put('game_state', GAME_STATE_DEFAULT, GAME_STATE_KEY);
   return GAME_STATE_DEFAULT;
+}
+
+/**
+ * Retrieves all persisted debug log entries from the `space_idle_logs`
+ * store. Returns undefined if no logs have been written yet.
+ */
+export async function getLogEntries(): Promise<LogEntry[] | undefined> {
+  const db = await openDB<SpaceIdleDB>(DB_NAME, DB_VERSION);
+  return await db.get('space_idle_logs', LOGS_KEY);
+}
+
+/**
+ * Replaces the entire log entry array in the `space_idle_logs` store.
+ * The caller (LogStorageService) is responsible for trimming to
+ * LOG_ENTRY_LIMIT (ring-buffer policy).
+ */
+export async function saveLogEntries(entries: LogEntry[]): Promise<void> {
+  const db = await openDB<SpaceIdleDB>(DB_NAME, DB_VERSION);
+  await db.put('space_idle_logs', entries, LOGS_KEY);
+}
+
+/**
+ * Clears all persisted debug log entries.
+ */
+export async function clearLogEntries(): Promise<void> {
+  const db = await openDB<SpaceIdleDB>(DB_NAME, DB_VERSION);
+  await db.delete('space_idle_logs', LOGS_KEY);
 }

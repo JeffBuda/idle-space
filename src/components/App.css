@@ -9,8 +9,11 @@
 
 .app-header {
   width: 100%;
-  text-align: center;
   padding: 2rem 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .app-header h1 {

@@ -1,8 +1,16 @@
 // src/useGameState.ts
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { calculateElapsedSeconds } from '../utils/time';
-import { processIdleProgression, type GameState } from '../engine/time';
+import { type GameState } from '../engine/time';
+import { engineReducer, type GameAction } from '../engine/reducer';
+import { withLogging } from '../logging/logger';
 import { getGameState, saveGameState, initGameState, initDB } from '../db';
+
+/**
+ * Wraps the pure engine reducer with diagnostic logging.
+ * Created once at module scope for a stable, memoized reference.
+ */
+const loggedReducer = withLogging(engineReducer);
 
 const OFFLINE_THRESHOLD_SECONDS = 60;
 const TICK_INTERVAL_MS = 1000;
@@ -50,8 +58,9 @@ export const useGameState = (): UseGameStateResult => {
         setOfflineSeconds(elapsed);
       }
       
-      // Process idle progression with the pure functional engine
-      const newState = processIdleProgression(savedState, now);
+      // Process idle progression through the logged engine reducer
+      const action: GameAction = { type: 'IDLE_PROGRESSION' };
+      const newState = loggedReducer(savedState, action, now, savedState.rngSeed);
       setGameState(newState);
       lastTickRef.current = now;
       await saveGameState(newState);
@@ -106,12 +115,8 @@ export const useGameState = (): UseGameStateResult => {
       const deltaSeconds = calculateElapsedSeconds(lastTickRef.current, now);
       
       if (deltaSeconds > 0) {
-        const newState = {
-          ...currentState,
-          lastTimestamp: now,
-          elapsedSeconds: currentState.elapsedSeconds + deltaSeconds,
-          totalDistanceKm: currentState.totalDistanceKm + deltaSeconds * 10,
-        };
+        const action: GameAction = { type: 'IDLE_PROGRESSION' };
+        const newState = loggedReducer(currentState, action, now, currentState.rngSeed);
         gameStateRef.current = newState;
         setGameState(newState);
         lastTickRef.current = now;
