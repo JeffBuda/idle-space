@@ -18,37 +18,57 @@ import { test, expect, type Page } from '@playwright/test'
 // Viewport size per E2E test conventions
 test.use({ viewport: { width: 1280, height: 720 } })
 
-/** Clears IndexedDB stores to isolate each test's state. */
+/** Clears IndexedDB to isolate each test's state.
+ *
+ * Uses deleteDatabase for a clean slate instead of trying to
+ * open-and-clear stores. Opening without a version argument can
+ * create a version-1 database that forces initDB() to run a
+ * version upgrade on the next page load, adding latency that
+ * makes tests flaky in CI.
+ */
 const clearIndexedDB = async (page: Page) => {
+  // Navigate to a blank page to release any open IDB connections
+  // from the app, allowing deleteDatabase to succeed without blocking.
+  await page.goto('about:blank')
+  await page.waitForLoadState('load')
+
   await page.evaluate(async () => {
     if (!('indexedDB' in window)) return
     try {
       await new Promise<void>((resolve) => {
-        const request = indexedDB.open('space_idle_db')
-        request.onupgradeneeded = () => {
-          const db = request.result
-          ;['game_state', 'keyval', 'space_idle_logs'].forEach((store) => {
-            if (db.objectStoreNames.contains(store)) {
-              db.deleteObjectStore(store)
-            }
-          })
-        }
-        request.onsuccess = () => {
-          const db = request.result
-          const tx = db.transaction(['game_state', 'keyval', 'space_idle_logs'], 'readwrite')
-          tx.objectStore('game_state').clear()
-          tx.objectStore('keyval').clear()
-          tx.objectStore('space_idle_logs').clear()
-          tx.oncomplete = () => resolve()
-          tx.onerror = () => resolve() // best-effort ΓÇö don't reject
-        }
-        request.onerror = () => resolve() // best-effort ΓÇö don't reject
+        const request = indexedDB.deleteDatabase('space_idle_db')
+        request.onsuccess = () => resolve()
+        request.onerror = () => resolve() // best-effort
+        request.onblocked = () => resolve() // best-effort
       })
     } catch {
-      /* IndexedDB may be unavailable in some CI browser contexts ΓÇö
+      /* IndexedDB may be unavailable in some CI browser contexts -
          best-effort cleanup, continue with tests */
     }
   })
+}
+
+/** Waits for at least minCount log entries to appear in the debug
+ * console. Clicks the Refresh button and polls the DOM, since
+ * useDebugLogs only loads once on mount -- the APP_WAKE entry may
+ * be written to IDB (fire-and-forget via LogStorageService.append)
+ * after the initial mount read completes. */
+const waitForLogEntries = async (page: Page, minCount = 1, timeout = 10000) => {
+  const endTime = Date.now() + timeout
+  while (Date.now() < endTime) {
+    try {
+      await expect(page.getByTestId('debug-loading')).toBeHidden({ timeout: 2000 })
+    } catch {}
+    await page.getByTestId('debug-refresh').click()
+    try {
+      await expect(page.getByTestId('debug-loading')).toBeHidden({ timeout: 2000 })
+    } catch {}
+    const count = await page.locator('[data-testid^="log-entry-"]').count()
+    if (count >= minCount) return
+    await page.waitForTimeout(500)
+  }
+  const count = await page.locator('[data-testid^="log-entry-"]').count()
+  expect(count).toBeGreaterThanOrEqual(minCount)
 }
 
 // ---------------------------------------------------------------------------
@@ -94,8 +114,11 @@ test.describe.serial('debug console toggle flow', () => {
   test.beforeEach(async ({ page }) => {
     await clearIndexedDB(page)
     await page.goto('/')
-    // Wait for initial game state load + wake event log entry
-    await page.waitForTimeout(2000)
+    // Wait for the app to finish loading (game state loaded via handleWake).
+    // This ensures the APP_WAKE log entry has been dispatched before tests run.
+    await page.waitForSelector('[data-testid="total-travel-time"]', {
+      timeout: 10000,
+    })
   })
 
   test('toggling "Show Debug Console" reveals the console panel', async ({ page }) => {
@@ -134,10 +157,9 @@ test.describe.serial('debug console toggle flow', () => {
     await expect(consolePanel).toBeVisible()
     console.log('Debug console visible')
 
-    // No need to wait for ticks ΓÇö ticks no longer produce log entries.
     // The page load in beforeEach triggered handleWake(), which produced
-    // an APP_WAKE log entry via the loggedReducer.
-    await page.waitForTimeout(500)
+    // an APP_WAKE log entry via the loggedReducer. Wait for it to appear.
+    await waitForLogEntries(page)
 
     // Check for log entries
     const entries = page.locator('[data-testid^="log-entry-"]')
@@ -163,12 +185,14 @@ test.describe.serial('debug console toggle flow', () => {
 
     await expect(page.getByTestId('debug-console')).toBeVisible()
 
+    // Wait for entries to be loaded before clearing
+    await waitForLogEntries(page)
+
     // Click clear to remove all logs
     await page.getByTestId('debug-clear').click()
-    await page.waitForTimeout(500)
 
     const emptyState = page.getByTestId('debug-empty')
-    await expect(emptyState).toBeVisible()
+    await expect(emptyState).toBeVisible({ timeout: 5000 })
     console.log('Debug console shows empty state after clearing logs')
   })
 
@@ -177,8 +201,8 @@ test.describe.serial('debug console toggle flow', () => {
     await page.getByTestId('toggle-debug-console').click()
 
     await expect(page.getByTestId('debug-console')).toBeVisible()
-    // The page load produced an APP_WAKE log entry ΓÇö no need to wait for ticks
-    await page.waitForTimeout(500)
+    // Wait for at least one APP_WAKE entry from page load before filtering
+    await waitForLogEntries(page)
 
     // The filter dropdown should exist
     const filter = page.getByTestId('debug-filter')
@@ -206,11 +230,12 @@ test.describe.serial('debug console toggle flow', () => {
   })
 
   test('debug console logs suspend and resume events', async ({ page }) => {
-    // Open debug console ΓÇö page load already produced an APP_WAKE entry
+    // Open debug console -- page load already produced an APP_WAKE entry
     await page.getByTestId('settings-gear').click()
     await page.getByTestId('toggle-debug-console').click()
     await expect(page.getByTestId('debug-console')).toBeVisible()
-    await page.waitForTimeout(500)
+    // Wait for at least one APP_WAKE entry from page load
+    await waitForLogEntries(page)
 
     // Record initial entry count (should include the wake event from page load)
     let entries = page.locator('[data-testid^="log-entry-"]')
@@ -218,28 +243,31 @@ test.describe.serial('debug console toggle flow', () => {
     console.log('Initial log entries (from wake on load):', initialCount)
     expect(initialCount).toBeGreaterThan(0)
 
-    // Simulate going idle (tab hidden) ΓÇö triggers handleSuspend
+    // Simulate going idle (tab hidden) -- triggers handleSuspend
     await page.evaluate(() => {
       Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })
       document.dispatchEvent(new Event('visibilitychange'))
     })
-    await page.waitForTimeout(500)
+    await page.waitForFunction(() => document.visibilityState === 'hidden', null, { timeout: 5000 })
 
     // Wait > 1 second so the resume event has a non-zero idle delta
     await page.waitForTimeout(1500)
 
-    // Simulate resuming (tab visible) ΓÇö triggers handleWake
+    // Simulate resuming (tab visible) -- triggers handleWake
     await page.evaluate(() => {
       Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true })
       document.dispatchEvent(new Event('visibilitychange'))
     })
-    await page.waitForTimeout(1000)
+    await page.waitForFunction(() => document.visibilityState === 'visible', null, {
+      timeout: 5000,
+    })
 
-    // Refresh to reload logs from IndexedDB (useDebugLogs loads on mount, not auto-refresh)
-    await page.getByTestId('debug-refresh').click()
-    await page.waitForTimeout(500)
+    // Wait for both the suspend + resume log entries to appear.
+    // APP_SUSPEND and APP_WAKE are both fire-and-forget via
+    // LogStorageService.append, so we poll by refreshing until they surface.
+    await waitForLogEntries(page, initialCount + 2)
 
-    // There should now be additional entries for suspend + resume
+    // Verify final entry count includes suspend + resume events
     entries = page.locator('[data-testid^="log-entry-"]')
     const updatedCount = await entries.count()
     console.log('Updated log entries (after suspend/resume cycle):', updatedCount)
@@ -251,12 +279,13 @@ test.describe.serial('debug console toggle flow', () => {
     await page.getByTestId('toggle-debug-console').click()
 
     await expect(page.getByTestId('debug-console')).toBeVisible()
-    await page.waitForTimeout(2000)
 
     const refreshBtn = page.getByTestId('debug-refresh')
     await expect(refreshBtn).toBeVisible()
     await refreshBtn.click()
-    await page.waitForTimeout(500)
+    try {
+      await expect(page.getByTestId('debug-loading')).toBeHidden({ timeout: 5000 })
+    } catch {}
 
     console.log('Refresh button clicked successfully')
   })
