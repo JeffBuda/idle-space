@@ -19,9 +19,18 @@ import type { LogEntry } from '../db';
 import { LogCategory } from './types';
 import { LogStorageService } from './storage';
 
-/** Maps GameAction.type → broader LogCategory for the filter dropdown. */
+/**
+ * Maps GameAction.type → broader LogCategory for the filter dropdown.
+ *
+ * Only event-type actions are logged — the high-frequency IDLE_PROGRESSION
+ * (real-time tick) bypasses the logging interceptor entirely by calling the
+ * raw engineReducer directly in the hook. The entries below cover every
+ * action that *does* flow through withLogging.
+ */
 const ACTION_CATEGORY: Record<string, LogCategory> = {
   IDLE_PROGRESSION: LogCategory.ENGINE_TICK,
+  APP_WAKE: LogCategory.APP_EVENT,
+  APP_SUSPEND: LogCategory.APP_EVENT,
 };
 
 /**

@@ -14,7 +14,7 @@ const baseState: GameState = {
 describe('engineReducer', () => {
   it('should process idle progression correctly via delegated engine function', () => {
     const action: GameAction = { type: 'IDLE_PROGRESSION' };
-    const now = 2_000_000; // 1 000 seconds elapsed → 10 000 km at 10 km/s
+    const now = 2_000_000; // 1 000 seconds elapsed -> 10 000 km at 10 km/s
     const result = engineReducer(baseState, action, now, 'test-seed');
 
     expect(result.elapsedSeconds).toBe(500 + 1_000);
@@ -46,9 +46,64 @@ describe('engineReducer', () => {
   it('should propagate the seed parameter to processIdleProgression via engine function', () => {
     const action: GameAction = { type: 'IDLE_PROGRESSION' };
     const result = engineReducer(baseState, action, 1_001_000, 'custom-seed');
-    // 1 second elapsed → 1 * 10 = 10 km added
+    // 1 second elapsed -> 1 * 10 = 10 km added
     expect(result.totalDistanceKm).toBe(5_000 + 10);
     expect(result.rngSeed).toBe('test-seed'); // rngSeed preserved from state
+  });
+
+  // ---- APP_WAKE: resuming from idle ----
+
+  it('should process idle progression correctly for APP_WAKE (same as IDLE_PROGRESSION)', () => {
+    const action: GameAction = { type: 'APP_WAKE' };
+    const now = 2_000_000; // 1 000 seconds elapsed -> 10 000 km at 10 km/s
+    const result = engineReducer(baseState, action, now, 'test-seed');
+
+    expect(result.elapsedSeconds).toBe(500 + 1_000);
+    expect(result.totalDistanceKm).toBe(5_000 + 10_000);
+    expect(result.lastTimestamp).toBe(now);
+    expect(result.rngSeed).toBe('test-seed');
+    expect(result.version).toBe('0.1.0');
+  });
+
+  it('should return a new object reference for APP_WAKE (immutability)', () => {
+    const action: GameAction = { type: 'APP_WAKE' };
+    const result = engineReducer(baseState, action, 2_000_000, 'seed');
+    expect(result).not.toBe(baseState);
+  });
+
+  it('should not mutate the original state for APP_WAKE', () => {
+    const original = { ...baseState };
+    const action: GameAction = { type: 'APP_WAKE' };
+    engineReducer(baseState, action, 2_000_000, 'seed');
+    expect(baseState).toEqual(original);
+  });
+
+  // ---- APP_SUSPEND: going idle ----
+
+  it('should update lastTimestamp for APP_SUSPEND without changing other fields', () => {
+    const action: GameAction = { type: 'APP_SUSPEND' };
+    const now = 2_000_000;
+    const result = engineReducer(baseState, action, now, 'test-seed');
+
+    expect(result.lastTimestamp).toBe(now);
+    // Other fields should be preserved unchanged
+    expect(result.elapsedSeconds).toBe(500);
+    expect(result.totalDistanceKm).toBe(5_000);
+    expect(result.rngSeed).toBe('test-seed');
+    expect(result.version).toBe('0.1.0');
+  });
+
+  it('should return a new object reference for APP_SUSPEND (immutability)', () => {
+    const action: GameAction = { type: 'APP_SUSPEND' };
+    const result = engineReducer(baseState, action, 2_000_000, 'seed');
+    expect(result).not.toBe(baseState);
+  });
+
+  it('should not mutate the original state for APP_SUSPEND', () => {
+    const original = { ...baseState };
+    const action: GameAction = { type: 'APP_SUSPEND' };
+    engineReducer(baseState, action, 2_000_000, 'seed');
+    expect(baseState).toEqual(original);
   });
 });
 

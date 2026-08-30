@@ -132,4 +132,58 @@ describe('withLogging', () => {
     expect(elapsedDiff?.from).toBe(500);
     expect(elapsedDiff?.to).toBe(1_500);
   });
+
+  it('should log APP_WAKE with APP_EVENT category', () => {
+    const wrapped = withLogging(engineReducer);
+    const action: GameAction = { type: 'APP_WAKE' };
+    wrapped(baseState, action, 2_000_000, 'test-seed');
+
+    expect(LogStorageService.append).toHaveBeenCalledTimes(1);
+    const logEntry = vi.mocked(LogStorageService.append).mock.calls[0][0];
+    expect(logEntry).toMatchObject({
+      actionType: 'APP_WAKE',
+      category: 'APP_EVENT',
+      seed: 'test-seed',
+    });
+    // APP_WAKE processes idle progression, so the diff should show changes
+    expect(logEntry.stateDiff.length).toBeGreaterThan(0);
+    const lastTsDiff = logEntry.stateDiff.find((d) => d.key === 'lastTimestamp');
+    expect(lastTsDiff).toBeDefined();
+    expect(lastTsDiff?.from).toBe(1_000_000);
+    expect(lastTsDiff?.to).toBe(2_000_000);
+  });
+
+  it('should log APP_SUSPEND with APP_EVENT category and capture lastTimestamp change', () => {
+    const wrapped = withLogging(engineReducer);
+    const action: GameAction = { type: 'APP_SUSPEND' };
+    const now = 2_000_000;
+    wrapped(baseState, action, now, 'test-seed');
+
+    expect(LogStorageService.append).toHaveBeenCalledTimes(1);
+    const logEntry = vi.mocked(LogStorageService.append).mock.calls[0][0];
+    expect(logEntry).toMatchObject({
+      actionType: 'APP_SUSPEND',
+      category: 'APP_EVENT',
+      seed: 'test-seed',
+    });
+    // APP_SUSPEND updates lastTimestamp only — diff should show exactly that
+    const lastTsDiff = logEntry.stateDiff.find((d) => d.key === 'lastTimestamp');
+    expect(lastTsDiff).toBeDefined();
+    expect(lastTsDiff?.from).toBe(1_000_000);
+    expect(lastTsDiff?.to).toBe(now);
+    // Other fields should not appear in the diff
+    expect(logEntry.stateDiff).toHaveLength(1);
+  });
+
+  it('should still log IDLE_PROGRESSION with ENGINE_TICK category', () => {
+    const wrapped = withLogging(engineReducer);
+    const action: GameAction = { type: 'IDLE_PROGRESSION' };
+    wrapped(baseState, action, 2_000_000, 'test-seed');
+
+    const logEntry = vi.mocked(LogStorageService.append).mock.calls[0][0];
+    expect(logEntry).toMatchObject({
+      actionType: 'IDLE_PROGRESSION',
+      category: 'ENGINE_TICK',
+    });
+  });
 });
