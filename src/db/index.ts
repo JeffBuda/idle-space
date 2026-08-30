@@ -26,8 +26,7 @@ export interface GameState {
 export interface LogEntry {
   id: string;
   timestamp: number;
-  actionType: string;
-  category: string;
+    actionType: string;
   executionTimeMs: number;
   stateDiff: Array<{ key: string; from: unknown; to: unknown }>;
   seed: string;

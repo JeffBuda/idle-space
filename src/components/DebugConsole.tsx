@@ -1,7 +1,6 @@
-// src/components/DebugConsole.tsx
 import { useState } from 'react';
 import { useDebugLogs } from '../hooks/useDebugLogs';
-import { LogCategory } from '../logging/types';
+import { formatLogTimestamp } from '../utils/time';
 import type { LogEntry } from '../hooks/useDebugLogs';
 import './DebugConsole.css';
 
@@ -14,7 +13,6 @@ interface DebugConsoleProps {
  * Slide-up debug console overlay for inspecting engine log entries.
  *
  * Features:
- *   - Category filter dropdown
  *   - Refresh, Clear, and Export (JSON download) actions
  *   - Expandable per-entry state-diff details
  *
@@ -23,15 +21,9 @@ interface DebugConsoleProps {
  */
 export const DebugConsole = ({ visible, onClose }: DebugConsoleProps) => {
   const { logs, isLoading, refresh, clear } = useDebugLogs();
-  const [filter, setFilter] = useState<string>('ALL');
   const [expandedEntries, setExpandedEntries] = useState<Set<string>>(
     new Set(),
   );
-
-  const filteredLogs =
-    filter === 'ALL'
-      ? logs
-      : logs.filter((log) => log.category === filter);
 
   const handleExport = () => {
     const dataStr = JSON.stringify(logs, null, 2);
@@ -74,19 +66,6 @@ export const DebugConsole = ({ visible, onClose }: DebugConsoleProps) => {
       </div>
 
       <div className="debug-controls">
-        <select
-          className="debug-filter"
-          data-testid="debug-filter"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        >
-          <option value="ALL">All</option>
-          {Object.values(LogCategory).map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
-            </option>
-          ))}
-        </select>
         <button
           type="button"
           className="debug-btn"
@@ -116,10 +95,10 @@ export const DebugConsole = ({ visible, onClose }: DebugConsoleProps) => {
       <div className="debug-entries">
         {isLoading ? (
           <p data-testid="debug-loading">Loading logs...</p>
-        ) : filteredLogs.length === 0 ? (
+        ) : logs.length === 0 ? (
           <p data-testid="debug-empty">No log entries</p>
         ) : (
-          filteredLogs.map((log: LogEntry) => (
+          logs.map((log: LogEntry) => (
             <div
               key={log.id}
               className="log-entry"
@@ -130,10 +109,9 @@ export const DebugConsole = ({ visible, onClose }: DebugConsoleProps) => {
                 onClick={() => toggleExpand(log.id)}
               >
                 <span className="log-timestamp">
-                  {new Date(log.timestamp).toISOString()}
+                  {formatLogTimestamp(log.timestamp)}
                 </span>
                 <span className="log-action">{log.actionType}</span>
-                <span className="log-category">{log.category}</span>
                 <span className="log-duration">
                   {log.executionTimeMs.toFixed(3)}ms
                 </span>

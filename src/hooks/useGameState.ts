@@ -6,6 +6,9 @@ import { engineReducer, type GameAction } from '../engine/reducer';
 import { withLogging } from '../logging/logger';
 import { getGameState, saveGameState, initGameState, initDB } from '../db';
 
+export type { GameState };
+
+
 /**
  * Wraps the pure engine reducer with diagnostic logging.
  * Created once at module scope for a stable, memoized reference.

@@ -5,7 +5,6 @@ import { LogStorageService } from './storage';
 import { engineReducer, type GameAction } from '../engine/reducer';
 import { type GameState } from '../engine/time';
 
-// Mock the storage layer so withLogging tests don't touch IndexedDB
 vi.mock('./storage', () => ({
   LogStorageService: {
     append: vi.fn().mockResolvedValue(undefined),
@@ -31,9 +30,7 @@ describe('calculateDiff', () => {
   it('should detect a changed value', () => {
     const prev = { a: 1, b: 'hello' };
     const next = { a: 2, b: 'hello' };
-    expect(calculateDiff(prev, next)).toEqual([
-      { key: 'a', from: 1, to: 2 },
-    ]);
+    expect(calculateDiff(prev, next)).toEqual([{ key: 'a', from: 1, to: 2 }]);
   });
 
   it('should detect multiple changed values', () => {
@@ -48,17 +45,13 @@ describe('calculateDiff', () => {
   it('should detect a newly added key (from undefined)', () => {
     const prev = { a: 1 };
     const next = { a: 1, b: 'new' };
-    expect(calculateDiff(prev, next)).toEqual([
-      { key: 'b', from: undefined, to: 'new' },
-    ]);
+    expect(calculateDiff(prev, next)).toEqual([{ key: 'b', from: undefined, to: 'new' }]);
   });
 
   it('should detect a removed key (to undefined)', () => {
     const prev = { a: 1, b: 'value' };
     const next = { a: 1 };
-    expect(calculateDiff(prev, next)).toEqual([
-      { key: 'b', from: 'value', to: undefined },
-    ]);
+    expect(calculateDiff(prev, next)).toEqual([{ key: 'b', from: 'value', to: undefined }]);
   });
 
   it('should handle empty state objects', () => {
@@ -77,6 +70,7 @@ describe('calculateDiff', () => {
   });
 });
 
+
 describe('withLogging', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -86,8 +80,6 @@ describe('withLogging', () => {
     const wrapped = withLogging(engineReducer);
     const action: GameAction = { type: 'IDLE_PROGRESSION' };
     const result = wrapped(baseState, action, 2_000_000, 'test-seed');
-
-    // With 1 000 s elapsed at 10 km/s, 10 000 km is added
     expect(result.totalDistanceKm).toBe(5_000 + 10_000);
     expect(result.elapsedSeconds).toBe(500 + 1_000);
     expect(result.lastTimestamp).toBe(2_000_000);
@@ -95,14 +87,13 @@ describe('withLogging', () => {
 
   it('should dispatch a log entry to LogStorageService.append on each call', () => {
     const wrapped = withLogging(engineReducer);
-    const action: GameAction = { type: 'IDLE_PROGRESSION' };
+    const action: GameAction = { type: 'APP_WAKE' };
     wrapped(baseState, action, 2_000_000, 'test-seed');
 
     expect(LogStorageService.append).toHaveBeenCalledTimes(1);
     const logEntry = vi.mocked(LogStorageService.append).mock.calls[0][0];
     expect(logEntry).toMatchObject({
-      actionType: 'IDLE_PROGRESSION',
-      category: 'ENGINE_TICK',
+      actionType: 'APP_WAKE',
       seed: 'test-seed',
     });
     expect(logEntry.executionTimeMs).toBeGreaterThanOrEqual(0);
@@ -116,14 +107,13 @@ describe('withLogging', () => {
       new Error('IDB write failed'),
     );
     const wrapped = withLogging(engineReducer);
-    const action: GameAction = { type: 'IDLE_PROGRESSION' };
-
+    const action: GameAction = { type: 'APP_WAKE' };
     expect(() => wrapped(baseState, action, 2_000_000, 'test-seed')).not.toThrow();
   });
 
   it('should capture stateDiff with from/to values for changed fields', () => {
     const wrapped = withLogging(engineReducer);
-    const action: GameAction = { type: 'IDLE_PROGRESSION' };
+    const action: GameAction = { type: 'APP_WAKE' };
     wrapped(baseState, action, 2_000_000, 'test-seed');
 
     const logEntry = vi.mocked(LogStorageService.append).mock.calls[0][0];
@@ -133,7 +123,7 @@ describe('withLogging', () => {
     expect(elapsedDiff?.to).toBe(1_500);
   });
 
-  it('should log APP_WAKE with APP_EVENT category', () => {
+  it('should log APP_WAKE actions', () => {
     const wrapped = withLogging(engineReducer);
     const action: GameAction = { type: 'APP_WAKE' };
     wrapped(baseState, action, 2_000_000, 'test-seed');
@@ -142,10 +132,8 @@ describe('withLogging', () => {
     const logEntry = vi.mocked(LogStorageService.append).mock.calls[0][0];
     expect(logEntry).toMatchObject({
       actionType: 'APP_WAKE',
-      category: 'APP_EVENT',
       seed: 'test-seed',
     });
-    // APP_WAKE processes idle progression, so the diff should show changes
     expect(logEntry.stateDiff.length).toBeGreaterThan(0);
     const lastTsDiff = logEntry.stateDiff.find((d) => d.key === 'lastTimestamp');
     expect(lastTsDiff).toBeDefined();
@@ -153,7 +141,7 @@ describe('withLogging', () => {
     expect(lastTsDiff?.to).toBe(2_000_000);
   });
 
-  it('should log APP_SUSPEND with APP_EVENT category and capture lastTimestamp change', () => {
+  it('should log APP_SUSPEND actions and capture lastTimestamp change', () => {
     const wrapped = withLogging(engineReducer);
     const action: GameAction = { type: 'APP_SUSPEND' };
     const now = 2_000_000;
@@ -163,27 +151,19 @@ describe('withLogging', () => {
     const logEntry = vi.mocked(LogStorageService.append).mock.calls[0][0];
     expect(logEntry).toMatchObject({
       actionType: 'APP_SUSPEND',
-      category: 'APP_EVENT',
       seed: 'test-seed',
     });
-    // APP_SUSPEND updates lastTimestamp only — diff should show exactly that
     const lastTsDiff = logEntry.stateDiff.find((d) => d.key === 'lastTimestamp');
     expect(lastTsDiff).toBeDefined();
     expect(lastTsDiff?.from).toBe(1_000_000);
     expect(lastTsDiff?.to).toBe(now);
-    // Other fields should not appear in the diff
     expect(logEntry.stateDiff).toHaveLength(1);
   });
 
-  it('should still log IDLE_PROGRESSION with ENGINE_TICK category', () => {
+  it('should not log IDLE_PROGRESSION (engine tick) actions', () => {
     const wrapped = withLogging(engineReducer);
     const action: GameAction = { type: 'IDLE_PROGRESSION' };
     wrapped(baseState, action, 2_000_000, 'test-seed');
-
-    const logEntry = vi.mocked(LogStorageService.append).mock.calls[0][0];
-    expect(logEntry).toMatchObject({
-      actionType: 'IDLE_PROGRESSION',
-      category: 'ENGINE_TICK',
-    });
+    expect(LogStorageService.append).not.toHaveBeenCalled();
   });
 });

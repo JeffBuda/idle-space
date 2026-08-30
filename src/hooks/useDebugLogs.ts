@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { LogStorageService } from '../logging/storage';
 import type { LogEntry } from '../db';
-import { LogCategory } from '../logging/types';
 
 export interface UseDebugLogsResult {
   logs: LogEntry[];
@@ -11,7 +10,6 @@ export interface UseDebugLogsResult {
   clear: () => Promise<void>;
 }
 
-export { LogCategory };
 export type { LogEntry };
 
 /**

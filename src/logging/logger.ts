@@ -16,22 +16,7 @@
 // awaited by the caller, so the state transition is synchronous.
 import type { EngineReducerFn } from '../engine/reducer';
 import type { LogEntry } from '../db';
-import { LogCategory } from './types';
 import { LogStorageService } from './storage';
-
-/**
- * Maps GameAction.type → broader LogCategory for the filter dropdown.
- *
- * Only event-type actions are logged — the high-frequency IDLE_PROGRESSION
- * (real-time tick) bypasses the logging interceptor entirely by calling the
- * raw engineReducer directly in the hook. The entries below cover every
- * action that *does* flow through withLogging.
- */
-const ACTION_CATEGORY: Record<string, LogCategory> = {
-  IDLE_PROGRESSION: LogCategory.ENGINE_TICK,
-  APP_WAKE: LogCategory.APP_EVENT,
-  APP_SUSPEND: LogCategory.APP_EVENT,
-};
 
 /**
  * Calculates a shallow diff between two state snapshots, returning
@@ -79,6 +64,10 @@ const generateLogEntryId = (): string =>
  *   4. Builds a LogEntry with state diff
  *   5. Dispatches it to LogStorageService (fire-and-forget async IDB write)
  *   6. Returns the new GameState (same object the engine produced)
+ *
+ * Only event-type actions (APP_WAKE, APP_SUSPEND) are logged. The
+ * high-frequency IDLE_PROGRESSION (real-time tick) is skipped to
+ * avoid flooding the debug console with per-second entries.
  */
 export const withLogging = (reducer: EngineReducerFn): EngineReducerFn => {
   return (prevState, action, currentTime, seed) => {
@@ -86,11 +75,16 @@ export const withLogging = (reducer: EngineReducerFn): EngineReducerFn => {
     const newState = reducer(prevState, action, currentTime, seed);
     const executionTimeMs = performance.now() - startTime;
 
+    // Engine ticks (IDLE_PROGRESSION) are high-frequency and bypass
+    // logging to keep the debug console focused on meaningful events.
+    if (action.type === 'IDLE_PROGRESSION') {
+      return newState;
+    }
+
     const logEntry: LogEntry = {
       id: generateLogEntryId(),
       timestamp: Date.now(),
       actionType: action.type,
-      category: ACTION_CATEGORY[action.type] ?? LogCategory.ENGINE_TICK,
       executionTimeMs,
       stateDiff: calculateDiff(
         prevState as unknown as Record<string, unknown>,

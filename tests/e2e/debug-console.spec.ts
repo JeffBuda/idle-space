@@ -123,7 +123,6 @@ test.describe.serial('debug console toggle flow', () => {
     console.log('Debug console is visible after toggle');
 
     // Verify control elements are present
-    await expect(page.getByTestId('debug-filter')).toBeVisible();
     await expect(page.getByTestId('debug-refresh')).toBeVisible();
     await expect(page.getByTestId('debug-clear')).toBeVisible();
     await expect(page.getByTestId('debug-export')).toBeVisible();
@@ -178,42 +177,7 @@ test.describe.serial('debug console toggle flow', () => {
 
     const emptyState = page.getByTestId('debug-empty');
     await expect(emptyState).toBeVisible();
-    console.log('Debug console shows empty state after clearing logs');
-  });
-
-  test('debug console filter dropdown filters by category', async ({
-    page,
-  }) => {
-    await page.getByTestId('settings-gear').click();
-    await page.getByTestId('toggle-debug-console').click();
-
-    await expect(page.getByTestId('debug-console')).toBeVisible();
-    // The page load produced an APP_WAKE log entry — no need to wait for ticks
-    await page.waitForTimeout(500);
-
-    // The filter dropdown should exist
-    const filter = page.getByTestId('debug-filter');
-    await expect(filter).toBeVisible();
-
-    // Change filter to a specific category
-    await filter.selectOption('APP_EVENT');
-    await page.waitForTimeout(500);
-
-    // All visible entries should match the filter
-    const entries = page.locator('[data-testid^="log-entry-"]');
-    const count = await entries.count();
-    for (let i = 0; i < count; i++) {
-      const entry = entries.nth(i);
-      const categoryText = await entry.locator('.log-category').textContent();
-      expect(categoryText).toBe('APP_EVENT');
-    }
-    console.log(`Filtered to APP_EVENT: ${count} entries visible`);
-
-    // Switch back to ALL
-    await filter.selectOption('ALL');
-    await page.waitForTimeout(500);
-    const allCount = await page.locator('[data-testid^="log-entry-"]').count();
-    console.log(`All categories: ${allCount} entries visible`);
+  console.log('Debug console shows empty state after clearing logs');
   });
 
   test('debug console logs suspend and resume events', async ({ page }) => {
