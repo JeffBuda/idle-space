@@ -58,11 +58,15 @@ const waitForLogEntries = async (page: Page, minCount = 1, timeout = 10000) => {
   while (Date.now() < endTime) {
     try {
       await expect(page.getByTestId('debug-loading')).toBeHidden({ timeout: 2000 })
-    } catch {}
+    } catch {
+      // Loading indicator may not appear -- that's fine, logs might already be loaded
+    }
     await page.getByTestId('debug-refresh').click()
     try {
       await expect(page.getByTestId('debug-loading')).toBeHidden({ timeout: 2000 })
-    } catch {}
+    } catch {
+      // Loading indicator may not appear -- that's fine, logs might already be loaded
+    }
     const count = await page.locator('[data-testid^="log-entry-"]').count()
     if (count >= minCount) return
     await page.waitForTimeout(500)
@@ -285,7 +289,9 @@ test.describe.serial('debug console toggle flow', () => {
     await refreshBtn.click()
     try {
       await expect(page.getByTestId('debug-loading')).toBeHidden({ timeout: 5000 })
-    } catch {}
+    } catch {
+      // Loading indicator may not appear -- logs might already be loaded
+    }
 
     console.log('Refresh button clicked successfully')
   })
