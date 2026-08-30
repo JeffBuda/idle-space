@@ -10,20 +10,15 @@
 //
 // This module depends on the db layer (src/db) for IDB access and
 // the LogEntry type. It is NOT imported by the engine layer.
-import type { LogEntry } from '../db';
-import {
-  getLogEntries,
-  saveLogEntries,
-  clearLogEntries,
-  LOG_ENTRY_LIMIT,
-} from '../db';
+import type { LogEntry } from '../db'
+import { getLogEntries, saveLogEntries, clearLogEntries, LOG_ENTRY_LIMIT } from '../db'
 
 /**
  * Internal write queue: serializes appends so that concurrent
  * fire-and-forget calls don't clobber each other's read-modify-write
  * cycle. Each append is chained after the previous one completes.
  */
-let writeQueue: Promise<void> = Promise.resolve();
+let writeQueue: Promise<void> = Promise.resolve()
 
 export const LogStorageService = {
   /**
@@ -37,23 +32,19 @@ export const LogStorageService = {
    */
   append(entry: LogEntry): Promise<void> {
     const doWrite = async () => {
-      const existing = await getLogEntries();
-      const currentLogs = existing ?? [];
-      const updated = [...currentLogs, entry];
+      const existing = await getLogEntries()
+      const currentLogs = existing ?? []
+      const updated = [...currentLogs, entry]
       const trimmed =
-        updated.length > LOG_ENTRY_LIMIT
-          ? updated.slice(updated.length - LOG_ENTRY_LIMIT)
-          : updated;
-      await saveLogEntries(trimmed);
-    };
+        updated.length > LOG_ENTRY_LIMIT ? updated.slice(updated.length - LOG_ENTRY_LIMIT) : updated
+      await saveLogEntries(trimmed)
+    }
 
-        writeQueue = writeQueue
-      .then(doWrite, doWrite)
-      .catch((err) => {
-        console.warn('Failed to persist debug log entry:', err);
-      });
+    writeQueue = writeQueue.then(doWrite, doWrite).catch((err) => {
+      console.warn('Failed to persist debug log entry:', err)
+    })
 
-    return writeQueue;
+    return writeQueue
   },
 
   /**
@@ -61,13 +52,13 @@ export const LogStorageService = {
    * Returns an empty array if no logs exist yet.
    */
   getAll(): Promise<LogEntry[]> {
-    return getLogEntries().then((entries) => entries ?? []);
+    return getLogEntries().then((entries) => entries ?? [])
   },
 
   /**
    * Clears all persisted debug log entries from IndexedDB.
    */
   clear(): Promise<void> {
-    return clearLogEntries();
+    return clearLogEntries()
   },
-};
+}

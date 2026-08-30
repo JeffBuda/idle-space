@@ -1,12 +1,12 @@
 // src/components/SettingsMenu.tsx
-import { useState, useRef, useEffect } from 'react';
-import './SettingsMenu.css';
+import { useState, useRef, useEffect } from 'react'
+import './SettingsMenu.css'
 
 interface SettingsMenuProps {
-  debugConsoleVisible: boolean;
-  onToggleDebugConsole: () => void;
-  gameStateVisible: boolean;
-  onToggleGameState: () => void;
+  debugConsoleVisible: boolean
+  onToggleDebugConsole: () => void
+  gameStateVisible: boolean
+  onToggleGameState: () => void
 }
 
 /**
@@ -25,20 +25,20 @@ export const SettingsMenu = ({
   gameStateVisible,
   onToggleGameState,
 }: SettingsMenuProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+        setIsOpen(false)
       }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
-  const toggleOpen = () => setIsOpen((prev) => !prev);
+  const toggleOpen = () => setIsOpen((prev) => !prev)
 
   return (
     <div className="settings-menu" ref={menuRef} data-testid="settings-menu">
@@ -59,26 +59,22 @@ export const SettingsMenu = ({
           <h3 className="settings-title">Settings</h3>
           <button
             type="button"
-            className={`settings-toggle ${
-              debugConsoleVisible ? 'settings-on' : 'settings-off'
-            }`}
+            className={`settings-toggle ${debugConsoleVisible ? 'settings-on' : 'settings-off'}`}
             data-testid="toggle-debug-console"
             onClick={() => {
-              onToggleDebugConsole();
-              setIsOpen(false);
+              onToggleDebugConsole()
+              setIsOpen(false)
             }}
           >
             {debugConsoleVisible ? 'Hide' : 'Show'} Debug Console
           </button>
           <button
             type="button"
-            className={`settings-toggle ${
-              gameStateVisible ? 'settings-on' : 'settings-off'
-            }`}
+            className={`settings-toggle ${gameStateVisible ? 'settings-on' : 'settings-off'}`}
             data-testid="toggle-game-state"
             onClick={() => {
-              onToggleGameState();
-              setIsOpen(false);
+              onToggleGameState()
+              setIsOpen(false)
             }}
           >
             {gameStateVisible ? 'Hide' : 'View'} Game State
@@ -86,5 +82,5 @@ export const SettingsMenu = ({
         </div>
       )}
     </div>
-  );
-};
+  )
+}

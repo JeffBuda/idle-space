@@ -1,7 +1,7 @@
-import { readFileSync } from 'node:fs';
-import { defineConfig } from 'vitest/config';
+import { readFileSync } from 'node:fs'
+import { defineConfig } from 'vitest/config'
 
-const packageJson = JSON.parse(readFileSync('./package.json', 'utf8'));
+const packageJson = JSON.parse(readFileSync('./package.json', 'utf8'))
 
 export default defineConfig({
   test: {
@@ -17,4 +17,4 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(packageJson.version),
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
   },
-});
+})

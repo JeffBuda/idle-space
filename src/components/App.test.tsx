@@ -1,13 +1,13 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
-import App from './App';
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, waitFor, act, fireEvent } from '@testing-library/react'
+import App from './App'
 
 // ---------------------------------------------------------------------------
 // Mock the useDbStatus hook so tests don't require a real IDB.
 // ---------------------------------------------------------------------------
 vi.mock('../hooks/useDbStatus', () => ({
   useDbStatus: vi.fn().mockReturnValue('Connected'),
-}));
+}))
 
 // ---------------------------------------------------------------------------
 // Mock the useGameState hook so tests don't depend on real IDB/visibility events
@@ -18,7 +18,7 @@ const mockGameStateData = {
   rngSeed: 'test-seed',
   totalDistanceKm: 1000,
   version: '0.1.0',
-};
+}
 
 vi.mock('../hooks/useGameState', () => ({
   useGameState: () => ({
@@ -27,7 +27,7 @@ vi.mock('../hooks/useGameState', () => ({
     clearOfflineSeconds: vi.fn(),
     isLoading: false,
   }),
-}));
+}))
 
 // Mock the useDebugLogs hook so App tests don't require a real IDB
 vi.mock('../hooks/useDebugLogs', () => ({
@@ -37,7 +37,7 @@ vi.mock('../hooks/useDebugLogs', () => ({
     refresh: vi.fn(),
     clear: vi.fn(),
   }),
-}));
+}))
 
 // ---------------------------------------------------------------------------
 // Helper: replace navigator.serviceWorker with a controllable mock.
@@ -53,129 +53,126 @@ const mockServiceWorker = (controller: object | null = null) => {
     },
     configurable: true,
     writable: true,
-  });
-};
+  })
+}
 
 describe('App', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.clearAllMocks()
     // Default: no active service worker
-    mockServiceWorker(null);
-  });
+    mockServiceWorker(null)
+  })
 
   it('renders the landing page title', async () => {
     await act(async () => {
-      render(<App />);
-    });
-    expect(
-      screen.getByRole('heading', { name: 'Space Exploration Idle PWA' })
-    ).toBeInTheDocument();
-  });
+      render(<App />)
+    })
+    expect(screen.getByRole('heading', { name: 'Space Exploration Idle PWA' })).toBeInTheDocument()
+  })
 
   it('renders all essential status widgets without errors', async () => {
     await act(async () => {
-      render(<App />);
-    });
-    expect(screen.getByText('Service Worker')).toBeInTheDocument();
-    expect(screen.getByText('IndexedDB')).toBeInTheDocument();
-    expect(screen.getByText('Install Ready')).toBeInTheDocument();
-    expect(screen.getByTestId('sw-status')).toBeInTheDocument();
-    expect(screen.getByTestId('db-status')).toBeInTheDocument();
-    expect(screen.getByTestId('install-status')).toBeInTheDocument();
-  });
+      render(<App />)
+    })
+    expect(screen.getByText('Service Worker')).toBeInTheDocument()
+    expect(screen.getByText('IndexedDB')).toBeInTheDocument()
+    expect(screen.getByText('Install Ready')).toBeInTheDocument()
+    expect(screen.getByTestId('sw-status')).toBeInTheDocument()
+    expect(screen.getByTestId('db-status')).toBeInTheDocument()
+    expect(screen.getByTestId('install-status')).toBeInTheDocument()
+  })
 
   it('updates the Service Worker status indicator to Active when registered', async () => {
-    mockServiceWorker({} as ServiceWorker);
+    mockServiceWorker({} as ServiceWorker)
     await act(async () => {
-      render(<App />);
-    });
+      render(<App />)
+    })
     await waitFor(() => {
-      expect(screen.getByTestId('sw-status').textContent).toBe('Active');
-    });
-  });
+      expect(screen.getByTestId('sw-status').textContent).toBe('Active')
+    })
+  })
 
   it('shows Inactive when no service worker controller is present', async () => {
-    mockServiceWorker(null);
+    mockServiceWorker(null)
     await act(async () => {
-      render(<App />);
-    });
-    expect(screen.getByTestId('sw-status').textContent).toBe('Inactive');
-  });
+      render(<App />)
+    })
+    expect(screen.getByTestId('sw-status').textContent).toBe('Inactive')
+  })
 
   it('shows Connected for IndexedDB after successful init', async () => {
     await act(async () => {
-      render(<App />);
-    });
+      render(<App />)
+    })
     await waitFor(() => {
-      expect(screen.getByTestId('db-status').textContent).toBe('Connected');
-    });
-  });
+      expect(screen.getByTestId('db-status').textContent).toBe('Connected')
+    })
+  })
 
   it('renders the engine section with game state information', async () => {
     await act(async () => {
-      render(<App />);
-    });
-    expect(screen.getByText('Engine')).toBeInTheDocument();
-    expect(screen.getByTestId('total-travel-time')).toBeInTheDocument();
-    expect(screen.getByTestId('total-distance')).toBeInTheDocument();
-  });
+      render(<App />)
+    })
+    expect(screen.getByText('Engine')).toBeInTheDocument()
+    expect(screen.getByTestId('total-travel-time')).toBeInTheDocument()
+    expect(screen.getByTestId('total-distance')).toBeInTheDocument()
+  })
 
   it('renders the build information card with version and build date', async () => {
     await act(async () => {
-      render(<App />);
-    });
-    expect(screen.getByText('Build Information')).toBeInTheDocument();
-    expect(screen.getByTestId('app-version')).toBeInTheDocument();
-    expect(screen.getByTestId('build-date')).toBeInTheDocument();
-    expect(screen.getByTestId('app-version').textContent).toMatch(/\d+\.\d+\.\d+/);
-        expect(screen.getByTestId('build-date').textContent).not.toBe('');
-  });
+      render(<App />)
+    })
+    expect(screen.getByText('Build Information')).toBeInTheDocument()
+    expect(screen.getByTestId('app-version')).toBeInTheDocument()
+    expect(screen.getByTestId('build-date')).toBeInTheDocument()
+    expect(screen.getByTestId('app-version').textContent).toMatch(/\d+\.\d+\.\d+/)
+    expect(screen.getByTestId('build-date').textContent).not.toBe('')
+  })
 
   it('renders the gear icon in the header', () => {
-    render(<App />);
-    expect(screen.getByTestId('settings-gear')).toBeInTheDocument();
-  });
+    render(<App />)
+    expect(screen.getByTestId('settings-gear')).toBeInTheDocument()
+  })
 
-    it('opens settings card when gear icon is clicked', () => {
-    render(<App />);
-    fireEvent.click(screen.getByTestId('settings-gear'));
-    expect(screen.getByTestId('settings-card')).toBeInTheDocument();
-  });
+  it('opens settings card when gear icon is clicked', () => {
+    render(<App />)
+    fireEvent.click(screen.getByTestId('settings-gear'))
+    expect(screen.getByTestId('settings-card')).toBeInTheDocument()
+  })
 
   it('opens game state viewer when "View Game State" is clicked', async () => {
-    render(<App />);
-    fireEvent.click(screen.getByTestId('settings-gear'));
-    fireEvent.click(screen.getByTestId('toggle-game-state'));
+    render(<App />)
+    fireEvent.click(screen.getByTestId('settings-gear'))
+    fireEvent.click(screen.getByTestId('toggle-game-state'))
 
     await waitFor(() => {
-      expect(screen.getByTestId('game-state-viewer')).toBeInTheDocument();
-    });
-  });
+      expect(screen.getByTestId('game-state-viewer')).toBeInTheDocument()
+    })
+  })
 
   it('displays game state JSON in the viewer when visible', async () => {
-    render(<App />);
-    fireEvent.click(screen.getByTestId('settings-gear'));
-    fireEvent.click(screen.getByTestId('toggle-game-state'));
+    render(<App />)
+    fireEvent.click(screen.getByTestId('settings-gear'))
+    fireEvent.click(screen.getByTestId('toggle-game-state'))
 
     await waitFor(() => {
-      const json = screen.getByTestId('game-state-json');
-      expect(json).toBeInTheDocument();
-      expect(json.textContent).toContain('totalDistanceKm');
-      expect(json.textContent).toContain('1000');
-    });
-  });
+      const json = screen.getByTestId('game-state-json')
+      expect(json).toBeInTheDocument()
+      expect(json.textContent).toContain('totalDistanceKm')
+      expect(json.textContent).toContain('1000')
+    })
+  })
 
   it('closes game state viewer when close button is clicked', async () => {
-    render(<App />);
-    fireEvent.click(screen.getByTestId('settings-gear'));
-    fireEvent.click(screen.getByTestId('toggle-game-state'));
+    render(<App />)
+    fireEvent.click(screen.getByTestId('settings-gear'))
+    fireEvent.click(screen.getByTestId('toggle-game-state'))
 
     await waitFor(() => {
-      expect(screen.getByTestId('game-state-viewer')).toBeInTheDocument();
-    });
+      expect(screen.getByTestId('game-state-viewer')).toBeInTheDocument()
+    })
 
-    fireEvent.click(screen.getByTestId('game-state-close'));
-    expect(screen.queryByTestId('game-state-viewer')).not.toBeInTheDocument();
-  });
-});
-
+    fireEvent.click(screen.getByTestId('game-state-close'))
+    expect(screen.queryByTestId('game-state-viewer')).not.toBeInTheDocument()
+  })
+})

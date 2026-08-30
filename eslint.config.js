@@ -1,4 +1,6 @@
 import js from '@eslint/js'
+import eslintConfigPrettier from 'eslint-config-prettier'
+
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
@@ -18,7 +20,7 @@ export default tseslint.config(
     plugins: {
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
-      'boundaries': boundaries,
+      boundaries: boundaries,
     },
     settings: {
       'import/resolver': {
@@ -33,75 +35,73 @@ export default tseslint.config(
         { type: 'hooks', pattern: 'src/hooks/**' },
         { type: 'components', pattern: 'src/components/**' },
       ],
-      'boundaries/files': [
-        { category: 'test', pattern: 'src/**/*.test.{ts,tsx}' },
-      ],
+      'boundaries/files': [{ category: 'test', pattern: 'src/**/*.test.{ts,tsx}' }],
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': [
-        'warn',
-        { allowConstantExport: true },
-      ],
+      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
       // ---- Architectural boundary enforcement ----
-      'boundaries/dependencies': [2, {
-        default: 'allow',
-        policies: [
-          // Engine: pure layer — must not depend on db, hooks, components
-          {
-            from: { element: { type: 'engine' } },
-            disallow: {
-              to: {
-                element: { types: ['db', 'hooks', 'components'] },
-              },
-            },
-          },
-          // Db: persistence layer — must not depend on any other internal layer
-          {
-            from: { element: { type: 'db' } },
-            disallow: {
-              to: {
-                element: {
-                  types: ['engine', 'hooks', 'components', 'utils'],
+      'boundaries/dependencies': [
+        2,
+        {
+          default: 'allow',
+          policies: [
+            // Engine: pure layer — must not depend on db, hooks, components
+            {
+              from: { element: { type: 'engine' } },
+              disallow: {
+                to: {
+                  element: { types: ['db', 'hooks', 'components'] },
                 },
               },
             },
-          },
-          // Components: presentation layer — must not import engine or db directly
-          {
-            from: { element: { type: 'components' } },
-            disallow: {
-              to: { element: { types: ['engine', 'db'] } },
-            },
-          },
-          // Hooks: must not depend on components
-          {
-            from: { element: { type: 'hooks' } },
-            disallow: {
-              to: {
-                element: { types: ['components'] },
-              },
-            },
-          },
-          // Utils: pure utilities — must not depend on any other internal layer
-          {
-            from: { element: { type: 'utils' } },
-            disallow: {
-              to: {
-                element: {
-                  types: ['engine', 'db', 'hooks', 'components'],
+            // Db: persistence layer — must not depend on any other internal layer
+            {
+              from: { element: { type: 'db' } },
+              disallow: {
+                to: {
+                  element: {
+                    types: ['engine', 'hooks', 'components', 'utils'],
+                  },
                 },
               },
             },
-          },
-          // No file (source or test) should import from test files
-          {
-            disallow: {
-              to: { file: { categories: 'test' } },
+            // Components: presentation layer — must not import engine or db directly
+            {
+              from: { element: { type: 'components' } },
+              disallow: {
+                to: { element: { types: ['engine', 'db'] } },
+              },
             },
-          },
-        ],
-      }],
+            // Hooks: must not depend on components
+            {
+              from: { element: { type: 'hooks' } },
+              disallow: {
+                to: {
+                  element: { types: ['components'] },
+                },
+              },
+            },
+            // Utils: pure utilities — must not depend on any other internal layer
+            {
+              from: { element: { type: 'utils' } },
+              disallow: {
+                to: {
+                  element: {
+                    types: ['engine', 'db', 'hooks', 'components'],
+                  },
+                },
+              },
+            },
+            // No file (source or test) should import from test files
+            {
+              disallow: {
+                to: { file: { categories: 'test' } },
+              },
+            },
+          ],
+        },
+      ],
     },
   },
   // ---- Code-level restrictions for the engine layer ----
@@ -112,11 +112,26 @@ export default tseslint.config(
     rules: {
       'no-restricted-globals': [
         'error',
-        { name: 'localStorage', message: 'Engine must not use localStorage — use IndexedDB via db layer' },
-        { name: 'sessionStorage', message: 'Engine must not use sessionStorage — use IndexedDB via db layer' },
-        { name: 'window', message: 'Engine must not access window — the engine layer must be pure' },
-        { name: 'document', message: 'Engine must not access document — the engine layer must be pure' },
-        { name: 'Date', message: 'Engine must not use Date — pass currentTime as a parameter for determinism' },
+        {
+          name: 'localStorage',
+          message: 'Engine must not use localStorage — use IndexedDB via db layer',
+        },
+        {
+          name: 'sessionStorage',
+          message: 'Engine must not use sessionStorage — use IndexedDB via db layer',
+        },
+        {
+          name: 'window',
+          message: 'Engine must not access window — the engine layer must be pure',
+        },
+        {
+          name: 'document',
+          message: 'Engine must not access document — the engine layer must be pure',
+        },
+        {
+          name: 'Date',
+          message: 'Engine must not use Date — pass currentTime as a parameter for determinism',
+        },
       ],
     },
   },
@@ -127,9 +142,16 @@ export default tseslint.config(
     rules: {
       'no-restricted-globals': [
         'error',
-        { name: 'localStorage', message: 'DB layer must not use localStorage — use IndexedDB only' },
-        { name: 'sessionStorage', message: 'DB layer must not use sessionStorage — use IndexedDB only' },
+        {
+          name: 'localStorage',
+          message: 'DB layer must not use localStorage — use IndexedDB only',
+        },
+        {
+          name: 'sessionStorage',
+          message: 'DB layer must not use sessionStorage — use IndexedDB only',
+        },
       ],
     },
   },
+  eslintConfigPrettier,
 )

@@ -62,7 +62,9 @@
   transition: color 0.2s ease;
 }
 
-.gs-close:hover { color: #ffffff; }
+.gs-close:hover {
+  color: #ffffff;
+}
 
 .gs-close:focus-visible {
   outline: 2px solid #4a9eff;
@@ -94,7 +96,14 @@
 }
 
 @media (max-width: 600px) {
-  .gs-modal { max-width: 100%; max-height: 90vh; }
-  .gs-header { padding: 0.75rem 1rem; }
-  .gs-content { padding: 0.75rem 1rem; }
+  .gs-modal {
+    max-width: 100%;
+    max-height: 90vh;
+  }
+  .gs-header {
+    padding: 0.75rem 1rem;
+  }
+  .gs-content {
+    padding: 0.75rem 1rem;
+  }
 }

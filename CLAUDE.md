@@ -7,12 +7,12 @@
 
 ## TL;DR — Most common pitfalls
 
-| Pitfall | What to do |
-|---|---|
-| Manifest `start_url` 404s on GitHub Pages | Use **relative** paths in VitePWA `manifest` config (`start_url: '.'`, `src: 'icons/...'`) — Vite's `base` does **not** prefix manifest fields |
-| TypeScript check shows TS6305/TS6306/TS6310 | Pre-existing config issues. Use `npm run build` for the real type check |
-| `cd /D` fails in shell | Use `Set-Location` or `node -e` with absolute paths instead |
-| Editor tool doubles indentation | Include full leading whitespace in `old_text`, or use `node -e` to write files |
+| Pitfall                                     | What to do                                                                                                                                     |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Manifest `start_url` 404s on GitHub Pages   | Use **relative** paths in VitePWA `manifest` config (`start_url: '.'`, `src: 'icons/...'`) — Vite's `base` does **not** prefix manifest fields |
+| TypeScript check shows TS6305/TS6306/TS6310 | Pre-existing config issues. Use `npm run build` for the real type check                                                                        |
+| `cd /D` fails in shell                      | Use `Set-Location` or `node -e` with absolute paths instead                                                                                    |
+| Editor tool doubles indentation             | Include full leading whitespace in `old_text`, or use `node -e` to write files                                                                 |
 
 ---
 
@@ -48,6 +48,7 @@ manifest is served at `/idle-space/manifest.webmanifest`, `'icons/...'`
 correctly resolves to `/idle-space/icons/...`.
 
 **Verify after build**:
+
 ```bash
 npm run build
 # Check the generated manifest:
@@ -69,17 +70,20 @@ cat dist/manifest.webmanifest | node -e "const m=JSON.parse(require('fs').readFi
 ## 3. Shell & Tooling Environment
 
 ### Commands that DON'T work in this Windows + PowerShell environment
+
 - `cd /D C:\path` — the PowerShell profile's `Set-Location` wrapper intercepts
   the `/D` flag and throws "Cannot find path 'C:\D'"
 - → **Use**: `Set-Location C:\path` or `node -e "..."` with absolute paths
 
 ### TypeScript check
+
 - `npx tsc --noEmit` produces **pre-existing** TS6305/TS6306/TS6310 errors
   (stale `.d.ts` files and composite project config) — these are NOT real
   issues and exist before any changes
 - → **Use** `npm run build` (Vite's esbuild-based type check is authoritative)
 
 ### Editor tool
+
 - Substring matching in `old_text` can double leading whitespace (the existing
   indentation + new indentation from `new_text`)
 - → When replacing lines with leading whitespace, include the **full** original
@@ -91,12 +95,14 @@ cat dist/manifest.webmanifest | node -e "const m=JSON.parse(require('fs').readFi
 ## 4. Testing Conventions
 
 ### Unit & Component Tests
+
 - **Command**: `npm run test` (`vitest run`)
 - **Location**: `src/**/*.test.{ts,tsx}`
 - **Framework**: Vitest + jsdom + @testing-library/react v14
 - All tests must pass before considering a task complete.
 
 ### E2E / Playwright Tests
+
 - **Command**: `npx playwright test`
 - **Location**: `tests/e2e/`
 - **Browsers**: Chromium + WebKit

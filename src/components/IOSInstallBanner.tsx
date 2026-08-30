@@ -3,14 +3,14 @@
 // A fixed-position banner that instructs iOS Safari users to install the
 // PWA to their Home Screen via the native Share sheet.  Visible only on
 // iOS devices running in standard browser mode (not standalone).
-import React from 'react';
-import { useIOSInstallPrompt } from '../hooks/useIOSInstallPrompt';
-import './IOSInstallBanner.css';
+import React from 'react'
+import { useIOSInstallPrompt } from '../hooks/useIOSInstallPrompt'
+import './IOSInstallBanner.css'
 
 export const IOSInstallBanner: React.FC = () => {
-  const { showPrompt, handleDismiss } = useIOSInstallPrompt();
+  const { showPrompt, handleDismiss } = useIOSInstallPrompt()
 
-  if (!showPrompt) return null;
+  if (!showPrompt) return null
 
   return (
     <div className="ios-install-banner" data-testid="ios-install-banner">
@@ -68,9 +68,8 @@ export const IOSInstallBanner: React.FC = () => {
         <div className="ios-install-banner__text">
           <h3 className="ios-install-banner__title">Save Your Game!</h3>
           <p className="ios-install-banner__desc">
-            To prevent your save from being wiped by iOS Safari, install this
-            game. Tap <strong>Share</strong> and choose{' '}
-            <strong>Add to Home Screen</strong>.
+            To prevent your save from being wiped by iOS Safari, install this game. Tap{' '}
+            <strong>Share</strong> and choose <strong>Add to Home Screen</strong>.
           </p>
         </div>
 
@@ -85,7 +84,7 @@ export const IOSInstallBanner: React.FC = () => {
         </button>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default IOSInstallBanner;
+export default IOSInstallBanner

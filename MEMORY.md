@@ -8,21 +8,21 @@
 
 ## 📋 Quick Reference
 
-| Concern             | Convention                                                                 |
-|---------------------|----------------------------------------------------------------------------|
-| **Stack**           | React 18 + TypeScript (strict) + Vite 5 + VitePWA                          |
-| **Styling**         | Plain CSS (no Tailwind). Dark theme: `#0d1117` bg, `#1a202c` card bg       |
-| **State mgmt**      | React `useState` / `useEffect`. No external state lib.                     |
-| **Persistence**     | `idb` v8 (`openDB`) for IndexedDB. `localStorage` / `sessionStorage` OK.    |
-| **Testing**         | Vitest + jsdom + @testing-library/react v14                                 |
-| **Test command**    | `npm run test` (`vitest run`) — runs all `.test.{ts,tsx}` in `src/`         |
-| **Lint**            | `npm run lint` (ESLint flat config)                                        |
-| **Type check**      | `npm run build` (Vite build includes tsc). Or `npx tsc --noEmit`           |
-| **E2E**             | Playwright (Chromium + WebKit) — `npx playwright test`                      |
+| Concern             | Convention                                                                                                                                  |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Stack**           | React 18 + TypeScript (strict) + Vite 5 + VitePWA                                                                                           |
+| **Styling**         | Plain CSS (no Tailwind). Dark theme: `#0d1117` bg, `#1a202c` card bg                                                                        |
+| **State mgmt**      | React `useState` / `useEffect`. No external state lib.                                                                                      |
+| **Persistence**     | `idb` v8 (`openDB`) for IndexedDB. `localStorage` / `sessionStorage` OK.                                                                    |
+| **Testing**         | Vitest + jsdom + @testing-library/react v14                                                                                                 |
+| **Test command**    | `npm run test` (`vitest run`) — runs all `.test.{ts,tsx}` in `src/`                                                                         |
+| **Lint**            | `npm run lint` (ESLint flat config)                                                                                                         |
+| **Type check**      | `npm run build` (Vite build includes tsc). Or `npx tsc --noEmit`                                                                            |
+| **E2E**             | Playwright (Chromium + WebKit) — `npx playwright test`                                                                                      |
 | **GitHub CLI (gh)** | Installed at `C:\Program Files\GitHub CLI\gh.exe`. Auth credentials stored in Windows Credential Manager. Use `gh pr create` to create PRs. |
-| **File layout**     | Flat in `src/`. No `components/` or `hooks/` subdirs.                        |
-| **TS strict rules** | `strict`, `noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch` |
-| **Test selectors**  | `data-testid` attributes. `@testing-library/jest-dom` matchers.              |
+| **File layout**     | Flat in `src/`. No `components/` or `hooks/` subdirs.                                                                                       |
+| **TS strict rules** | `strict`, `noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch`                                                              |
+| **Test selectors**  | `data-testid` attributes. `@testing-library/jest-dom` matchers.                                                                             |
 
 ---
 
@@ -145,6 +145,7 @@ Object.defineProperty(navigator, 'standalone', { value: undefined, configurable:
 ## 5. TypeScript Strictness
 
 `tsconfig.app.json` enforces:
+
 - `strict: true`
 - `noUnusedLocals: true` — no unused local variables
 - `noUnusedParameters: true` — no unused function parameters
@@ -155,8 +156,9 @@ Object.defineProperty(navigator, 'standalone', { value: undefined, configurable:
 
 **Gotcha**: `navigator.standalone` is NOT in the standard DOM lib.
 Use a type assertion:
+
 ```ts
-const n = window.navigator as Navigator & { standalone?: boolean };
+const n = window.navigator as Navigator & { standalone?: boolean }
 ```
 
 ---
@@ -164,13 +166,16 @@ const n = window.navigator as Navigator & { standalone?: boolean };
 ## 6. Feature: iOS "Add to Home Screen" Install Banner
 
 ### Problem
+
 iOS Safari does NOT support the standard `beforeinstallprompt` event.
 Without a manual prompt, iOS users who browse in standard Safari mode are
 subject to Apple's 7-day Intelligent Tracking Prevention (ITP) local-storage
 wipe, which can delete their save-game progress.
 
 ### Solution
+
 A React hook + component that:
+
 1. Detects iOS devices via `navigator.userAgent` (iPhone, iPad, iPod).
 2. Checks if the PWA is already in standalone mode via two methods:
    - `navigator.standalone` (legacy, iOS Safari only).
@@ -181,26 +186,26 @@ A React hook + component that:
 
 ### Design Decisions (user-clarified)
 
-| Decision               | Choice         | Rationale                                              |
-|------------------------|----------------|--------------------------------------------------------|
-| Styling approach       | Plain CSS      | No Tailwind in project; match App.css conventions      |
-| Persistence mechanism  | sessionStorage | "localStorage" (Web Storage API) + session-only → sessionStorage |
-| Dismissal behavior     | Session-only   | Banner reappears on next visit — critical save message |
-| Share button viz       | Inline SVG     | Self-contained, no external asset deps                 |
-| File placement         | `src/` flat    | Matches existing project structure                     |
-| Memory file location   | `MEMORY.md`    | Repo root — easy to find                                |
+| Decision              | Choice         | Rationale                                                        |
+| --------------------- | -------------- | ---------------------------------------------------------------- |
+| Styling approach      | Plain CSS      | No Tailwind in project; match App.css conventions                |
+| Persistence mechanism | sessionStorage | "localStorage" (Web Storage API) + session-only → sessionStorage |
+| Dismissal behavior    | Session-only   | Banner reappears on next visit — critical save message           |
+| Share button viz      | Inline SVG     | Self-contained, no external asset deps                           |
+| File placement        | `src/` flat    | Matches existing project structure                               |
+| Memory file location  | `MEMORY.md`    | Repo root — easy to find                                         |
 
 ### Files Created/Modified
 
-| File                             | Type     | Description                                         |
-|----------------------------------|----------|-----------------------------------------------------|
-| `src/useIOSInstallPrompt.ts`     | Created  | Hook + exported helpers                             |
-| `src/IOSInstallBanner.css`       | Created  | Banner styles (dark theme, card-style, responsive)  |
-| `src/IOSInstallBanner.tsx`       | Created  | Banner component with inline SVG + dismiss button   |
-| `src/App.tsx`                    | Modified | Added `<IOSInstallBanner />` at end of layout       |
-| `src/IOSInstallBanner.test.tsx`  | Created  | 13 component tests                                  |
-| `src/useIOSInstallPrompt.test.ts`| Created  | 20+ unit tests for helpers + hook                    |
-| `MEMORY.md`                      | Created  | This file                                           |
+| File                              | Type     | Description                                        |
+| --------------------------------- | -------- | -------------------------------------------------- |
+| `src/useIOSInstallPrompt.ts`      | Created  | Hook + exported helpers                            |
+| `src/IOSInstallBanner.css`        | Created  | Banner styles (dark theme, card-style, responsive) |
+| `src/IOSInstallBanner.tsx`        | Created  | Banner component with inline SVG + dismiss button  |
+| `src/App.tsx`                     | Modified | Added `<IOSInstallBanner />` at end of layout      |
+| `src/IOSInstallBanner.test.tsx`   | Created  | 13 component tests                                 |
+| `src/useIOSInstallPrompt.test.ts` | Created  | 20+ unit tests for helpers + hook                  |
+| `MEMORY.md`                       | Created  | This file                                          |
 
 ### Exported API (`useIOSInstallPrompt.ts`)
 
@@ -243,12 +248,12 @@ export const IOS_INSTALL_PROMPT_DISMISSED_KEY = 'iosInstallPromptDismissed';
 7. Omit `.ts`/`.tsx` extensions in imports — Vite + `allowImportingTsExtensions`
    resolves them.
 
-
 ---
 
 ## Agent Documentation
 
 See the following files for comprehensive agent instructions:
+
 - **AGENTS.md** — Cross-tool global instructions and project identity
 - **ARCHITECTURE.md** — System design, data flow, and architecture decisions
 - **.clinerules/core.md** — Always-active core constraints (editor bugs, shell gotchas)
