@@ -27,13 +27,8 @@ export const OfflineGreeting: React.FC<OfflineGreetingProps> = ({
       <div className="offline-greeting-modal">
         <div className="offline-greeting__content">
           <h2 className="offline-greeting__title">Welcome Back, Explorer!</h2>
-          <p className="offline-greeting__message">
-            You've been away for:
-          </p>
-          <div 
-            className="offline-greeting__time" 
-            data-testid="offline-time-display"
-          >
+          <p className="offline-greeting__message">You've been away for:</p>
+          <div className="offline-greeting__time" data-testid="offline-time-display">
             {formattedTime}
           </div>
           <p className="offline-greeting__subtext">

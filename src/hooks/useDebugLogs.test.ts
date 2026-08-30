@@ -81,10 +81,7 @@ describe('useDebugLogs', () => {
 
   it('should reload logs when refresh() is called', async () => {
     const initialEntries = [makeLogEntry({ id: '1' })];
-    const refreshedEntries = [
-      makeLogEntry({ id: '1' }),
-      makeLogEntry({ id: '2' }),
-    ];
+    const refreshedEntries = [makeLogEntry({ id: '1' }), makeLogEntry({ id: '2' })];
     vi.mocked(LogStorageService.getAll)
       .mockResolvedValueOnce(initialEntries)
       .mockResolvedValueOnce(refreshedEntries);

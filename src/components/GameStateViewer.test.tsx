@@ -24,16 +24,12 @@ describe('GameStateViewer', () => {
   });
 
   it('should render when visible is true', () => {
-    render(
-      <GameStateViewer visible={true} gameState={mockGameState} onClose={vi.fn()} />,
-    );
+    render(<GameStateViewer visible={true} gameState={mockGameState} onClose={vi.fn()} />);
     expect(screen.getByTestId('game-state-viewer')).toBeInTheDocument();
   });
 
   it('should display game state as JSON when gameState is provided', () => {
-    render(
-      <GameStateViewer visible={true} gameState={mockGameState} onClose={vi.fn()} />,
-    );
+    render(<GameStateViewer visible={true} gameState={mockGameState} onClose={vi.fn()} />);
     const json = screen.getByTestId('game-state-json');
     expect(json).toBeInTheDocument();
     expect(json.textContent).toContain('totalDistanceKm');

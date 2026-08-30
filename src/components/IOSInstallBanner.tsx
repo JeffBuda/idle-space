@@ -68,9 +68,8 @@ export const IOSInstallBanner: React.FC = () => {
         <div className="ios-install-banner__text">
           <h3 className="ios-install-banner__title">Save Your Game!</h3>
           <p className="ios-install-banner__desc">
-            To prevent your save from being wiped by iOS Safari, install this
-            game. Tap <strong>Share</strong> and choose{' '}
-            <strong>Add to Home Screen</strong>.
+            To prevent your save from being wiped by iOS Safari, install this game. Tap{' '}
+            <strong>Share</strong> and choose <strong>Add to Home Screen</strong>.
           </p>
         </div>
 

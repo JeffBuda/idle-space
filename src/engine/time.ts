@@ -17,7 +17,7 @@ export interface EngineState {
 export const calculateIdleDistance = (
   prevState: EngineState,
   currentTime: number,
-  speedKmPerSec: number = 10
+  speedKmPerSec: number = 10,
 ): EngineState => {
   const deltaSeconds = Math.max(0, (currentTime - prevState.lastProcessedTime) / 1000);
   return {
@@ -39,13 +39,13 @@ export const calculateIdleDistance = (
 export const processIdleProgression = (
   prevState: GameState,
   currentTime: number,
-  speedKmPerSec: number = 10
+  speedKmPerSec: number = 10,
 ): GameState => {
   const deltaSeconds = Math.max(0, Math.floor((currentTime - prevState.lastTimestamp) / 1000));
-  
+
   // Calculate idle distance traveled
   const distanceTraveled = deltaSeconds * speedKmPerSec;
-  
+
   return {
     ...prevState,
     lastTimestamp: currentTime,

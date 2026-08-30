@@ -67,9 +67,7 @@ describe('App', () => {
     await act(async () => {
       render(<App />);
     });
-    expect(
-      screen.getByRole('heading', { name: 'Space Exploration Idle PWA' })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Space Exploration Idle PWA' })).toBeInTheDocument();
   });
 
   it('renders all essential status widgets without errors', async () => {
@@ -128,7 +126,7 @@ describe('App', () => {
     expect(screen.getByTestId('app-version')).toBeInTheDocument();
     expect(screen.getByTestId('build-date')).toBeInTheDocument();
     expect(screen.getByTestId('app-version').textContent).toMatch(/\d+\.\d+\.\d+/);
-        expect(screen.getByTestId('build-date').textContent).not.toBe('');
+    expect(screen.getByTestId('build-date').textContent).not.toBe('');
   });
 
   it('renders the gear icon in the header', () => {
@@ -136,7 +134,7 @@ describe('App', () => {
     expect(screen.getByTestId('settings-gear')).toBeInTheDocument();
   });
 
-    it('opens settings card when gear icon is clicked', () => {
+  it('opens settings card when gear icon is clicked', () => {
     render(<App />);
     fireEvent.click(screen.getByTestId('settings-gear'));
     expect(screen.getByTestId('settings-card')).toBeInTheDocument();
@@ -178,4 +176,3 @@ describe('App', () => {
     expect(screen.queryByTestId('game-state-viewer')).not.toBeInTheDocument();
   });
 });
-

@@ -47,23 +47,21 @@ describe('isIOSUserAgent', () => {
   it('returns true for iPhone', () => {
     expect(
       isIOSUserAgent(
-        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
-      )
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+      ),
     ).toBe(true);
   });
 
   it('returns true for iPad', () => {
     expect(
       isIOSUserAgent(
-        'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
-      )
+        'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+      ),
     ).toBe(true);
   });
 
   it('returns true for iPod', () => {
-    expect(
-      isIOSUserAgent('Mozilla/5.0 (iPod; CPU iPhone OS 17_0 like Mac OS X)')
-    ).toBe(true);
+    expect(isIOSUserAgent('Mozilla/5.0 (iPod; CPU iPhone OS 17_0 like Mac OS X)')).toBe(true);
   });
 
   it('is case-insensitive', () => {
@@ -73,24 +71,24 @@ describe('isIOSUserAgent', () => {
   it('returns false for Chrome on Windows', () => {
     expect(
       isIOSUserAgent(
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-      )
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      ),
     ).toBe(false);
   });
 
   it('returns false for Safari on macOS', () => {
     expect(
       isIOSUserAgent(
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15'
-      )
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
+      ),
     ).toBe(false);
   });
 
   it('returns false for Android Chrome', () => {
     expect(
       isIOSUserAgent(
-        'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36'
-      )
+        'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+      ),
     ).toBe(false);
   });
 });
@@ -326,4 +324,3 @@ describe('useIOSInstallPrompt', () => {
     expect(result.current.showPrompt).toBe(false);
   });
 });
-

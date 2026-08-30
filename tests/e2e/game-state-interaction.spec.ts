@@ -94,7 +94,7 @@ test.describe.serial('Game State Interaction Tests', () => {
     // Verify the displayed offline time shows ~2 minutes
     const offlineTime = await page.$eval(
       '[data-testid="offline-time-display"]',
-      (el) => el.textContent
+      (el) => el.textContent,
     );
     console.log('Offline time displayed:', offlineTime);
     expect(offlineTime).toMatch(/2m/);
@@ -118,7 +118,9 @@ test.describe.serial('Game State Interaction Tests', () => {
     await expect(page.getByTestId('offline-greeting')).not.toBeVisible();
   });
 
-  test('Test 7 (Offline Greeting Collect Rewards): collecting rewards hides modal', async ({ page }) => {
+  test('Test 7 (Offline Greeting Collect Rewards): collecting rewards hides modal', async ({
+    page,
+  }) => {
     // beforeEach created fresh game state; now simulate 2 min idle
     await setGameTimestamp(page, 120000);
     await page.reload();
@@ -143,7 +145,7 @@ test.describe.serial('Game State Interaction Tests', () => {
     // Get initial travel time
     const initialTime = await page.$eval(
       '[data-testid="total-travel-time"]',
-      (el) => el.textContent
+      (el) => el.textContent,
     );
     console.log('Initial time:', initialTime);
 
@@ -153,7 +155,7 @@ test.describe.serial('Game State Interaction Tests', () => {
     // Check that time has incremented
     const updatedTime = await page.$eval(
       '[data-testid="total-travel-time"]',
-      (el) => el.textContent
+      (el) => el.textContent,
     );
     console.log('Updated time after 6s:', updatedTime);
 

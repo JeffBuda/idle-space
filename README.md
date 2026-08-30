@@ -40,12 +40,12 @@ Pushing to `main` triggers the CI/CD pipeline which builds, tests, and deploys t
 
 ## Technologies
 
-| Category       | Tool                                      |
-|----------------|-------------------------------------------|
-| Framework      | React 18, TypeScript (strict)             |
-| Build          | Vite 5                                    |
-| PWA            | vite-plugin-pwa, idb (IndexedDB)          |
-| Unit Tests     | Vitest 2, jsdom                           |
-| Component Tests| @testing-library/react, @testing-library/user-event |
-| E2E Tests      | Playwright (Chromium + WebKit)            |
-| CI/CD          | GitHub Actions, GitHub Pages              |
+| Category        | Tool                                                |
+| --------------- | --------------------------------------------------- |
+| Framework       | React 18, TypeScript (strict)                       |
+| Build           | Vite 5                                              |
+| PWA             | vite-plugin-pwa, idb (IndexedDB)                    |
+| Unit Tests      | Vitest 2, jsdom                                     |
+| Component Tests | @testing-library/react, @testing-library/user-event |
+| E2E Tests       | Playwright (Chromium + WebKit)                      |
+| CI/CD           | GitHub Actions, GitHub Pages                        |

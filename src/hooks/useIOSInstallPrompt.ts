@@ -49,12 +49,10 @@ export const isIOSUserAgent = (userAgent: string): boolean => {
  * so the banner must not appear.
  */
 export const isStandaloneMode = (): boolean => {
-  const navigatorWithStandalone =
-    window.navigator as Navigator & { standalone?: boolean };
+  const navigatorWithStandalone = window.navigator as Navigator & { standalone?: boolean };
   const isLegacyStandalone =
     'standalone' in window.navigator && navigatorWithStandalone.standalone === true;
-  const isModernStandalone =
-    window.matchMedia('(display-mode: standalone)').matches;
+  const isModernStandalone = window.matchMedia('(display-mode: standalone)').matches;
   return isLegacyStandalone || isModernStandalone;
 };
 

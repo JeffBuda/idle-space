@@ -31,9 +31,7 @@ describe('calculateDiff', () => {
   it('should detect a changed value', () => {
     const prev = { a: 1, b: 'hello' };
     const next = { a: 2, b: 'hello' };
-    expect(calculateDiff(prev, next)).toEqual([
-      { key: 'a', from: 1, to: 2 },
-    ]);
+    expect(calculateDiff(prev, next)).toEqual([{ key: 'a', from: 1, to: 2 }]);
   });
 
   it('should detect multiple changed values', () => {
@@ -48,17 +46,13 @@ describe('calculateDiff', () => {
   it('should detect a newly added key (from undefined)', () => {
     const prev = { a: 1 };
     const next = { a: 1, b: 'new' };
-    expect(calculateDiff(prev, next)).toEqual([
-      { key: 'b', from: undefined, to: 'new' },
-    ]);
+    expect(calculateDiff(prev, next)).toEqual([{ key: 'b', from: undefined, to: 'new' }]);
   });
 
   it('should detect a removed key (to undefined)', () => {
     const prev = { a: 1, b: 'value' };
     const next = { a: 1 };
-    expect(calculateDiff(prev, next)).toEqual([
-      { key: 'b', from: 'value', to: undefined },
-    ]);
+    expect(calculateDiff(prev, next)).toEqual([{ key: 'b', from: 'value', to: undefined }]);
   });
 
   it('should handle empty state objects', () => {
@@ -112,9 +106,7 @@ describe('withLogging', () => {
   });
 
   it('should not throw when LogStorageService.append rejects (fire-and-forget)', () => {
-    vi.mocked(LogStorageService.append).mockRejectedValueOnce(
-      new Error('IDB write failed'),
-    );
+    vi.mocked(LogStorageService.append).mockRejectedValueOnce(new Error('IDB write failed'));
     const wrapped = withLogging(engineReducer);
     const action: GameAction = { type: 'APP_WAKE' };
 

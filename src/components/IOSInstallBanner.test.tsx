@@ -94,17 +94,13 @@ describe('IOSInstallBanner', () => {
   it('renders on iOS iPhone Safari in standard browser mode', async () => {
     setUserAgent(IOS_IPHONE_UA);
     render(<IOSInstallBanner />);
-    expect(
-      await screen.findByTestId('ios-install-banner')
-    ).toBeInTheDocument();
+    expect(await screen.findByTestId('ios-install-banner')).toBeInTheDocument();
   });
 
   it('renders on iOS iPad Safari in standard browser mode', async () => {
     setUserAgent(IOS_IPAD_UA);
     render(<IOSInstallBanner />);
-    expect(
-      await screen.findByTestId('ios-install-banner')
-    ).toBeInTheDocument();
+    expect(await screen.findByTestId('ios-install-banner')).toBeInTheDocument();
   });
 
   // ───────────────────────────────────────────────────────────────
@@ -114,9 +110,7 @@ describe('IOSInstallBanner', () => {
     setUserAgent(CHROME_WINDOWS_UA);
     render(<IOSInstallBanner />);
     await waitFor(() => {
-      expect(
-        screen.queryByTestId('ios-install-banner')
-      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId('ios-install-banner')).not.toBeInTheDocument();
     });
   });
 
@@ -124,9 +118,7 @@ describe('IOSInstallBanner', () => {
     setUserAgent(SAFARI_MACOS_UA);
     render(<IOSInstallBanner />);
     await waitFor(() => {
-      expect(
-        screen.queryByTestId('ios-install-banner')
-      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId('ios-install-banner')).not.toBeInTheDocument();
     });
   });
 
@@ -134,9 +126,7 @@ describe('IOSInstallBanner', () => {
     setUserAgent(CHROME_WINDOWS_UA);
     render(<IOSInstallBanner />);
     await waitFor(() => {
-      expect(
-        screen.queryByTestId('ios-install-banner')
-      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId('ios-install-banner')).not.toBeInTheDocument();
     });
   });
   // ───────────────────────────────────────────────────────────────
@@ -152,9 +142,7 @@ describe('IOSInstallBanner', () => {
     render(<IOSInstallBanner />);
 
     await waitFor(() => {
-      expect(
-        screen.queryByTestId('ios-install-banner')
-      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId('ios-install-banner')).not.toBeInTheDocument();
     });
   });
 
@@ -169,9 +157,7 @@ describe('IOSInstallBanner', () => {
     render(<IOSInstallBanner />);
 
     await waitFor(() => {
-      expect(
-        screen.queryByTestId('ios-install-banner')
-      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId('ios-install-banner')).not.toBeInTheDocument();
     });
   });
 
@@ -188,14 +174,10 @@ describe('IOSInstallBanner', () => {
     fireEvent.click(dismissButton);
 
     await waitFor(() => {
-      expect(
-        screen.queryByTestId('ios-install-banner')
-      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId('ios-install-banner')).not.toBeInTheDocument();
     });
 
-    expect(
-      sessionStorage.getItem(IOS_INSTALL_PROMPT_DISMISSED_KEY)
-    ).toBe('true');
+    expect(sessionStorage.getItem(IOS_INSTALL_PROMPT_DISMISSED_KEY)).toBe('true');
   });
 
   it('does not render if the banner was previously dismissed in this session', async () => {
@@ -204,9 +186,7 @@ describe('IOSInstallBanner', () => {
     render(<IOSInstallBanner />);
 
     await waitFor(() => {
-      expect(
-        screen.queryByTestId('ios-install-banner')
-      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId('ios-install-banner')).not.toBeInTheDocument();
     });
   });
 
@@ -245,10 +225,6 @@ describe('IOSInstallBanner', () => {
     const dismissButton = await screen.findByRole('button', {
       name: 'Dismiss',
     });
-    expect(dismissButton).toHaveAttribute(
-      'data-testid',
-      'ios-install-dismiss'
-    );
+    expect(dismissButton).toHaveAttribute('data-testid', 'ios-install-dismiss');
   });
 });
-

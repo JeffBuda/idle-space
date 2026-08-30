@@ -25,14 +25,9 @@ interface DebugConsoleProps {
 export const DebugConsole = ({ visible, onClose }: DebugConsoleProps) => {
   const { logs, isLoading, refresh, clear } = useDebugLogs();
   const [filter, setFilter] = useState<string>('ALL');
-  const [expandedEntries, setExpandedEntries] = useState<Set<string>>(
-    new Set(),
-  );
+  const [expandedEntries, setExpandedEntries] = useState<Set<string>>(new Set());
 
-  const filteredLogs =
-    filter === 'ALL'
-      ? logs
-      : logs.filter((log) => log.category === filter);
+  const filteredLogs = filter === 'ALL' ? logs : logs.filter((log) => log.category === filter);
 
   const handleExport = () => {
     const dataStr = JSON.stringify(logs, null, 2);
@@ -88,20 +83,10 @@ export const DebugConsole = ({ visible, onClose }: DebugConsoleProps) => {
             </option>
           ))}
         </select>
-        <button
-          type="button"
-          className="debug-btn"
-          data-testid="debug-refresh"
-          onClick={refresh}
-        >
+        <button type="button" className="debug-btn" data-testid="debug-refresh" onClick={refresh}>
           Refresh
         </button>
-        <button
-          type="button"
-          className="debug-btn"
-          data-testid="debug-clear"
-          onClick={clear}
-        >
+        <button type="button" className="debug-btn" data-testid="debug-clear" onClick={clear}>
           Clear
         </button>
         <button
@@ -121,23 +106,12 @@ export const DebugConsole = ({ visible, onClose }: DebugConsoleProps) => {
           <p data-testid="debug-empty">No log entries</p>
         ) : (
           filteredLogs.map((log: LogEntry) => (
-            <div
-              key={log.id}
-              className="log-entry"
-              data-testid={`log-entry-${log.id}`}
-            >
-              <div
-                className="log-meta"
-                onClick={() => toggleExpand(log.id)}
-              >
-                <span className="log-timestamp">
-                  {formatLogTimestamp(log.timestamp)}
-                </span>
+            <div key={log.id} className="log-entry" data-testid={`log-entry-${log.id}`}>
+              <div className="log-meta" onClick={() => toggleExpand(log.id)}>
+                <span className="log-timestamp">{formatLogTimestamp(log.timestamp)}</span>
                 <span className="log-action">{log.actionType}</span>
                 <span className="log-category">{log.category}</span>
-                <span className="log-duration">
-                  {log.executionTimeMs.toFixed(3)}ms
-                </span>
+                <span className="log-duration">{log.executionTimeMs.toFixed(3)}ms</span>
               </div>
               {expandedEntries.has(log.id) && (
                 <div className="log-diff" data-testid={`log-diff-${log.id}`}>

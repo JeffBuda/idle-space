@@ -19,8 +19,8 @@ const mockLogs = [
     id: 'log-1',
     timestamp: Date.now(),
     actionType: 'APP_WAKE',
-  category: 'APP_EVENT',
-  executionTimeMs: 0.05,
+    category: 'APP_EVENT',
+    executionTimeMs: 0.05,
     stateDiff: [{ key: 'totalDistanceKm', from: 0, to: 10 }],
     seed: 'test-seed',
   },
@@ -28,19 +28,21 @@ const mockLogs = [
     id: 'log-2',
     timestamp: Date.now() + 1000,
     actionType: 'APP_SUSPEND',
-  category: 'APP_EVENT',
-  executionTimeMs: 0.03,
+    category: 'APP_EVENT',
+    executionTimeMs: 0.03,
     stateDiff: [{ key: 'elapsedSeconds', from: 0, to: 1 }],
     seed: 'test-seed-2',
   },
 ];
 
-const mockUseDebugLogs = (overrides: Partial<{
-  logs: typeof mockLogs;
-  isLoading: boolean;
-  refresh: ReturnType<typeof vi.fn>;
-  clear: ReturnType<typeof vi.fn>;
-}> = {}) => {
+const mockUseDebugLogs = (
+  overrides: Partial<{
+    logs: typeof mockLogs;
+    isLoading: boolean;
+    refresh: ReturnType<typeof vi.fn>;
+    clear: ReturnType<typeof vi.fn>;
+  }> = {},
+) => {
   vi.mocked(useDebugLogs).mockReturnValue({
     logs: overrides.logs ?? [],
     isLoading: overrides.isLoading ?? false,
@@ -56,9 +58,7 @@ describe('DebugConsole', () => {
 
   it('should not render when visible is false', () => {
     mockUseDebugLogs();
-    const { container } = render(
-      <DebugConsole visible={false} onClose={vi.fn()} />,
-    );
+    const { container } = render(<DebugConsole visible={false} onClose={vi.fn()} />);
     expect(container.firstChild).toBeNull();
   });
 

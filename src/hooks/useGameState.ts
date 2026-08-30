@@ -8,7 +8,6 @@ import { getGameState, saveGameState, initGameState, initDB } from '../db';
 
 export type { GameState };
 
-
 /**
  * Wraps the pure engine reducer with diagnostic logging.
  * Created once at module scope for a stable, memoized reference.
@@ -30,7 +29,7 @@ export const useGameState = (): UseGameStateResult => {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [offlineSeconds, setOfflineSeconds] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Refs to hold mutable state without triggering re-renders
   const gameStateRef = useRef<GameState | null>(null);
   const saveIntervalRef = useRef<number | null>(null);
@@ -46,21 +45,21 @@ export const useGameState = (): UseGameStateResult => {
     try {
       // Ensure IndexedDB is initialized first
       await initDB();
-      
+
       let savedState = await getGameState();
-      
+
       if (!savedState) {
         savedState = await initGameState();
       }
-      
+
       const now = Date.now();
       const elapsed = calculateElapsedSeconds(savedState.lastTimestamp, now);
-      
+
       // Only show offline modal if the user was gone for more than 1 minute
       if (elapsed > OFFLINE_THRESHOLD_SECONDS) {
         setOfflineSeconds(elapsed);
       }
-      
+
       // APP_WAKE: resuming from idle — process idle progression through the
       // logged engine reducer so the event appears in the debug console.
       const action: GameAction = { type: 'APP_WAKE' };
@@ -122,7 +121,7 @@ export const useGameState = (): UseGameStateResult => {
     if (currentState && lastTickRef.current > 0) {
       const now = Date.now();
       const deltaSeconds = calculateElapsedSeconds(lastTickRef.current, now);
-      
+
       if (deltaSeconds > 0) {
         const action: GameAction = { type: 'IDLE_PROGRESSION' };
         const newState = engineReducer(currentState, action, now, currentState.rngSeed);

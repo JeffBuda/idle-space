@@ -34,7 +34,7 @@ export const formatElapsedTime = (totalSeconds: number): string => {
   if (minutes > 0) parts.push(`${minutes}m`);
   parts.push(`${seconds}s`);
 
-    return parts.join(' ');
+  return parts.join(' ');
 };
 
 /**

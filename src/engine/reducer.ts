@@ -27,9 +27,9 @@ export type GameAction =
   // visible again. Processed via the loggedReducer so it appears in the
   // debug console as an event that affects the time aggregation calculation.
   | { type: 'APP_SUSPEND' };
-  // Going idle / backgrounding — dispatched when the tab is hidden or
-  // the page is about to unload. Updates lastTimestamp (the idle baseline)
-  // and is logged as an event.
+// Going idle / backgrounding — dispatched when the tab is hidden or
+// the page is about to unload. Updates lastTimestamp (the idle baseline)
+// and is logged as an event.
 
 /**
  * Function signature for the engine reducer. Used by the logging
@@ -62,7 +62,7 @@ export const engineReducer: EngineReducerFn = (
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _seed,
 ) => {
-    switch (action.type) {
+  switch (action.type) {
     case 'IDLE_PROGRESSION':
     case 'APP_WAKE':
       // Both IDLE_PROGRESSION (real-time tick) and APP_WAKE (resume from idle)

@@ -46,19 +46,13 @@ describe('SettingsMenu', () => {
   it('shows "Show Debug Console" when console is hidden', () => {
     render(<SettingsMenu {...defaultProps} />);
     fireEvent.click(screen.getByTestId('settings-gear'));
-    expect(
-      screen.getByTestId('toggle-debug-console').textContent,
-    ).toContain('Show Debug Console');
+    expect(screen.getByTestId('toggle-debug-console').textContent).toContain('Show Debug Console');
   });
 
   it('shows "Hide Debug Console" when console is visible', () => {
-    render(
-      <SettingsMenu {...defaultProps} debugConsoleVisible={true} />,
-    );
+    render(<SettingsMenu {...defaultProps} debugConsoleVisible={true} />);
     fireEvent.click(screen.getByTestId('settings-gear'));
-    expect(
-      screen.getByTestId('toggle-debug-console').textContent,
-    ).toContain('Hide Debug Console');
+    expect(screen.getByTestId('toggle-debug-console').textContent).toContain('Hide Debug Console');
   });
 
   it('closes settings card after toggling debug console', () => {
@@ -80,19 +74,13 @@ describe('SettingsMenu', () => {
   it('shows "View Game State" when game state viewer is hidden', () => {
     render(<SettingsMenu {...defaultProps} />);
     fireEvent.click(screen.getByTestId('settings-gear'));
-    expect(
-      screen.getByTestId('toggle-game-state').textContent,
-    ).toContain('View Game State');
+    expect(screen.getByTestId('toggle-game-state').textContent).toContain('View Game State');
   });
 
   it('shows "Hide Game State" when game state viewer is visible', () => {
-    render(
-      <SettingsMenu {...defaultProps} gameStateVisible={true} />,
-    );
+    render(<SettingsMenu {...defaultProps} gameStateVisible={true} />);
     fireEvent.click(screen.getByTestId('settings-gear'));
-    expect(
-      screen.getByTestId('toggle-game-state').textContent,
-    ).toContain('Hide Game State');
+    expect(screen.getByTestId('toggle-game-state').textContent).toContain('Hide Game State');
   });
 
   it('closes settings card after toggling game state', () => {

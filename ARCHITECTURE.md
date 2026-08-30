@@ -32,13 +32,13 @@ src/
 
 ### Layer Responsibilities
 
-| Layer | Responsibility |
-|-------|---------------|
-| **engine/** | Pure functions for game logic (time progression, RNG, distance calculation). No React imports. |
-| **hooks/** | (Planned) React hooks that bridge engine logic to component state. |
-| **components/** | (Planned) Presentational React components that consume immutable state. |
-| **utils/** | Pure utility functions (formatting, parsing, calculations). |
-| **db/** | IndexedDB persistence layer using `idb` (openDB). No game logic. |
+| Layer           | Responsibility                                                                                 |
+| --------------- | ---------------------------------------------------------------------------------------------- |
+| **engine/**     | Pure functions for game logic (time progression, RNG, distance calculation). No React imports. |
+| **hooks/**      | (Planned) React hooks that bridge engine logic to component state.                             |
+| **components/** | (Planned) Presentational React components that consume immutable state.                        |
+| **utils/**      | Pure utility functions (formatting, parsing, calculations).                                    |
+| **db/**         | IndexedDB persistence layer using `idb` (openDB). No game logic.                               |
 
 ## 3. Data Flow
 
@@ -57,12 +57,12 @@ IndexedDB (game_state) → useGameState hook → App.tsx → OfflineGreeting / S
 
 ## 4. Testing Pyramid
 
-| Layer | Tool | Location | Purpose |
-|-------|------|----------|---------|
-| Unit | Vitest + jsdom | `src/**/*.test.ts` | Engine logic, pure functions, utilities |
-| Component | Vitest + @testing-library/react | `src/**/*.test.tsx` | React component rendering and behavior |
-| E2E (Basic) | Playwright | `tests/e2e/pwa-launch.spec.ts` | PWA shell, SW registration, IndexedDB persistence |
-| E2E (Interactive) | Playwright (serial) | `tests/e2e/game-state-interaction.spec.ts` | Offline greeting, dismissal, real-time increments |
+| Layer             | Tool                            | Location                                   | Purpose                                           |
+| ----------------- | ------------------------------- | ------------------------------------------ | ------------------------------------------------- |
+| Unit              | Vitest + jsdom                  | `src/**/*.test.ts`                         | Engine logic, pure functions, utilities           |
+| Component         | Vitest + @testing-library/react | `src/**/*.test.tsx`                        | React component rendering and behavior            |
+| E2E (Basic)       | Playwright                      | `tests/e2e/pwa-launch.spec.ts`             | PWA shell, SW registration, IndexedDB persistence |
+| E2E (Interactive) | Playwright (serial)             | `tests/e2e/game-state-interaction.spec.ts` | Offline greeting, dismissal, real-time increments |
 
 ## 5. Key Design Decisions
 

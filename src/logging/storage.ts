@@ -11,12 +11,7 @@
 // This module depends on the db layer (src/db) for IDB access and
 // the LogEntry type. It is NOT imported by the engine layer.
 import type { LogEntry } from '../db';
-import {
-  getLogEntries,
-  saveLogEntries,
-  clearLogEntries,
-  LOG_ENTRY_LIMIT,
-} from '../db';
+import { getLogEntries, saveLogEntries, clearLogEntries, LOG_ENTRY_LIMIT } from '../db';
 
 /**
  * Internal write queue: serializes appends so that concurrent
@@ -47,11 +42,9 @@ export const LogStorageService = {
       await saveLogEntries(trimmed);
     };
 
-        writeQueue = writeQueue
-      .then(doWrite, doWrite)
-      .catch((err) => {
-        console.warn('Failed to persist debug log entry:', err);
-      });
+    writeQueue = writeQueue.then(doWrite, doWrite).catch((err) => {
+      console.warn('Failed to persist debug log entry:', err);
+    });
 
     return writeQueue;
   },

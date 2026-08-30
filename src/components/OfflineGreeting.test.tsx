@@ -14,7 +14,7 @@ describe('OfflineGreeting', () => {
         offlineSeconds={null}
         onDismiss={mockOnDismiss}
         onCollectRewards={mockOnCollectRewards}
-      />
+      />,
     );
     expect(container.firstChild).toBeNull();
   });
@@ -25,7 +25,7 @@ describe('OfflineGreeting', () => {
         offlineSeconds={3661} // 1h 1m 1s
         onDismiss={mockOnDismiss}
         onCollectRewards={mockOnCollectRewards}
-      />
+      />,
     );
 
     expect(screen.getByText('Welcome Back, Explorer!')).toBeInTheDocument();
@@ -39,13 +39,11 @@ describe('OfflineGreeting', () => {
         offlineSeconds={offlineSeconds}
         onDismiss={mockOnDismiss}
         onCollectRewards={mockOnCollectRewards}
-      />
+      />,
     );
 
     const expectedTime = formatElapsedTime(offlineSeconds);
-    expect(screen.getByTestId('offline-time-display')).toHaveTextContent(
-      expectedTime
-    );
+    expect(screen.getByTestId('offline-time-display')).toHaveTextContent(expectedTime);
   });
 
   it('should call onDismiss when dismiss button is clicked', () => {
@@ -54,7 +52,7 @@ describe('OfflineGreeting', () => {
         offlineSeconds={3600}
         onDismiss={mockOnDismiss}
         onCollectRewards={mockOnCollectRewards}
-      />
+      />,
     );
 
     const dismissBtn = screen.getByTestId('dismiss-offline-btn');
@@ -68,7 +66,7 @@ describe('OfflineGreeting', () => {
         offlineSeconds={3600}
         onDismiss={mockOnDismiss}
         onCollectRewards={mockOnCollectRewards}
-      />
+      />,
     );
 
     const collectBtn = screen.getByTestId('collect-rewards-btn');
@@ -82,11 +80,11 @@ describe('OfflineGreeting', () => {
         offlineSeconds={7200}
         onDismiss={mockOnDismiss}
         onCollectRewards={mockOnCollectRewards}
-      />
+      />,
     );
 
     expect(
-      screen.getByText("Your ship has continued its journey in your absence.")
+      screen.getByText('Your ship has continued its journey in your absence.'),
     ).toBeInTheDocument();
   });
 });

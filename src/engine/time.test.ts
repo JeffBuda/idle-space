@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { calculateIdleDistance, processIdleProgression, type EngineState, type GameState } from './time';
+import {
+  calculateIdleDistance,
+  processIdleProgression,
+  type EngineState,
+  type GameState,
+} from './time';
 
 describe('calculateIdleDistance', () => {
   const baseState: EngineState = {

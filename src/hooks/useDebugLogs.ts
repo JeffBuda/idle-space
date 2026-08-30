@@ -13,7 +13,6 @@ export interface UseDebugLogsResult {
 export { LogCategory } from '../logging/types';
 export type { LogEntry };
 
-
 /**
  * React hook that interfaces with the diagnostic logging system.
  *

@@ -44,7 +44,9 @@ const App = () => {
 
   // Idle progression & offline tracking
   const { gameState, offlineSeconds, clearOfflineSeconds, isLoading } = useGameState();
-  const handleCollectRewards = () => { clearOfflineSeconds(); };
+  const handleCollectRewards = () => {
+    clearOfflineSeconds();
+  };
 
   if (isLoading) {
     return (
@@ -82,11 +84,15 @@ const App = () => {
           <h2>Application Status</h2>
           <div className="status-item">
             <span className="label">Service Worker</span>
-            <span data-testid="sw-status" className="value">{swStatus}</span>
+            <span data-testid="sw-status" className="value">
+              {swStatus}
+            </span>
           </div>
           <div className="status-item">
             <span className="label">IndexedDB</span>
-            <span data-testid="db-status" className="value">{dbStatus}</span>
+            <span data-testid="db-status" className="value">
+              {dbStatus}
+            </span>
           </div>
           <div className="status-item">
             <span className="label">Install Ready</span>
@@ -122,7 +128,9 @@ const App = () => {
           <h2>Build Information</h2>
           <div className="status-item">
             <span className="label">Version</span>
-            <span data-testid="app-version" className="value">{APP_VERSION}</span>
+            <span data-testid="app-version" className="value">
+              {APP_VERSION}
+            </span>
           </div>
           <div className="status-item">
             <span className="label">Build Date</span>
@@ -144,10 +152,7 @@ const App = () => {
       <IOSInstallBanner />
 
       {/* Debug console */}
-      <DebugConsole
-        visible={debugConsoleVisible}
-        onClose={() => setDebugConsoleVisible(false)}
-      />
+      <DebugConsole visible={debugConsoleVisible} onClose={() => setDebugConsoleVisible(false)} />
 
       {/* Game state viewer */}
       <GameStateViewer

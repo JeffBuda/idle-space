@@ -15,20 +15,12 @@ export interface GameStateViewerProps {
  * Accessible from the SettingsMenu via the "View Game State" toggle.
  * Receives immutable GameState passed down from the useGameState hook.
  */
-export const GameStateViewer = ({
-  visible,
-  gameState,
-  onClose,
-}: GameStateViewerProps) => {
+export const GameStateViewer = ({ visible, gameState, onClose }: GameStateViewerProps) => {
   if (!visible) return null;
 
   return (
     <aside className="game-state-viewer" data-testid="game-state-viewer">
-      <div
-        className="gs-backdrop"
-        data-testid="game-state-backdrop"
-        onClick={onClose}
-      />
+      <div className="gs-backdrop" data-testid="game-state-backdrop" onClick={onClose} />
       <div className="gs-modal">
         <div className="gs-header">
           <h3 data-testid="game-state-title">Game State</h3>

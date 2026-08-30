@@ -59,9 +59,7 @@ export const SettingsMenu = ({
           <h3 className="settings-title">Settings</h3>
           <button
             type="button"
-            className={`settings-toggle ${
-              debugConsoleVisible ? 'settings-on' : 'settings-off'
-            }`}
+            className={`settings-toggle ${debugConsoleVisible ? 'settings-on' : 'settings-off'}`}
             data-testid="toggle-debug-console"
             onClick={() => {
               onToggleDebugConsole();
@@ -72,9 +70,7 @@ export const SettingsMenu = ({
           </button>
           <button
             type="button"
-            className={`settings-toggle ${
-              gameStateVisible ? 'settings-on' : 'settings-off'
-            }`}
+            className={`settings-toggle ${gameStateVisible ? 'settings-on' : 'settings-off'}`}
             data-testid="toggle-game-state"
             onClick={() => {
               onToggleGameState();

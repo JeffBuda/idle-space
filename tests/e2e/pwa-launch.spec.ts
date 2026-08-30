@@ -34,22 +34,18 @@ async function getGameStateFromIDB(page: Page): Promise<unknown | null> {
 async function waitForServiceWorker(page: Page, timeoutMs = 5000): Promise<void> {
   await page.waitForFunction(
     () => navigator.serviceWorker && navigator.serviceWorker.controller !== null,
-    { timeout: timeoutMs }
+    { timeout: timeoutMs },
   );
 }
 
 // ---------------------------------------------------------------------------
 // Test 1 — UI Render: main header and status widgets exist in the DOM.
 // ---------------------------------------------------------------------------
-test('Test 1 (UI Render): main headers and status widgets exist', async ({
-  page,
-}) => {
+test('Test 1 (UI Render): main headers and status widgets exist', async ({ page }) => {
   await page.goto('/');
 
   // Header
-  await expect(
-    page.getByRole('heading', { name: 'Space Exploration Idle PWA' })
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Space Exploration Idle PWA' })).toBeVisible();
 
   // Status widgets
   await expect(page.getByText('Service Worker')).toBeVisible();
@@ -78,18 +74,14 @@ test('Test 2 (Service Worker Registration): controller becomes active within 10 
 
   await waitForServiceWorker(page, 10000);
 
-  const hasController = await page.evaluate(
-    () => navigator.serviceWorker?.controller !== null
-  );
+  const hasController = await page.evaluate(() => navigator.serviceWorker?.controller !== null);
   expect(hasController).toBe(true);
 });
 
 // ---------------------------------------------------------------------------
 // Test 3 — IndexedDB Operations: data persists across a page reload.
 // ---------------------------------------------------------------------------
-test('Test 3 (IndexedDB Operations): state persists across reload', async ({
-  page,
-}) => {
+test('Test 3 (IndexedDB Operations): state persists across reload', async ({ page }) => {
   await page.goto('/');
 
   // Wait for game state to load
@@ -113,9 +105,7 @@ test('Test 3 (IndexedDB Operations): state persists across reload', async ({
 // ---------------------------------------------------------------------------
 // Test 4 — Game State Creation: game_state is created on first load.
 // ---------------------------------------------------------------------------
-test('Test 4 (Game State Creation): game state is created and displayed', async ({
-  page,
-}) => {
+test('Test 4 (Game State Creation): game state is created and displayed', async ({ page }) => {
   await page.goto('/');
 
   // Wait for game state to load

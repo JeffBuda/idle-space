@@ -54,7 +54,7 @@ describe('formatElapsedTime', () => {
     expect(formatElapsedTime(0)).toBe('0s');
   });
 
-    it('should omit zero-value components (except seconds)', () => {
+  it('should omit zero-value components (except seconds)', () => {
     expect(formatElapsedTime(3600)).toBe('1h 0s');
     expect(formatElapsedTime(86400)).toBe('1d 0s');
     // 90061 seconds = 1 day, 1 hour, 1 minute, 1 second
