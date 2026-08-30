@@ -8,7 +8,7 @@ import { test, expect, type Page } from '@playwright/test';
  *   - The gear icon (⚙️) appears in the app header
  *   - Clicking the gear opens the settings card
  *   - The debug console toggle and panel work end-to-end
- *   - Log entries from idle progression appear in the console
+  *   - Log entries from app events (wake/suspend) appear in the console
  *
  * Serial block is used because idle progression writes to IndexedDB
  * (game_state and space_idle_logs stores). The beforeEach hook clears
@@ -97,7 +97,7 @@ test.describe.serial('debug console toggle flow', () => {
   test.beforeEach(async ({ page }) => {
     await clearIndexedDB(page);
     await page.goto('/');
-    // Wait for initial game state load + first idle tick
+    // Wait for initial game state load + wake event log entry
     await page.waitForTimeout(2000);
   });
 
@@ -130,7 +130,7 @@ test.describe.serial('debug console toggle flow', () => {
     console.log('All debug console controls are present');
   });
 
-  test('debug console displays log entries from idle progression', async ({
+  test('debug console displays log entries from app events (not game ticks)', async ({
     page,
   }) => {
     // Open settings and toggle debug console on
@@ -139,24 +139,28 @@ test.describe.serial('debug console toggle flow', () => {
 
     const consolePanel = page.getByTestId('debug-console');
     await expect(consolePanel).toBeVisible();
-    console.log('Debug console visible, waiting for log entries to appear');
+    console.log('Debug console visible');
 
-    // Wait for the 1-second interval tick to fire multiple times
-    await page.waitForTimeout(5000);
+    // No need to wait for ticks — ticks no longer produce log entries.
+    // The page load in beforeEach triggered handleWake(), which produced
+    // an APP_WAKE log entry via the loggedReducer.
+    await page.waitForTimeout(500);
 
     // Check for log entries
     const entries = page.locator('[data-testid^="log-entry-"]');
     const count = await entries.count();
     console.log(`Found ${count} log entries in debug console`);
 
-    // At least one entry should exist after ticks fire
-    if (count > 0) {
-      const firstEntry = entries.first();
-      await expect(firstEntry).toBeVisible();
-      const entryText = await firstEntry.textContent();
-      expect(entryText).toBeTruthy();
-      console.log(`First log entry content: ${entryText}`);
-    }
+    // At least one entry should exist from the wake event on page load
+    expect(count).toBeGreaterThan(0);
+
+    // Verify the entry is an APP_WAKE event (not a tick)
+    const firstEntry = entries.first();
+    await expect(firstEntry).toBeVisible();
+    const entryText = await firstEntry.textContent();
+    expect(entryText).toBeTruthy();
+    expect(entryText).toContain('APP_WAKE');
+    console.log(`First log entry content: ${entryText}`);
   });
 
   test('debug console shows empty state when no logs exist', async ({
@@ -184,14 +188,15 @@ test.describe.serial('debug console toggle flow', () => {
     await page.getByTestId('toggle-debug-console').click();
 
     await expect(page.getByTestId('debug-console')).toBeVisible();
-    await page.waitForTimeout(3000);
+    // The page load produced an APP_WAKE log entry — no need to wait for ticks
+    await page.waitForTimeout(500);
 
     // The filter dropdown should exist
     const filter = page.getByTestId('debug-filter');
     await expect(filter).toBeVisible();
 
     // Change filter to a specific category
-    await filter.selectOption('ENGINE_TICK');
+    await filter.selectOption('APP_EVENT');
     await page.waitForTimeout(500);
 
     // All visible entries should match the filter
@@ -200,15 +205,56 @@ test.describe.serial('debug console toggle flow', () => {
     for (let i = 0; i < count; i++) {
       const entry = entries.nth(i);
       const categoryText = await entry.locator('.log-category').textContent();
-      expect(categoryText).toBe('ENGINE_TICK');
+      expect(categoryText).toBe('APP_EVENT');
     }
-    console.log(`Filtered to ENGINE_TICK: ${count} entries visible`);
+    console.log(`Filtered to APP_EVENT: ${count} entries visible`);
 
     // Switch back to ALL
     await filter.selectOption('ALL');
     await page.waitForTimeout(500);
     const allCount = await page.locator('[data-testid^="log-entry-"]').count();
     console.log(`All categories: ${allCount} entries visible`);
+  });
+
+  test('debug console logs suspend and resume events', async ({ page }) => {
+    // Open debug console — page load already produced an APP_WAKE entry
+    await page.getByTestId('settings-gear').click();
+    await page.getByTestId('toggle-debug-console').click();
+    await expect(page.getByTestId('debug-console')).toBeVisible();
+    await page.waitForTimeout(500);
+
+    // Record initial entry count (should include the wake event from page load)
+    let entries = page.locator('[data-testid^="log-entry-"]');
+    const initialCount = await entries.count();
+    console.log('Initial log entries (from wake on load):', initialCount);
+    expect(initialCount).toBeGreaterThan(0);
+
+    // Simulate going idle (tab hidden) — triggers handleSuspend
+    await page.evaluate(() => {
+      Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await page.waitForTimeout(500);
+
+    // Wait > 1 second so the resume event has a non-zero idle delta
+    await page.waitForTimeout(1500);
+
+    // Simulate resuming (tab visible) — triggers handleWake
+    await page.evaluate(() => {
+      Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await page.waitForTimeout(1000);
+
+    // Refresh to reload logs from IndexedDB (useDebugLogs loads on mount, not auto-refresh)
+    await page.getByTestId('debug-refresh').click();
+    await page.waitForTimeout(500);
+
+    // There should now be additional entries for suspend + resume
+    entries = page.locator('[data-testid^="log-entry-"]');
+    const updatedCount = await entries.count();
+    console.log('Updated log entries (after suspend/resume cycle):', updatedCount);
+    expect(updatedCount).toBeGreaterThanOrEqual(initialCount + 2);
   });
 
   test('debug console refresh button reloads entries', async ({ page }) => {

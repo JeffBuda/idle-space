@@ -58,8 +58,9 @@ export const useGameState = (): UseGameStateResult => {
         setOfflineSeconds(elapsed);
       }
       
-      // Process idle progression through the logged engine reducer
-      const action: GameAction = { type: 'IDLE_PROGRESSION' };
+      // APP_WAKE: resuming from idle — process idle progression through the
+      // logged engine reducer so the event appears in the debug console.
+      const action: GameAction = { type: 'APP_WAKE' };
       const newState = loggedReducer(savedState, action, now, savedState.rngSeed);
       setGameState(newState);
       lastTickRef.current = now;
@@ -75,13 +76,14 @@ export const useGameState = (): UseGameStateResult => {
     try {
       const currentState = gameStateRef.current;
       if (currentState) {
-        const stateToSave = {
-          ...currentState,
-          lastTimestamp: Date.now(),
-        };
-        await saveGameState(stateToSave);
-        gameStateRef.current = stateToSave;
-        setGameState(stateToSave);
+        const now = Date.now();
+        // APP_SUSPEND: going idle — dispatch through the logged engine reducer
+        // so the event and its lastTimestamp update appear in the debug console.
+        const action: GameAction = { type: 'APP_SUSPEND' };
+        const newState = loggedReducer(currentState, action, now, currentState.rngSeed);
+        gameStateRef.current = newState;
+        setGameState(newState);
+        await saveGameState(newState);
       } else {
         // Save current timestamp even if we haven't loaded state yet
         const defaultState = await initGameState();
@@ -107,7 +109,11 @@ export const useGameState = (): UseGameStateResult => {
     setOfflineSeconds(null);
   }, []);
 
-  // Real-time tick to update elapsed seconds every second
+  // Real-time tick to update elapsed seconds every second.
+  // Uses the raw engineReducer (NOT loggedReducer) to avoid producing a
+  // debug log entry for every 1-second game tick. Only events that affect
+  // the time aggregation calculation (going idle, resuming from idle) are
+  // logged, via APP_WAKE and APP_SUSPEND action types.
   const tick = useCallback(() => {
     const currentState = gameStateRef.current;
     if (currentState && lastTickRef.current > 0) {
@@ -116,7 +122,7 @@ export const useGameState = (): UseGameStateResult => {
       
       if (deltaSeconds > 0) {
         const action: GameAction = { type: 'IDLE_PROGRESSION' };
-        const newState = loggedReducer(currentState, action, now, currentState.rngSeed);
+        const newState = engineReducer(currentState, action, now, currentState.rngSeed);
         gameStateRef.current = newState;
         setGameState(newState);
         lastTickRef.current = now;

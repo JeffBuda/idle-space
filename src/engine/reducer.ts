@@ -18,9 +18,18 @@ import { processIdleProgression, type GameState } from './time';
  * interceptor can capture action metadata without coupling to
  * individual engine functions.
  */
-export type GameAction = {
-  type: 'IDLE_PROGRESSION';
-};
+export type GameAction =
+  | { type: 'IDLE_PROGRESSION' }
+  // Real-time game tick — dispatched every second by the 1-second interval.
+  // Uses the raw engineReducer (no logging) to avoid flooding the debug console.
+  | { type: 'APP_WAKE' }
+  // Resuming from idle / foregrounding — dispatched when the tab becomes
+  // visible again. Processed via the loggedReducer so it appears in the
+  // debug console as an event that affects the time aggregation calculation.
+  | { type: 'APP_SUSPEND' };
+  // Going idle / backgrounding — dispatched when the tab is hidden or
+  // the page is about to unload. Updates lastTimestamp (the idle baseline)
+  // and is logged as an event.
 
 /**
  * Function signature for the engine reducer. Used by the logging
@@ -53,9 +62,18 @@ export const engineReducer: EngineReducerFn = (
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _seed,
 ) => {
-  switch (action.type) {
+    switch (action.type) {
     case 'IDLE_PROGRESSION':
+    case 'APP_WAKE':
+      // Both IDLE_PROGRESSION (real-time tick) and APP_WAKE (resume from idle)
+      // calculate accumulated idle distance. APP_WAKE is logged via the
+      // withLogging interceptor; IDLE_PROGRESSION bypasses logging to avoid
+      // flooding the debug console with per-second entries.
       return processIdleProgression(prevState, currentTime, SPEED_KM_PER_SEC);
+    case 'APP_SUSPEND':
+      // Going idle — snapshot the current timestamp as the idle baseline.
+      // The next processIdleProgression call (on wake) will delta from this.
+      return { ...prevState, lastTimestamp: currentTime };
     default:
       return prevState;
   }
