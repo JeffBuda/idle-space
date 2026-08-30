@@ -219,3 +219,45 @@ test('utils layer should have no circular dependencies', async () => {
       .haveNoCycles(),
   ).toPassAsync();
 });
+// ---------------------------------------------------------------------------
+// Logging layer isolation
+// (diagnostic logging - depends on engine and db, but not hooks/components)
+// ---------------------------------------------------------------------------
+test('engine layer should not depend on logging layer', async () => {
+  await expect(
+    projectFiles(configPath)
+      .inFolder('src/engine')
+      .shouldNot()
+      .dependOnFiles()
+      .inFolder('src/logging'),
+  ).toPassAsync();
+});
+
+test('logging layer should not depend on components layer', async () => {
+  await expect(
+    projectFiles(configPath)
+      .inFolder('src/logging')
+      .shouldNot()
+      .dependOnFiles()
+      .inFolder('src/components'),
+  ).toPassAsync();
+});
+
+test('logging layer should not depend on hooks layer', async () => {
+  await expect(
+    projectFiles(configPath)
+      .inFolder('src/logging')
+      .shouldNot()
+      .dependOnFiles()
+      .inFolder('src/hooks'),
+  ).toPassAsync();
+});
+
+test('logging layer should have no circular dependencies', async () => {
+  await expect(
+    projectFiles(configPath)
+      .inFolder('src/logging')
+      .should()
+      .haveNoCycles()
+  ).toPassAsync();
+});
