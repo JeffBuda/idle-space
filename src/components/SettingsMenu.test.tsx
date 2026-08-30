@@ -7,6 +7,8 @@ describe('SettingsMenu', () => {
   const defaultProps = {
     debugConsoleVisible: false,
     onToggleDebugConsole: vi.fn(),
+    gameStateVisible: false,
+    onToggleGameState: vi.fn(),
   };
 
   beforeEach(() => {
@@ -65,6 +67,40 @@ describe('SettingsMenu', () => {
     expect(screen.getByTestId('settings-card')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('toggle-debug-console'));
+    expect(screen.queryByTestId('settings-card')).not.toBeInTheDocument();
+  });
+
+  it('calls onToggleGameState when toggle button is clicked', () => {
+    render(<SettingsMenu {...defaultProps} />);
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    fireEvent.click(screen.getByTestId('toggle-game-state'));
+    expect(defaultProps.onToggleGameState).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows "View Game State" when game state viewer is hidden', () => {
+    render(<SettingsMenu {...defaultProps} />);
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    expect(
+      screen.getByTestId('toggle-game-state').textContent,
+    ).toContain('View Game State');
+  });
+
+  it('shows "Hide Game State" when game state viewer is visible', () => {
+    render(
+      <SettingsMenu {...defaultProps} gameStateVisible={true} />,
+    );
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    expect(
+      screen.getByTestId('toggle-game-state').textContent,
+    ).toContain('Hide Game State');
+  });
+
+  it('closes settings card after toggling game state', () => {
+    render(<SettingsMenu {...defaultProps} />);
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    expect(screen.getByTestId('settings-card')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('toggle-game-state'));
     expect(screen.queryByTestId('settings-card')).not.toBeInTheDocument();
   });
 });

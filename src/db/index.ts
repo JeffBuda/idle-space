@@ -20,7 +20,7 @@ export interface GameState {
  * object store. Created by the withLogging interceptor
  * (src/logging/logger.ts) and consumed by the DebugConsole overlay.
  *
- * This type is self-contained — it does NOT reference GameState from
+ * This type is self-contained ΓÇö it does NOT reference GameState from
  * the engine layer, preserving the db layer's architectural isolation.
  */
 export interface LogEntry {

@@ -2,7 +2,7 @@
 //
 // Interceptor (middleware) that wraps the pure engine reducer.
 // Captures execution timing, state diffs, and dispatches log entries
-// to the LogStorageService — without modifying the core engine logic.
+// to the LogStorageService ΓÇö without modifying the core engine logic.
 //
 // Key design principles:
 //   - DRY: Logging logic lives here, written exactly once, rather than
@@ -20,22 +20,21 @@ import { LogCategory } from './types';
 import { LogStorageService } from './storage';
 
 /**
- * Maps GameAction.type → broader LogCategory for the filter dropdown.
+ * Maps GameAction.type -> broader LogCategory for the filter dropdown.
  *
- * Only event-type actions are logged — the high-frequency IDLE_PROGRESSION
- * (real-time tick) bypasses the logging interceptor entirely by calling the
- * raw engineReducer directly in the hook. The entries below cover every
- * action that *does* flow through withLogging.
+ * Only event-type actions are logged. The high-frequency IDLE_PROGRESSION
+ * (real-time tick) is explicitly skipped inside withLogging to avoid
+ * flooding the debug console with thousands of entries (it fires every
+ * 1 second). The entries below cover every action that *does* get logged.
  */
 const ACTION_CATEGORY: Record<string, LogCategory> = {
-  IDLE_PROGRESSION: LogCategory.ENGINE_TICK,
   APP_WAKE: LogCategory.APP_EVENT,
   APP_SUSPEND: LogCategory.APP_EVENT,
 };
 
 /**
  * Calculates a shallow diff between two state snapshots, returning
- * only the top-level keys whose values changed. Pure function — no
+ * only the top-level keys whose values changed. Pure function ΓÇö no
  * side effects, easy to unit test.
  *
  * @param prev - The previous state snapshot
@@ -86,11 +85,18 @@ export const withLogging = (reducer: EngineReducerFn): EngineReducerFn => {
     const newState = reducer(prevState, action, currentTime, seed);
     const executionTimeMs = performance.now() - startTime;
 
+    // Skip logging for high-frequency engine tick actions.
+    // These fire every 1s via the real-time tick interval in useGameState
+    // and would flood the debug console with thousands of entries.
+    if (action.type === 'IDLE_PROGRESSION') {
+      return newState;
+    }
+
     const logEntry: LogEntry = {
       id: generateLogEntryId(),
       timestamp: Date.now(),
       actionType: action.type,
-      category: ACTION_CATEGORY[action.type] ?? LogCategory.ENGINE_TICK,
+      category: ACTION_CATEGORY[action.type] ?? LogCategory.APP_EVENT,
       executionTimeMs,
       stateDiff: calculateDiff(
         prevState as unknown as Record<string, unknown>,

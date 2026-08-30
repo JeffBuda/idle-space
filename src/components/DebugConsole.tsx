@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useDebugLogs } from '../hooks/useDebugLogs';
 import { LogCategory } from '../logging/types';
+import { formatLogTimestamp } from '../utils/time';
 import type { LogEntry } from '../hooks/useDebugLogs';
 import './DebugConsole.css';
 
@@ -69,7 +70,7 @@ export const DebugConsole = ({ visible, onClose }: DebugConsoleProps) => {
           aria-label="Close debug console"
           onClick={onClose}
         >
-          ✕
+          Γ£ò
         </button>
       </div>
 
@@ -130,7 +131,7 @@ export const DebugConsole = ({ visible, onClose }: DebugConsoleProps) => {
                 onClick={() => toggleExpand(log.id)}
               >
                 <span className="log-timestamp">
-                  {new Date(log.timestamp).toISOString()}
+                  {formatLogTimestamp(log.timestamp)}
                 </span>
                 <span className="log-action">{log.actionType}</span>
                 <span className="log-category">{log.category}</span>

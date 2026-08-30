@@ -5,31 +5,31 @@ import { DebugConsole } from './DebugConsole';
 import { useDebugLogs } from '../hooks/useDebugLogs';
 import { LogCategory } from '../logging/types';
 
-// Mock the useDebugLogs hook — the component should not touch IndexedDB directly
+// Mock the useDebugLogs hook ΓÇö the component should not touch IndexedDB directly
 vi.mock('../hooks/useDebugLogs', () => ({
   useDebugLogs: vi.fn(),
 }));
 
 vi.mock('../logging/types', () => ({
-  LogCategory: { ENGINE_TICK: 'ENGINE_TICK' },
+  LogCategory: { APP_EVENT: 'APP_EVENT' },
 }));
 
 const mockLogs = [
   {
     id: 'log-1',
     timestamp: Date.now(),
-    actionType: 'IDLE_PROGRESSION',
-    category: 'ENGINE_TICK',
-    executionTimeMs: 0.05,
+    actionType: 'APP_WAKE',
+  category: 'APP_EVENT',
+  executionTimeMs: 0.05,
     stateDiff: [{ key: 'totalDistanceKm', from: 0, to: 10 }],
     seed: 'test-seed',
   },
   {
     id: 'log-2',
     timestamp: Date.now() + 1000,
-    actionType: 'IDLE_PROGRESSION',
-    category: 'ENGINE_TICK',
-    executionTimeMs: 0.03,
+    actionType: 'APP_SUSPEND',
+  category: 'APP_EVENT',
+  executionTimeMs: 0.03,
     stateDiff: [{ key: 'elapsedSeconds', from: 0, to: 1 }],
     seed: 'test-seed-2',
   },
@@ -103,7 +103,7 @@ describe('DebugConsole', () => {
     const filter = screen.getByTestId('debug-filter');
     expect(filter).toBeInTheDocument();
     expect(screen.getByText('All')).toBeInTheDocument();
-    expect(screen.getByText(LogCategory.ENGINE_TICK, { selector: 'option' })).toBeInTheDocument();
+    expect(screen.getByText(LogCategory.APP_EVENT, { selector: 'option' })).toBeInTheDocument();
   });
 
   it('should call refresh when the Refresh button is clicked', () => {
@@ -132,5 +132,14 @@ describe('DebugConsole', () => {
     // Click the log meta to expand
     fireEvent.click(screen.getByTestId('log-entry-log-1').firstChild!);
     expect(screen.getByTestId('log-diff-log-1')).toBeInTheDocument();
+  });
+
+  it('should use short locale date and time for log timestamps', () => {
+    const ts = new Date('2024-06-15T10:30:45.000Z').getTime();
+    mockUseDebugLogs({ logs: [{ ...mockLogs[0], timestamp: ts }] });
+    render(<DebugConsole visible={true} onClose={vi.fn()} />);
+    const allText = document.body.textContent ?? '';
+    expect(allText).not.toMatch(/2024-06-15T/);
+    expect(allText).not.toMatch(/Z$/);
   });
 });

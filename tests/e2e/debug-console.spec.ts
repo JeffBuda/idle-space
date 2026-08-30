@@ -5,7 +5,7 @@ import { test, expect, type Page } from '@playwright/test';
  * E2E tests for the diagnostic logging system.
  *
  * These tests verify:
- *   - The gear icon (⚙️) appears in the app header
+ *   - The gear icon (ΓÜÖ∩╕Å) appears in the app header
  *   - Clicking the gear opens the settings card
  *   - The debug console toggle and panel work end-to-end
   *   - Log entries from app events (wake/suspend) appear in the console
@@ -43,12 +43,12 @@ const clearIndexedDB = async (page: Page) => {
           tx.objectStore('keyval').clear();
           tx.objectStore('space_idle_logs').clear();
           tx.oncomplete = () => resolve();
-          tx.onerror = () => resolve(); // best-effort — don't reject
+          tx.onerror = () => resolve(); // best-effort ΓÇö don't reject
         };
-        request.onerror = () => resolve(); // best-effort — don't reject
+        request.onerror = () => resolve(); // best-effort ΓÇö don't reject
       });
     } catch {
-      /* IndexedDB may be unavailable in some CI browser contexts —
+      /* IndexedDB may be unavailable in some CI browser contexts ΓÇö
          best-effort cleanup, continue with tests */
     }
   });
@@ -91,7 +91,7 @@ test('clicking outside the settings card closes it', async ({ page }) => {
 });
 
 // ---------------------------------------------------------------------------
-// Debug console interaction tests (modify IndexedDB — run serially)
+// Debug console interaction tests (modify IndexedDB ΓÇö run serially)
 // ---------------------------------------------------------------------------
 test.describe.serial('debug console toggle flow', () => {
   test.beforeEach(async ({ page }) => {
@@ -141,7 +141,7 @@ test.describe.serial('debug console toggle flow', () => {
     await expect(consolePanel).toBeVisible();
     console.log('Debug console visible');
 
-    // No need to wait for ticks — ticks no longer produce log entries.
+    // No need to wait for ticks ΓÇö ticks no longer produce log entries.
     // The page load in beforeEach triggered handleWake(), which produced
     // an APP_WAKE log entry via the loggedReducer.
     await page.waitForTimeout(500);
@@ -188,7 +188,7 @@ test.describe.serial('debug console toggle flow', () => {
     await page.getByTestId('toggle-debug-console').click();
 
     await expect(page.getByTestId('debug-console')).toBeVisible();
-    // The page load produced an APP_WAKE log entry — no need to wait for ticks
+    // The page load produced an APP_WAKE log entry ΓÇö no need to wait for ticks
     await page.waitForTimeout(500);
 
     // The filter dropdown should exist
@@ -217,7 +217,7 @@ test.describe.serial('debug console toggle flow', () => {
   });
 
   test('debug console logs suspend and resume events', async ({ page }) => {
-    // Open debug console — page load already produced an APP_WAKE entry
+    // Open debug console ΓÇö page load already produced an APP_WAKE entry
     await page.getByTestId('settings-gear').click();
     await page.getByTestId('toggle-debug-console').click();
     await expect(page.getByTestId('debug-console')).toBeVisible();
@@ -229,7 +229,7 @@ test.describe.serial('debug console toggle flow', () => {
     console.log('Initial log entries (from wake on load):', initialCount);
     expect(initialCount).toBeGreaterThan(0);
 
-    // Simulate going idle (tab hidden) — triggers handleSuspend
+    // Simulate going idle (tab hidden) ΓÇö triggers handleSuspend
     await page.evaluate(() => {
       Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
       document.dispatchEvent(new Event('visibilitychange'));
@@ -239,7 +239,7 @@ test.describe.serial('debug console toggle flow', () => {
     // Wait > 1 second so the resume event has a non-zero idle delta
     await page.waitForTimeout(1500);
 
-    // Simulate resuming (tab visible) — triggers handleWake
+    // Simulate resuming (tab visible) ΓÇö triggers handleWake
     await page.evaluate(() => {
       Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
       document.dispatchEvent(new Event('visibilitychange'));

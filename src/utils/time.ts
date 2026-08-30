@@ -34,5 +34,20 @@ export const formatElapsedTime = (totalSeconds: number): string => {
   if (minutes > 0) parts.push(`${minutes}m`);
   parts.push(`${seconds}s`);
 
-  return parts.join(' ');
+    return parts.join(' ');
+};
+
+/**
+ * Formats a UNIX timestamp (ms) as a short locale date and time string.
+ * Uses the system locale with `dateStyle: 'short'` and `timeStyle: 'short'`
+ * to produce a concise, human-readable representation (e.g. "1/15/24, 10:30 AM").
+ *
+ * @param timestamp - UNIX timestamp in milliseconds
+ * @returns A short locale string like "6/15/24, 10:30 AM"
+ */
+export const formatLogTimestamp = (timestamp: number): string => {
+  return new Date(timestamp).toLocaleString(undefined, {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  });
 };

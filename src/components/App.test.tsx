@@ -136,10 +136,46 @@ describe('App', () => {
     expect(screen.getByTestId('settings-gear')).toBeInTheDocument();
   });
 
-  it('opens settings card when gear icon is clicked', () => {
+    it('opens settings card when gear icon is clicked', () => {
     render(<App />);
     fireEvent.click(screen.getByTestId('settings-gear'));
     expect(screen.getByTestId('settings-card')).toBeInTheDocument();
+  });
+
+  it('opens game state viewer when "View Game State" is clicked', async () => {
+    render(<App />);
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    fireEvent.click(screen.getByTestId('toggle-game-state'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('game-state-viewer')).toBeInTheDocument();
+    });
+  });
+
+  it('displays game state JSON in the viewer when visible', async () => {
+    render(<App />);
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    fireEvent.click(screen.getByTestId('toggle-game-state'));
+
+    await waitFor(() => {
+      const json = screen.getByTestId('game-state-json');
+      expect(json).toBeInTheDocument();
+      expect(json.textContent).toContain('totalDistanceKm');
+      expect(json.textContent).toContain('1000');
+    });
+  });
+
+  it('closes game state viewer when close button is clicked', async () => {
+    render(<App />);
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    fireEvent.click(screen.getByTestId('toggle-game-state'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('game-state-viewer')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('game-state-close'));
+    expect(screen.queryByTestId('game-state-viewer')).not.toBeInTheDocument();
   });
 });
 

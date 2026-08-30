@@ -21,7 +21,7 @@ const makeLogEntry = (overrides: Partial<LogEntry> = {}): LogEntry => ({
   id: `log-${Math.random().toString(36).slice(2, 9)}`,
   timestamp: Date.now(),
   actionType: 'IDLE_PROGRESSION',
-  category: 'ENGINE_TICK',
+  category: 'APP_EVENT',
   executionTimeMs: 0.1,
   stateDiff: [{ key: 'totalDistanceKm', from: 0, to: 10 }],
   seed: 'test-seed',
@@ -91,7 +91,7 @@ describe('LogStorageService', () => {
       const entry1 = makeLogEntry({ id: 'concurrent-1' });
       const entry2 = makeLogEntry({ id: 'concurrent-2' });
 
-      // Append sequentially, awaiting each — the writeQueue serializes them
+      // Append sequentially, awaiting each ΓÇö the writeQueue serializes them
       await LogStorageService.append(entry1);
       await LogStorageService.append(entry2);
 
@@ -107,7 +107,7 @@ describe('LogStorageService', () => {
       vi.mocked(getLogEntries).mockRejectedValue(new Error('IDB error'));
       vi.mocked(saveLogEntries).mockResolvedValue(undefined);
 
-      // Should not throw — the error is caught internally
+      // Should not throw ΓÇö the error is caught internally
       await expect(LogStorageService.append(makeLogEntry())).resolves.toBeUndefined();
     });
   });

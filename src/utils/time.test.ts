@@ -1,6 +1,6 @@
 // src/utils/time.test.ts
 import { describe, it, expect } from 'vitest';
-import { calculateElapsedSeconds, formatElapsedTime } from './time';
+import { calculateElapsedSeconds, formatElapsedTime, formatLogTimestamp } from './time';
 
 describe('calculateElapsedSeconds', () => {
   it('should calculate seconds between two timestamps', () => {
@@ -64,5 +64,33 @@ describe('formatElapsedTime', () => {
   it('should handle large values with multiple days', () => {
     const days = 30 * 86400 + 5 * 3600 + 30 * 60 + 15;
     expect(formatElapsedTime(days)).toBe('30d 5h 30m 15s');
+  });
+});
+
+describe('formatLogTimestamp', () => {
+  it('should format a timestamp as short locale date and time', () => {
+    const ts = new Date('2024-06-15T10:30:45.000Z').getTime();
+    const result = formatLogTimestamp(ts);
+    // Should NOT be ISO 8601 format (no 'T' separator, no 'Z' suffix)
+    expect(result).not.toMatch(/T\d{2}:\d{2}/);
+    expect(result).not.toMatch(/Z$/);
+    // Should contain a time separator
+    expect(result).toContain(':');
+    // Should be a non-empty string
+    expect(result.length).toBeGreaterThan(0);
+  });
+
+  it('should produce a different output than toISOString', () => {
+    const ts = new Date('2024-06-15T10:30:45.000Z').getTime();
+    const result = formatLogTimestamp(ts);
+    const iso = new Date(ts).toISOString();
+    expect(result).not.toBe(iso);
+  });
+
+  it('should handle the current time', () => {
+    const ts = Date.now();
+    const result = formatLogTimestamp(ts);
+    expect(typeof result).toBe('string');
+    expect(result.length).toBeGreaterThan(0);
   });
 });
