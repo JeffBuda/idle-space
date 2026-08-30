@@ -14,10 +14,10 @@
 //
 // The interceptor is a fire-and-forget: the async IDB write is not
 // awaited by the caller, so the state transition is synchronous.
-import type { EngineReducerFn } from '../engine/reducer'
-import type { LogEntry } from '../db'
-import { LogCategory } from './types'
-import { LogStorageService } from './storage'
+import type { EngineReducerFn } from '../engine/reducer';
+import type { LogEntry } from '../db';
+import { LogCategory } from './types';
+import { LogStorageService } from './storage';
 
 /**
  * Maps GameAction.type -> broader LogCategory for the filter dropdown.
@@ -30,7 +30,7 @@ import { LogStorageService } from './storage'
 const ACTION_CATEGORY: Record<string, LogCategory> = {
   APP_WAKE: LogCategory.APP_EVENT,
   APP_SUSPEND: LogCategory.APP_EVENT,
-}
+};
 
 /**
  * Calculates a shallow diff between two state snapshots, returning
@@ -46,24 +46,24 @@ export const calculateDiff = (
   prev: Record<string, unknown>,
   next: Record<string, unknown>,
 ): Array<{ key: string; from: unknown; to: unknown }> => {
-  const diff: Array<{ key: string; from: unknown; to: unknown }> = []
-  const allKeys = new Set([...Object.keys(prev), ...Object.keys(next)])
+  const diff: Array<{ key: string; from: unknown; to: unknown }> = [];
+  const allKeys = new Set([...Object.keys(prev), ...Object.keys(next)]);
   for (const key of allKeys) {
-    const from = prev[key]
-    const to = next[key]
+    const from = prev[key];
+    const to = next[key];
     if (from !== to) {
-      diff.push({ key, from, to })
+      diff.push({ key, from, to });
     }
   }
-  return diff
-}
+  return diff;
+};
 
 /**
  * Generates a pseudo-unique ID for a log entry.
  * Combines a timestamp with a random suffix to avoid collisions
  * when multiple entries are created within the same millisecond.
  */
-const generateLogEntryId = (): string => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+const generateLogEntryId = (): string => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
 /**
  * Higher-order function that wraps a pure engine reducer with
@@ -80,15 +80,15 @@ const generateLogEntryId = (): string => `${Date.now()}-${Math.random().toString
  */
 export const withLogging = (reducer: EngineReducerFn): EngineReducerFn => {
   return (prevState, action, currentTime, seed) => {
-    const startTime = performance.now()
-    const newState = reducer(prevState, action, currentTime, seed)
-    const executionTimeMs = performance.now() - startTime
+    const startTime = performance.now();
+    const newState = reducer(prevState, action, currentTime, seed);
+    const executionTimeMs = performance.now() - startTime;
 
     // Skip logging for high-frequency engine tick actions.
     // These fire every 1s via the real-time tick interval in useGameState
     // and would flood the debug console with thousands of entries.
     if (action.type === 'IDLE_PROGRESSION') {
-      return newState
+      return newState;
     }
 
     const logEntry: LogEntry = {
@@ -102,13 +102,13 @@ export const withLogging = (reducer: EngineReducerFn): EngineReducerFn => {
         newState as unknown as Record<string, unknown>,
       ),
       seed,
-    }
+    };
 
     // Fire-and-forget: persist to IndexedDB without blocking the state transition
     LogStorageService.append(logEntry).catch(() => {
       /* errors are already swallowed inside LogStorageService */
-    })
+    });
 
-    return newState
-  }
-}
+    return newState;
+  };
+};

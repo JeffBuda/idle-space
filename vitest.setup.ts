@@ -1,5 +1,5 @@
-import '@testing-library/jest-dom'
-import { vi } from 'vitest'
+import '@testing-library/jest-dom';
+import { vi } from 'vitest';
 
 // Mock window.matchMedia for component tests that use PWA installation logic
 Object.defineProperty(window, 'matchMedia', {
@@ -14,4 +14,4 @@ Object.defineProperty(window, 'matchMedia', {
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
   })),
-})
+});

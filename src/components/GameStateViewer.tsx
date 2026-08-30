@@ -1,11 +1,11 @@
 // src/components/GameStateViewer.tsx
-import type { GameState } from '../hooks/useGameState'
-import './GameStateViewer.css'
+import type { GameState } from '../hooks/useGameState';
+import './GameStateViewer.css';
 
 export interface GameStateViewerProps {
-  visible: boolean
-  gameState: GameState | null
-  onClose: () => void
+  visible: boolean;
+  gameState: GameState | null;
+  onClose: () => void;
 }
 
 /**
@@ -16,7 +16,7 @@ export interface GameStateViewerProps {
  * Receives immutable GameState passed down from the useGameState hook.
  */
 export const GameStateViewer = ({ visible, gameState, onClose }: GameStateViewerProps) => {
-  if (!visible) return null
+  if (!visible) return null;
 
   return (
     <aside className="game-state-viewer" data-testid="game-state-viewer">
@@ -45,5 +45,5 @@ export const GameStateViewer = ({ visible, gameState, onClose }: GameStateViewer
         </div>
       </div>
     </aside>
-  )
-}
+  );
+};

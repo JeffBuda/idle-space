@@ -7,7 +7,7 @@
 // Showing the banner is critical: installing the PWA to the Home Screen
 // bypasses iOS Safari's 7-day Intelligent Tracking Prevention (ITP)
 // local-storage wipe, ensuring the player's game state persists.
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react';
 
 /**
  * sessionStorage key that records whether the user has dismissed the
@@ -18,7 +18,7 @@ import { useState, useEffect } from 'react'
  * a message about save-game persistence that the user should not
  * permanently suppress.
  */
-export const IOS_INSTALL_PROMPT_DISMISSED_KEY = 'iosInstallPromptDismissed'
+export const IOS_INSTALL_PROMPT_DISMISSED_KEY = 'iosInstallPromptDismissed';
 
 /**
  * Returns `true` when the supplied user-agent string belongs to an iOS
@@ -28,9 +28,9 @@ export const IOS_INSTALL_PROMPT_DISMISSED_KEY = 'iosInstallPromptDismissed'
  * parts of the iOS user-agent string.
  */
 export const isIOSUserAgent = (userAgent: string): boolean => {
-  const ua = userAgent.toLowerCase()
-  return /iphone|ipad|ipod/.test(ua)
-}
+  const ua = userAgent.toLowerCase();
+  return /iphone|ipad|ipod/.test(ua);
+};
 
 /**
  * Returns `true` when the PWA is running in standalone mode.
@@ -49,29 +49,29 @@ export const isIOSUserAgent = (userAgent: string): boolean => {
  * so the banner must not appear.
  */
 export const isStandaloneMode = (): boolean => {
-  const navigatorWithStandalone = window.navigator as Navigator & { standalone?: boolean }
+  const navigatorWithStandalone = window.navigator as Navigator & { standalone?: boolean };
   const isLegacyStandalone =
-    'standalone' in window.navigator && navigatorWithStandalone.standalone === true
-  const isModernStandalone = window.matchMedia('(display-mode: standalone)').matches
-  return isLegacyStandalone || isModernStandalone
-}
+    'standalone' in window.navigator && navigatorWithStandalone.standalone === true;
+  const isModernStandalone = window.matchMedia('(display-mode: standalone)').matches;
+  return isLegacyStandalone || isModernStandalone;
+};
 
 /**
  * Returns `true` when the user has dismissed the install banner during
  * the current browser session.
  */
 export const hasPromptBeenDismissed = (): boolean =>
-  sessionStorage.getItem(IOS_INSTALL_PROMPT_DISMISSED_KEY) === 'true'
+  sessionStorage.getItem(IOS_INSTALL_PROMPT_DISMISSED_KEY) === 'true';
 
 export interface IOSInstallPromptResult {
   /** Whether the install banner should be visible right now. */
-  showPrompt: boolean
+  showPrompt: boolean;
   /** Whether the current device is an iOS device. */
-  isIOS: boolean
+  isIOS: boolean;
   /** Whether the app is running in standalone PWA mode. */
-  isStandalone: boolean
+  isStandalone: boolean;
   /** Call to dismiss the banner for the remainder of this session. */
-  handleDismiss: () => void
+  handleDismiss: () => void;
 }
 
 /**
@@ -88,27 +88,27 @@ export interface IOSInstallPromptResult {
  *   and `handleDismiss`.
  */
 export const useIOSInstallPrompt = (): IOSInstallPromptResult => {
-  const [showPrompt, setShowPrompt] = useState(false)
-  const [isIOS, setIsIOS] = useState(false)
-  const [isStandalone, setIsStandalone] = useState(false)
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
-    const ios = isIOSUserAgent(window.navigator.userAgent)
-    const standalone = isStandaloneMode()
-    const dismissed = hasPromptBeenDismissed()
+    const ios = isIOSUserAgent(window.navigator.userAgent);
+    const standalone = isStandaloneMode();
+    const dismissed = hasPromptBeenDismissed();
 
-    setIsIOS(ios)
-    setIsStandalone(standalone)
+    setIsIOS(ios);
+    setIsStandalone(standalone);
 
     if (ios && !standalone && !dismissed) {
-      setShowPrompt(true)
+      setShowPrompt(true);
     }
-  }, [])
+  }, []);
 
   const handleDismiss = () => {
-    sessionStorage.setItem(IOS_INSTALL_PROMPT_DISMISSED_KEY, 'true')
-    setShowPrompt(false)
-  }
+    sessionStorage.setItem(IOS_INSTALL_PROMPT_DISMISSED_KEY, 'true');
+    setShowPrompt(false);
+  };
 
-  return { showPrompt, isIOS, isStandalone, handleDismiss }
-}
+  return { showPrompt, isIOS, isStandalone, handleDismiss };
+};

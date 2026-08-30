@@ -7,7 +7,7 @@
 // This module must remain PURE: no DOM access, no Date, no side effects.
 // All time/seed values are passed in as explicit parameters for
 // deterministic testability.
-import { processIdleProgression, type GameState } from './time'
+import { processIdleProgression, type GameState } from './time';
 
 /**
  * Discriminated union of all engine actions.
@@ -26,7 +26,7 @@ export type GameAction =
   // Resuming from idle / foregrounding — dispatched when the tab becomes
   // visible again. Processed via the loggedReducer so it appears in the
   // debug console as an event that affects the time aggregation calculation.
-  | { type: 'APP_SUSPEND' }
+  | { type: 'APP_SUSPEND' };
 // Going idle / backgrounding — dispatched when the tab is hidden or
 // the page is about to unload. Updates lastTimestamp (the idle baseline)
 // and is logged as an event.
@@ -40,10 +40,10 @@ export type EngineReducerFn = (
   action: GameAction,
   currentTime: number,
   seed: string,
-) => GameState
+) => GameState;
 
 /** Default travel speed in km/s — used by the idle progression engine. */
-export const SPEED_KM_PER_SEC = 10
+export const SPEED_KM_PER_SEC = 10;
 
 /**
  * Dispatches a GameAction against the current game state, producing a
@@ -69,12 +69,12 @@ export const engineReducer: EngineReducerFn = (
       // calculate accumulated idle distance. APP_WAKE is logged via the
       // withLogging interceptor; IDLE_PROGRESSION bypasses logging to avoid
       // flooding the debug console with per-second entries.
-      return processIdleProgression(prevState, currentTime, SPEED_KM_PER_SEC)
+      return processIdleProgression(prevState, currentTime, SPEED_KM_PER_SEC);
     case 'APP_SUSPEND':
       // Going idle — snapshot the current timestamp as the idle baseline.
       // The next processIdleProgression call (on wake) will delta from this.
-      return { ...prevState, lastTimestamp: currentTime }
+      return { ...prevState, lastTimestamp: currentTime };
     default:
-      return prevState
+      return prevState;
   }
-}
+};

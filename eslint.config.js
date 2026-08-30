@@ -1,11 +1,11 @@
-import js from '@eslint/js'
-import eslintConfigPrettier from 'eslint-config-prettier'
+import js from '@eslint/js';
+import eslintConfigPrettier from 'eslint-config-prettier';
 
-import globals from 'globals'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
-import tseslint from 'typescript-eslint'
-import boundaries from 'eslint-plugin-boundaries'
+import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
+import tseslint from 'typescript-eslint';
+import boundaries from 'eslint-plugin-boundaries';
 
 export default tseslint.config(
   { ignores: ['dist', 'node_modules', 'playwright-report', 'test-results', 'dev-dist'] },
@@ -154,4 +154,4 @@ export default tseslint.config(
     },
   },
   eslintConfigPrettier,
-)
+);

@@ -3,14 +3,14 @@
 // A fixed-position banner that instructs iOS Safari users to install the
 // PWA to their Home Screen via the native Share sheet.  Visible only on
 // iOS devices running in standard browser mode (not standalone).
-import React from 'react'
-import { useIOSInstallPrompt } from '../hooks/useIOSInstallPrompt'
-import './IOSInstallBanner.css'
+import React from 'react';
+import { useIOSInstallPrompt } from '../hooks/useIOSInstallPrompt';
+import './IOSInstallBanner.css';
 
 export const IOSInstallBanner: React.FC = () => {
-  const { showPrompt, handleDismiss } = useIOSInstallPrompt()
+  const { showPrompt, handleDismiss } = useIOSInstallPrompt();
 
-  if (!showPrompt) return null
+  if (!showPrompt) return null;
 
   return (
     <div className="ios-install-banner" data-testid="ios-install-banner">
@@ -84,7 +84,7 @@ export const IOSInstallBanner: React.FC = () => {
         </button>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default IOSInstallBanner
+export default IOSInstallBanner;

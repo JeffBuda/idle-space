@@ -1,14 +1,14 @@
 // src/components/DebugConsole.tsx
-import { useState } from 'react'
-import { useDebugLogs } from '../hooks/useDebugLogs'
-import { LogCategory } from '../logging/types'
-import { formatLogTimestamp } from '../utils/time'
-import type { LogEntry } from '../hooks/useDebugLogs'
-import './DebugConsole.css'
+import { useState } from 'react';
+import { useDebugLogs } from '../hooks/useDebugLogs';
+import { LogCategory } from '../logging/types';
+import { formatLogTimestamp } from '../utils/time';
+import type { LogEntry } from '../hooks/useDebugLogs';
+import './DebugConsole.css';
 
 interface DebugConsoleProps {
-  visible: boolean
-  onClose: () => void
+  visible: boolean;
+  onClose: () => void;
 }
 
 /**
@@ -23,36 +23,36 @@ interface DebugConsoleProps {
  * `space_idle_logs` IndexedDB store.
  */
 export const DebugConsole = ({ visible, onClose }: DebugConsoleProps) => {
-  const { logs, isLoading, refresh, clear } = useDebugLogs()
-  const [filter, setFilter] = useState<string>('ALL')
-  const [expandedEntries, setExpandedEntries] = useState<Set<string>>(new Set())
+  const { logs, isLoading, refresh, clear } = useDebugLogs();
+  const [filter, setFilter] = useState<string>('ALL');
+  const [expandedEntries, setExpandedEntries] = useState<Set<string>>(new Set());
 
-  const filteredLogs = filter === 'ALL' ? logs : logs.filter((log) => log.category === filter)
+  const filteredLogs = filter === 'ALL' ? logs : logs.filter((log) => log.category === filter);
 
   const handleExport = () => {
-    const dataStr = JSON.stringify(logs, null, 2)
-    const blob = new Blob([dataStr], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `idle-space-logs-${Date.now()}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
+    const dataStr = JSON.stringify(logs, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `idle-space-logs-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const toggleExpand = (id: string) => {
     setExpandedEntries((prev) => {
-      const next = new Set(prev)
+      const next = new Set(prev);
       if (next.has(id)) {
-        next.delete(id)
+        next.delete(id);
       } else {
-        next.add(id)
+        next.add(id);
       }
-      return next
-    })
-  }
+      return next;
+    });
+  };
 
-  if (!visible) return null
+  if (!visible) return null;
 
   return (
     <aside className="debug-console" data-testid="debug-console">
@@ -123,5 +123,5 @@ export const DebugConsole = ({ visible, onClose }: DebugConsoleProps) => {
         )}
       </div>
     </aside>
-  )
-}
+  );
+};

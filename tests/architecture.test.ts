@@ -10,10 +10,10 @@
  * are violated.
  */
 
-import { projectFiles } from 'archunit'
+import { projectFiles } from 'archunit';
 
 // All source files are described by tsconfig.app.json's include pattern.
-const configPath = './tsconfig.app.json'
+const configPath = './tsconfig.app.json';
 
 // ---------------------------------------------------------------------------
 // Engine layer isolation
@@ -22,8 +22,8 @@ const configPath = './tsconfig.app.json'
 test('engine layer should not depend on db layer', async () => {
   await expect(
     projectFiles(configPath).inFolder('src/engine').shouldNot().dependOnFiles().inFolder('src/db'),
-  ).toPassAsync()
-})
+  ).toPassAsync();
+});
 
 test('engine layer should not depend on hooks layer', async () => {
   await expect(
@@ -32,8 +32,8 @@ test('engine layer should not depend on hooks layer', async () => {
       .shouldNot()
       .dependOnFiles()
       .inFolder('src/hooks'),
-  ).toPassAsync()
-})
+  ).toPassAsync();
+});
 
 test('engine layer should not depend on components layer', async () => {
   await expect(
@@ -42,14 +42,14 @@ test('engine layer should not depend on components layer', async () => {
       .shouldNot()
       .dependOnFiles()
       .inFolder('src/components'),
-  ).toPassAsync()
-})
+  ).toPassAsync();
+});
 
 test('engine layer should have no circular dependencies', async () => {
   await expect(
     projectFiles(configPath).inFolder('src/engine').should().haveNoCycles(),
-  ).toPassAsync()
-})
+  ).toPassAsync();
+});
 
 // ---------------------------------------------------------------------------
 // Db layer isolation
@@ -58,14 +58,14 @@ test('engine layer should have no circular dependencies', async () => {
 test('db layer should not depend on engine layer', async () => {
   await expect(
     projectFiles(configPath).inFolder('src/db').shouldNot().dependOnFiles().inFolder('src/engine'),
-  ).toPassAsync()
-})
+  ).toPassAsync();
+});
 
 test('db layer should not depend on hooks layer', async () => {
   await expect(
     projectFiles(configPath).inFolder('src/db').shouldNot().dependOnFiles().inFolder('src/hooks'),
-  ).toPassAsync()
-})
+  ).toPassAsync();
+});
 
 test('db layer should not depend on components layer', async () => {
   await expect(
@@ -74,18 +74,18 @@ test('db layer should not depend on components layer', async () => {
       .shouldNot()
       .dependOnFiles()
       .inFolder('src/components'),
-  ).toPassAsync()
-})
+  ).toPassAsync();
+});
 
 test('db layer should not depend on utils layer', async () => {
   await expect(
     projectFiles(configPath).inFolder('src/db').shouldNot().dependOnFiles().inFolder('src/utils'),
-  ).toPassAsync()
-})
+  ).toPassAsync();
+});
 
 test('db layer should have no circular dependencies', async () => {
-  await expect(projectFiles(configPath).inFolder('src/db').should().haveNoCycles()).toPassAsync()
-})
+  await expect(projectFiles(configPath).inFolder('src/db').should().haveNoCycles()).toPassAsync();
+});
 
 // ---------------------------------------------------------------------------
 // Components layer isolation
@@ -98,8 +98,8 @@ test('components layer should not depend on engine layer', async () => {
       .shouldNot()
       .dependOnFiles()
       .inFolder('src/engine'),
-  ).toPassAsync()
-})
+  ).toPassAsync();
+});
 
 test('components layer should not depend on db layer', async () => {
   await expect(
@@ -108,14 +108,14 @@ test('components layer should not depend on db layer', async () => {
       .shouldNot()
       .dependOnFiles()
       .inFolder('src/db'),
-  ).toPassAsync()
-})
+  ).toPassAsync();
+});
 
 test('components layer should have no circular dependencies', async () => {
   await expect(
     projectFiles(configPath).inFolder('src/components').should().haveNoCycles(),
-  ).toPassAsync()
-})
+  ).toPassAsync();
+});
 
 // ---------------------------------------------------------------------------
 // Hooks layer isolation
@@ -128,12 +128,14 @@ test('hooks layer should not depend on components layer', async () => {
       .shouldNot()
       .dependOnFiles()
       .inFolder('src/components'),
-  ).toPassAsync()
-})
+  ).toPassAsync();
+});
 
 test('hooks layer should have no circular dependencies', async () => {
-  await expect(projectFiles(configPath).inFolder('src/hooks').should().haveNoCycles()).toPassAsync()
-})
+  await expect(
+    projectFiles(configPath).inFolder('src/hooks').should().haveNoCycles(),
+  ).toPassAsync();
+});
 
 // ---------------------------------------------------------------------------
 // Utils layer isolation
@@ -146,14 +148,14 @@ test('utils layer should not depend on engine layer', async () => {
       .shouldNot()
       .dependOnFiles()
       .inFolder('src/engine'),
-  ).toPassAsync()
-})
+  ).toPassAsync();
+});
 
 test('utils layer should not depend on db layer', async () => {
   await expect(
     projectFiles(configPath).inFolder('src/utils').shouldNot().dependOnFiles().inFolder('src/db'),
-  ).toPassAsync()
-})
+  ).toPassAsync();
+});
 
 test('utils layer should not depend on hooks layer', async () => {
   await expect(
@@ -162,8 +164,8 @@ test('utils layer should not depend on hooks layer', async () => {
       .shouldNot()
       .dependOnFiles()
       .inFolder('src/hooks'),
-  ).toPassAsync()
-})
+  ).toPassAsync();
+});
 
 test('utils layer should not depend on components layer', async () => {
   await expect(
@@ -172,12 +174,14 @@ test('utils layer should not depend on components layer', async () => {
       .shouldNot()
       .dependOnFiles()
       .inFolder('src/components'),
-  ).toPassAsync()
-})
+  ).toPassAsync();
+});
 
 test('utils layer should have no circular dependencies', async () => {
-  await expect(projectFiles(configPath).inFolder('src/utils').should().haveNoCycles()).toPassAsync()
-})
+  await expect(
+    projectFiles(configPath).inFolder('src/utils').should().haveNoCycles(),
+  ).toPassAsync();
+});
 // ---------------------------------------------------------------------------
 // Logging layer isolation
 // (diagnostic logging - depends on engine and db, but not hooks/components)
@@ -189,8 +193,8 @@ test('engine layer should not depend on logging layer', async () => {
       .shouldNot()
       .dependOnFiles()
       .inFolder('src/logging'),
-  ).toPassAsync()
-})
+  ).toPassAsync();
+});
 
 test('logging layer should not depend on components layer', async () => {
   await expect(
@@ -199,8 +203,8 @@ test('logging layer should not depend on components layer', async () => {
       .shouldNot()
       .dependOnFiles()
       .inFolder('src/components'),
-  ).toPassAsync()
-})
+  ).toPassAsync();
+});
 
 test('logging layer should not depend on hooks layer', async () => {
   await expect(
@@ -209,11 +213,11 @@ test('logging layer should not depend on hooks layer', async () => {
       .shouldNot()
       .dependOnFiles()
       .inFolder('src/hooks'),
-  ).toPassAsync()
-})
+  ).toPassAsync();
+});
 
 test('logging layer should have no circular dependencies', async () => {
   await expect(
     projectFiles(configPath).inFolder('src/logging').should().haveNoCycles(),
-  ).toPassAsync()
-})
+  ).toPassAsync();
+});

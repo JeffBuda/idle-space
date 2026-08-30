@@ -1,17 +1,17 @@
 // src/hooks/useDebugLogs.ts
-import { useState, useEffect, useCallback } from 'react'
-import { LogStorageService } from '../logging/storage'
-import type { LogEntry } from '../db'
+import { useState, useEffect, useCallback } from 'react';
+import { LogStorageService } from '../logging/storage';
+import type { LogEntry } from '../db';
 
 export interface UseDebugLogsResult {
-  logs: LogEntry[]
-  isLoading: boolean
-  refresh: () => void
-  clear: () => Promise<void>
+  logs: LogEntry[];
+  isLoading: boolean;
+  refresh: () => void;
+  clear: () => Promise<void>;
 }
 
-export { LogCategory } from '../logging/types'
-export type { LogEntry }
+export { LogCategory } from '../logging/types';
+export type { LogEntry };
 
 /**
  * React hook that interfaces with the diagnostic logging system.
@@ -23,38 +23,38 @@ export type { LogEntry }
  * delegated to LogStorageService (src/logging/storage.ts).
  */
 export const useDebugLogs = (): UseDebugLogsResult => {
-  const [logs, setLogs] = useState<LogEntry[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const loadLogs = useCallback(async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const entries = await LogStorageService.getAll()
-      setLogs(entries)
+      const entries = await LogStorageService.getAll();
+      setLogs(entries);
     } catch (error) {
-      console.error('Failed to load debug logs:', error)
-      setLogs([])
+      console.error('Failed to load debug logs:', error);
+      setLogs([]);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [])
+  }, []);
 
   const clear = useCallback(async () => {
     try {
-      await LogStorageService.clear()
-      setLogs([])
+      await LogStorageService.clear();
+      setLogs([]);
     } catch (error) {
-      console.error('Failed to clear debug logs:', error)
+      console.error('Failed to clear debug logs:', error);
     }
-  }, [])
+  }, []);
 
   const refresh = useCallback(() => {
-    loadLogs()
-  }, [loadLogs])
+    loadLogs();
+  }, [loadLogs]);
 
   useEffect(() => {
-    loadLogs()
-  }, [loadLogs])
+    loadLogs();
+  }, [loadLogs]);
 
-  return { logs, isLoading, refresh, clear }
-}
+  return { logs, isLoading, refresh, clear };
+};

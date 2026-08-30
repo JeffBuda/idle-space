@@ -3,14 +3,14 @@
 // A modal that greets the user upon waking the app, displaying the
 // exact offline time elapsed formatted in Days, Hours, Minutes, Seconds.
 // Visible when the user was away for more than 60 seconds.
-import React from 'react'
-import { formatElapsedTime } from '../utils/time'
-import './OfflineGreeting.css'
+import React from 'react';
+import { formatElapsedTime } from '../utils/time';
+import './OfflineGreeting.css';
 
 export interface OfflineGreetingProps {
-  offlineSeconds: number | null
-  onDismiss: () => void
-  onCollectRewards: () => void
+  offlineSeconds: number | null;
+  onDismiss: () => void;
+  onCollectRewards: () => void;
 }
 
 export const OfflineGreeting: React.FC<OfflineGreetingProps> = ({
@@ -18,9 +18,9 @@ export const OfflineGreeting: React.FC<OfflineGreetingProps> = ({
   onDismiss,
   onCollectRewards,
 }) => {
-  if (offlineSeconds === null) return null
+  if (offlineSeconds === null) return null;
 
-  const formattedTime = formatElapsedTime(offlineSeconds)
+  const formattedTime = formatElapsedTime(offlineSeconds);
 
   return (
     <div className="offline-greeting-overlay" data-testid="offline-greeting">
@@ -55,7 +55,7 @@ export const OfflineGreeting: React.FC<OfflineGreetingProps> = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default OfflineGreeting
+export default OfflineGreeting;

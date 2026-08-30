@@ -12,8 +12,8 @@ export const calculateElapsedSeconds = (
   lastTimestamp: number,
   currentTimestamp: number,
 ): number => {
-  return Math.max(0, Math.floor((currentTimestamp - lastTimestamp) / 1000))
-}
+  return Math.max(0, Math.floor((currentTimestamp - lastTimestamp) / 1000));
+};
 
 /**
  * Formats a duration in seconds into a human-readable "Dd Hh Mm Ss" string.
@@ -23,19 +23,19 @@ export const calculateElapsedSeconds = (
  * @returns A formatted string like "2d 3h 15m 45s"
  */
 export const formatElapsedTime = (totalSeconds: number): string => {
-  const days = Math.floor(totalSeconds / (3600 * 24))
-  const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const seconds = Math.floor(totalSeconds % 60)
+  const days = Math.floor(totalSeconds / (3600 * 24));
+  const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = Math.floor(totalSeconds % 60);
 
-  const parts = []
-  if (days > 0) parts.push(`${days}d`)
-  if (hours > 0) parts.push(`${hours}h`)
-  if (minutes > 0) parts.push(`${minutes}m`)
-  parts.push(`${seconds}s`)
+  const parts = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  parts.push(`${seconds}s`);
 
-  return parts.join(' ')
-}
+  return parts.join(' ');
+};
 
 /**
  * Formats a UNIX timestamp (ms) as a short locale date and time string.
@@ -49,5 +49,5 @@ export const formatLogTimestamp = (timestamp: number): string => {
   return new Date(timestamp).toLocaleString(undefined, {
     dateStyle: 'short',
     timeStyle: 'short',
-  })
-}
+  });
+};

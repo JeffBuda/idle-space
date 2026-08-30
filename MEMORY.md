@@ -158,7 +158,7 @@ Object.defineProperty(navigator, 'standalone', { value: undefined, configurable:
 Use a type assertion:
 
 ```ts
-const n = window.navigator as Navigator & { standalone?: boolean }
+const n = window.navigator as Navigator & { standalone?: boolean };
 ```
 
 ---

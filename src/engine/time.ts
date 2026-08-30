@@ -1,17 +1,17 @@
 // src/engine/time.ts
 
 export interface GameState {
-  lastTimestamp: number
-  elapsedSeconds: number
-  rngSeed: string
-  totalDistanceKm: number
-  version: string
+  lastTimestamp: number;
+  elapsedSeconds: number;
+  rngSeed: string;
+  totalDistanceKm: number;
+  version: string;
 }
 
 export interface EngineState {
-  lastProcessedTime: number
-  totalDistanceKm: number
-  seed: string
+  lastProcessedTime: number;
+  totalDistanceKm: number;
+  seed: string;
 }
 
 export const calculateIdleDistance = (
@@ -19,13 +19,13 @@ export const calculateIdleDistance = (
   currentTime: number,
   speedKmPerSec: number = 10,
 ): EngineState => {
-  const deltaSeconds = Math.max(0, (currentTime - prevState.lastProcessedTime) / 1000)
+  const deltaSeconds = Math.max(0, (currentTime - prevState.lastProcessedTime) / 1000);
   return {
     ...prevState,
     lastProcessedTime: currentTime,
     totalDistanceKm: prevState.totalDistanceKm + deltaSeconds * speedKmPerSec,
-  }
-}
+  };
+};
 
 /**
  * Pure function that processes all idle progression in a single deterministic pass.
@@ -41,15 +41,15 @@ export const processIdleProgression = (
   currentTime: number,
   speedKmPerSec: number = 10,
 ): GameState => {
-  const deltaSeconds = Math.max(0, Math.floor((currentTime - prevState.lastTimestamp) / 1000))
+  const deltaSeconds = Math.max(0, Math.floor((currentTime - prevState.lastTimestamp) / 1000));
 
   // Calculate idle distance traveled
-  const distanceTraveled = deltaSeconds * speedKmPerSec
+  const distanceTraveled = deltaSeconds * speedKmPerSec;
 
   return {
     ...prevState,
     lastTimestamp: currentTime,
     elapsedSeconds: prevState.elapsedSeconds + deltaSeconds,
     totalDistanceKm: prevState.totalDistanceKm + distanceTraveled,
-  }
-}
+  };
+};
