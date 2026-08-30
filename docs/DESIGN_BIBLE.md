@@ -81,3 +81,169 @@ font-family:
 // Every interactive element MUST have:
 <button type="button" data-testid="descriptive-name" aria-label="...">
 ```
+
+---
+
+# PWA Mobile UX Design Bible & Navigation Architecture
+
+> **Normative UX Specification** for all screens, menus, and multi-choice interaction
+> flows within the PWA mobile shell. Establishes standard mobile navigation patterns
+> optimized for standalone iOS/mobile execution. When a prompt says "follow the PWA
+> Mobile UX rules", apply the EXACT patterns below unless a final Poolside Laguna
+> spec explicitly overrides them.
+
+## Table of Contents
+
+| #   | Section                     | Anchor                                       |
+| --- | --------------------------- | -------------------------------------------- |
+| 1   | Imperative Navigation Rules | `#1-imperative-navigation-rules`             |
+| 2   | Screen Routing & Transition | `#2-screen-routing--transition-architecture` |
+| 3   | Layout Blueprint            | `#3-standard-screen-layout-blueprint`        |
+
+---
+
+## 1. Imperative Navigation Rules
+
+### ALWAYS
+
+- **Provide explicit, native-feeling back controls on every sub-screen.** In
+  standalone iOS PWA mode ("Add to Home Screen"), Safari's default browser chrome
+  (including the browser back button) is hidden. Every sub-screen or modal must
+  include a clearly visible top-left back button **or** a draggable bottom-sheet
+  handle.
+
+- **Place high-frequency primary actions within the "Thumb Zone"** (the bottom 35%
+  of the viewport). Primary controls, route confirmation, and navigation tab bars
+  must reside where the user's thumb rests naturally.
+
+- **Use dynamic bottom sheets instead of full-screen popups** for contextual
+  options. When selecting nodes, viewing planetary data, or configuring multi-stop
+  itineraries, slide up a bottom sheet over the interactive map rather than covering
+  the screen completely.
+
+- **Preserve navigation state across app backgrounding.** When returning from
+  background hibernation, the user must resume on the exact screen, zoom level, and
+  drawer state they left, powered by IndexedDB state persistence.
+
+- **Provide immediate visual and haptic/animated feedback within 100ms** of any
+  input. Even if the underlying state engine runs asynchronously, buttons must
+  immediately visually depress, active state toggles must highlight, and
+  transitions must trigger.
+
+- **Maintain a maximum navigation depth of 3 levels.** Structure all screen flows
+  as `Primary Hub → Sub-system → Action Modal`. Any flow requiring 4+ steps deep
+  must be refactored into a tabbed layout or inline drawer.
+
+- **Ensure touch targets meet minimum spatial requirements** (**44 × 44 px**).
+  Small visual elements (such as 12px star map nodes) must implement invisible touch
+  hit slops extending to at least 44 × 44 px to accommodate imprecise thumb taps.
+
+### NEVER
+
+- **Rely on browser-native dialogs** (`alert()`, `confirm()`, `prompt()`). These
+  break standalone PWA immersion on iOS, lock the main UI thread, and cannot be
+  styled to match the game aesthetic.
+
+- **Place destructive or irreversible actions directly adjacent to primary
+  navigation buttons.** Place "Clear Route," "Sell All," or "Abandon Mission"
+  actions in a secondary visual tier with distinct styling (e.g., ghost/outline
+  buttons or red text accents).
+
+- **Force full page reloads or unmount the primary view engine during navigation.**
+  Screen transitions must feel like state shifts within a continuous application
+  canvas rather than web page hops.
+
+- **Hide navigation state or active context from the user.** If a user is 2 stops
+  deep into a multi-stop itinerary, the top bar or persistent sheet must
+  continuously indicate the active path count and cumulative time cost.
+
+- **Use tiny top-right "X" icons as the sole closing mechanism on mobile.**
+  Top-corner close targets require awkward hand re-gripping on large modern
+  smartphones. Use swipe-down gestures or bottom-positioned cancel/close buttons.
+
+### SOMETIMES
+
+- **Use full-screen modals instead of bottom sheets.** Only use full-screen
+  overlays when the user enters an active modal state that entirely halts global
+  navigation (e.g., active clicker combat encounters or mandatory "Welcome Back"
+  idle reward summaries).
+
+- **Disable navigation routing based on game state.** If ship fuel range or
+  capacity upgrades are exceeded during route selection, disable the action button
+  and swap text to `[ INSUFFICIENT RANGE ]`, but do not prevent the user from
+  inspecting the star node itself.
+
+- **Hide persistent navigation chrome.** Hide bottom tab bars or floating action
+  buttons (FABs) when the user is actively zooming or dragging the map canvas to
+  maximize screen real estate, restoring chrome smoothly on gesture release.
+
+---
+
+## 2. Screen Routing & Transition Architecture
+
+```
+                  ┌─────────────────────────────────────────┐
+                  │           MAIN MAP HUB (Canvas)          │
+                  │  (Persistent Node/Navigation Overlay)   │
+                  └────────────────────┬────────────────────┘
+                                       │
+            ┌──────────────────────────┼──────────────────────────┐
+            ▼                          ▼                          ▼
+   ┌─────────────────┐        ┌─────────────────┐        ┌─────────────────┐
+   │ BOTTOM SHEET    │        │ FULL-SCREEN     │        │ SYSTEM MODAL    │
+   │ (Context Flow)  │        │ VIEW (Sub-Hub)  │        │ (Blocking Flow) │
+   ├─────────────────┤        ├─────────────────┤        ├─────────────────┤
+   │ Node Selection  │        │ Cargo Market    │        │ Active Combat   │
+   │ Route Itinerary │        │ Ship Upgrades   │        │ Welcome Back    │
+   │ Planet Scanning │        │ Mission Log     │        │ Offline Summary │
+   └─────────────────┘        └─────────────────┘        └─────────────────┘
+```
+
+| Container            | Primary Mobile Use Case                       | Entry Animation                          | Exit Animation        | Dismiss Gesture                         |
+| -------------------- | --------------------------------------------- | ---------------------------------------- | --------------------- | --------------------------------------- |
+| Bottom Sheet (Modal) | Quick choices, route plotting, target info    | Slide up from bottom (250ms ease-out)    | Slide down to bottom  | Swipe down on handle / Tap background   |
+| Full-Screen Push     | Complex management screens (Market, Upgrades) | Slide in from right (300ms cubic-bezier) | Slide out to right    | Edge-swipe right / Top-left back button |
+| System Overlay       | Mandatory alerts, game loop resolution        | Fade in + Scale up (90%)                 | Fade out + Scale down | Explicit primary button tap             |
+
+### Routing Rules
+
+- The **Main Map Hub** is the persistent root. It is never unmounted; sub-flows
+  layer on top of it via z-indexed containers.
+- Bottom Sheets are used for transient, reversible context flows. They must not
+  block interaction with the underlying map unless a selection is actively in
+  progress.
+- Full-Screen Views replace the hub's primary content area for complex management
+  tasks (Market, Ship Upgrades, Mission Log). Back navigation returns to the
+  previous hub state without reload.
+- System Overlays are modal-only; they require explicit user action to dismiss and
+  are reserved for game-loop-critical interruptions (combat, reward summaries).
+
+---
+
+## 3. Standard Screen Layout Blueprint (The iOS Safe-Area Grid)
+
+Every newly designed mobile screen must map to this structural skeleton:
+
+```
+┌─────────────────────────────────────────────────────────┐ 0px
+ │  [TOP BAR] App Status / Current Location / Resource Gauges │
+ ├─────────────────────────────────────────────────────────┤ Top Safe Area (44px)
+ │                                                         │
+ │                                                         │
+ │                      PRIMARY VIEW                       │
+ │                   (Viewport Canvas)                     │
+ │                                                         │
+ │                                                         │
+ ├─────────────────────────────────────────────────────────┤
+ │  [INTERACTIVE TIER] Bottom Sheet / Action Drawer         │ Bottom Safe Area
+ │  (Thumb Zone: All primary routing & selection choices)  │ Includes iOS Home Bar
+ └─────────────────────────────────────────────────────────┘ Viewport Height (100vh)
+```
+
+### Zone Rules
+
+| Zone                              | Height        | Interaction Rules                                                                                                                                                       |
+| --------------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Top Safe Area (Header)**        | 44px          | Read-only metrics, active location status, and main menu trigger. No high-frequency interactive buttons.                                                                |
+| **Primary Viewport (Center 65%)** | ~65% of 100vh | Pure spatial data (Star Map canvas, interactive planet renderer, visual progress meters).                                                                               |
+| **Bottom Safe Area / Drawer**     | ~35% of 100vh | Interactive controls, choice selections, confirm/cancel logic, and navigation tabs. Must respect `env(safe-area-inset-bottom)` to clear native iOS home indicator bars. |
