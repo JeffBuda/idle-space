@@ -3,9 +3,9 @@
  * Styles for the offline greeting modal.
  *
  * Visual language matches the rest of the PWA:
- *   - Dark theme background (#0d1117 / #1a202c)
- *   - Subtle borders: rgba(255, 255, 255, 0.1)
- *   - Accent green: #4ade80
+ *   - Dark theme background (var(--color-bg) / var(--color-surface))
+ *   - Subtle borders: var(--color-border)
+ *   - Accent green: var(--color-accent)
  *   - border-radius: 12-16px card style
  *   - Responsive at <= 600px
  */
@@ -16,114 +16,114 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(13, 17, 23, 0.8);
+  background-color: var(--color-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10000;
-  padding: 1rem;
+  z-index: var(--z-modal);
+  padding: var(--space-lg);
 }
 
 .offline-greeting-modal {
-  background-color: #1a202c;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 2rem;
-  max-width: 500px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-modal);
+  padding: var(--space-2xl);
+  max-width: var(--width-modal);
   width: 100%;
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-card);
   text-align: center;
 }
 
 .offline-greeting__content {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-xl);
 }
 
 .offline-greeting__title {
-  font-size: 1.75rem;
+  font-size: var(--font-size-175);
   font-weight: 700;
-  color: #ffffff;
-  margin: 0 0 1rem 0;
+  color: var(--color-white);
+  margin: 0 0 var(--space-lg) 0;
 }
 
 .offline-greeting__message {
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.7);
-  margin: 0 0 0.5rem 0;
+  font-size: var(--font-size-1);
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-sm) 0;
 }
 
 .offline-greeting__time {
-  font-size: 2rem;
+  font-size: var(--font-size-2);
   font-weight: 700;
-  color: #4ade80;
-  margin: 0.5rem 0;
+  color: var(--color-accent);
+  margin: var(--space-sm) 0;
   font-variant-numeric: tabular-nums;
 }
 
 .offline-greeting__subtext {
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.5);
+  font-size: var(--font-size-875);
+  color: var(--color-text-muted);
   margin: 0;
 }
 
 .offline-greeting__actions {
   display: flex;
-  gap: 1rem;
+  gap: var(--space-lg);
   justify-content: center;
   flex-wrap: wrap;
 }
 
 .btn {
   border: none;
-  border-radius: 12px;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
+  border-radius: var(--radius-card);
+  padding: var(--space-md) var(--space-xl);
+  font-size: var(--font-size-1);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   flex: 1;
-  min-width: 140px;
+  min-width: var(--width-btn-min);
 }
 
 .btn--primary {
-  background-color: #4ade80;
-  color: #0d1117;
+  background-color: var(--color-accent);
+  color: var(--color-bg);
 }
 
 .btn--primary:hover {
-  background-color: #68d368;
+  background-color: var(--color-accent-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(74, 222, 128, 0.3);
+  box-shadow: var(--shadow-accent-hover);
 }
 
 .btn--secondary {
-  background-color: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: var(--color-border-subtle);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
 }
 
 .btn--secondary:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.95);
+  background-color: var(--color-border);
+  color: var(--color-text-strong);
 }
 
 /* Responsive */
 @media (max-width: 600px) {
   .offline-greeting-modal {
-    padding: 1.5rem;
+    padding: var(--space-xl);
   }
 
   .offline-greeting__title {
-    font-size: 1.5rem;
+    font-size: var(--font-size-15);
   }
 
   .offline-greeting__time {
-    font-size: 1.75rem;
+    font-size: var(--font-size-175);
   }
 
   .offline-greeting__actions {
     flex-direction: column;
-    gap: 0.75rem;
+    gap: var(--space-md);
   }
 
   .btn {
