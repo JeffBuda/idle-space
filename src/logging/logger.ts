@@ -20,15 +20,14 @@ import { LogCategory } from './types';
 import { LogStorageService } from './storage';
 
 /**
- * Maps GameAction.type ΓåÆ broader LogCategory for the filter dropdown.
+ * Maps GameAction.type -> broader LogCategory for the filter dropdown.
  *
- * Only event-type actions are logged ΓÇö the high-frequency IDLE_PROGRESSION
- * (real-time tick) bypasses the logging interceptor entirely by calling the
- * raw engineReducer directly in the hook. The entries below cover every
- * action that *does* flow through withLogging.
+ * Only event-type actions are logged. The high-frequency IDLE_PROGRESSION
+ * (real-time tick) is explicitly skipped inside withLogging to avoid
+ * flooding the debug console with thousands of entries (it fires every
+ * 1 second). The entries below cover every action that *does* get logged.
  */
 const ACTION_CATEGORY: Record<string, LogCategory> = {
-  IDLE_PROGRESSION: LogCategory.ENGINE_TICK,
   APP_WAKE: LogCategory.APP_EVENT,
   APP_SUSPEND: LogCategory.APP_EVENT,
 };
@@ -86,11 +85,18 @@ export const withLogging = (reducer: EngineReducerFn): EngineReducerFn => {
     const newState = reducer(prevState, action, currentTime, seed);
     const executionTimeMs = performance.now() - startTime;
 
+    // Skip logging for high-frequency engine tick actions.
+    // These fire every 1s via the real-time tick interval in useGameState
+    // and would flood the debug console with thousands of entries.
+    if (action.type === 'IDLE_PROGRESSION') {
+      return newState;
+    }
+
     const logEntry: LogEntry = {
       id: generateLogEntryId(),
       timestamp: Date.now(),
       actionType: action.type,
-      category: ACTION_CATEGORY[action.type] ?? LogCategory.ENGINE_TICK,
+      category: ACTION_CATEGORY[action.type] ?? LogCategory.APP_EVENT,
       executionTimeMs,
       stateDiff: calculateDiff(
         prevState as unknown as Record<string, unknown>,

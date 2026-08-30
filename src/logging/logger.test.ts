@@ -95,14 +95,14 @@ describe('withLogging', () => {
 
   it('should dispatch a log entry to LogStorageService.append on each call', () => {
     const wrapped = withLogging(engineReducer);
-    const action: GameAction = { type: 'IDLE_PROGRESSION' };
+    const action: GameAction = { type: 'APP_WAKE' };
     wrapped(baseState, action, 2_000_000, 'test-seed');
 
     expect(LogStorageService.append).toHaveBeenCalledTimes(1);
     const logEntry = vi.mocked(LogStorageService.append).mock.calls[0][0];
     expect(logEntry).toMatchObject({
-      actionType: 'IDLE_PROGRESSION',
-      category: 'ENGINE_TICK',
+      actionType: 'APP_WAKE',
+      category: 'APP_EVENT',
       seed: 'test-seed',
     });
     expect(logEntry.executionTimeMs).toBeGreaterThanOrEqual(0);
@@ -116,14 +116,14 @@ describe('withLogging', () => {
       new Error('IDB write failed'),
     );
     const wrapped = withLogging(engineReducer);
-    const action: GameAction = { type: 'IDLE_PROGRESSION' };
+    const action: GameAction = { type: 'APP_WAKE' };
 
     expect(() => wrapped(baseState, action, 2_000_000, 'test-seed')).not.toThrow();
   });
 
   it('should capture stateDiff with from/to values for changed fields', () => {
     const wrapped = withLogging(engineReducer);
-    const action: GameAction = { type: 'IDLE_PROGRESSION' };
+    const action: GameAction = { type: 'APP_WAKE' };
     wrapped(baseState, action, 2_000_000, 'test-seed');
 
     const logEntry = vi.mocked(LogStorageService.append).mock.calls[0][0];
@@ -175,15 +175,12 @@ describe('withLogging', () => {
     expect(logEntry.stateDiff).toHaveLength(1);
   });
 
-  it('should still log IDLE_PROGRESSION with ENGINE_TICK category', () => {
+  it('should NOT log IDLE_PROGRESSION (engine tick) actions', () => {
     const wrapped = withLogging(engineReducer);
     const action: GameAction = { type: 'IDLE_PROGRESSION' };
     wrapped(baseState, action, 2_000_000, 'test-seed');
 
-    const logEntry = vi.mocked(LogStorageService.append).mock.calls[0][0];
-    expect(logEntry).toMatchObject({
-      actionType: 'IDLE_PROGRESSION',
-      category: 'ENGINE_TICK',
-    });
+    // IDLE_PROGRESSION fires every 1s -- must not produce a log entry
+    expect(LogStorageService.append).not.toHaveBeenCalled();
   });
 });

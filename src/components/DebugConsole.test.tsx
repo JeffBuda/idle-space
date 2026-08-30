@@ -11,25 +11,25 @@ vi.mock('../hooks/useDebugLogs', () => ({
 }));
 
 vi.mock('../logging/types', () => ({
-  LogCategory: { ENGINE_TICK: 'ENGINE_TICK' },
+  LogCategory: { APP_EVENT: 'APP_EVENT' },
 }));
 
 const mockLogs = [
   {
     id: 'log-1',
     timestamp: Date.now(),
-    actionType: 'IDLE_PROGRESSION',
-    category: 'ENGINE_TICK',
-    executionTimeMs: 0.05,
+    actionType: 'APP_WAKE',
+  category: 'APP_EVENT',
+  executionTimeMs: 0.05,
     stateDiff: [{ key: 'totalDistanceKm', from: 0, to: 10 }],
     seed: 'test-seed',
   },
   {
     id: 'log-2',
     timestamp: Date.now() + 1000,
-    actionType: 'IDLE_PROGRESSION',
-    category: 'ENGINE_TICK',
-    executionTimeMs: 0.03,
+    actionType: 'APP_SUSPEND',
+  category: 'APP_EVENT',
+  executionTimeMs: 0.03,
     stateDiff: [{ key: 'elapsedSeconds', from: 0, to: 1 }],
     seed: 'test-seed-2',
   },
@@ -103,7 +103,7 @@ describe('DebugConsole', () => {
     const filter = screen.getByTestId('debug-filter');
     expect(filter).toBeInTheDocument();
     expect(screen.getByText('All')).toBeInTheDocument();
-    expect(screen.getByText(LogCategory.ENGINE_TICK, { selector: 'option' })).toBeInTheDocument();
+    expect(screen.getByText(LogCategory.APP_EVENT, { selector: 'option' })).toBeInTheDocument();
   });
 
   it('should call refresh when the Refresh button is clicked', () => {

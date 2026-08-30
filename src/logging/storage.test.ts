@@ -21,7 +21,7 @@ const makeLogEntry = (overrides: Partial<LogEntry> = {}): LogEntry => ({
   id: `log-${Math.random().toString(36).slice(2, 9)}`,
   timestamp: Date.now(),
   actionType: 'IDLE_PROGRESSION',
-  category: 'ENGINE_TICK',
+  category: 'APP_EVENT',
   executionTimeMs: 0.1,
   stateDiff: [{ key: 'totalDistanceKm', from: 0, to: 10 }],
   seed: 'test-seed',
