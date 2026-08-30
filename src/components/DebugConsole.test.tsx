@@ -3,17 +3,23 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { DebugConsole } from './DebugConsole';
 import { useDebugLogs } from '../hooks/useDebugLogs';
+import { LogCategory } from '../logging/types';
 
-// Mock the useDebugLogs hook
+// Mock the useDebugLogs hook ΓÇö the component should not touch IndexedDB directly
 vi.mock('../hooks/useDebugLogs', () => ({
   useDebugLogs: vi.fn(),
+}));
+
+vi.mock('../logging/types', () => ({
+  LogCategory: { ENGINE_TICK: 'ENGINE_TICK' },
 }));
 
 const mockLogs = [
   {
     id: 'log-1',
     timestamp: Date.now(),
-    actionType: 'APP_WAKE',
+    actionType: 'IDLE_PROGRESSION',
+    category: 'ENGINE_TICK',
     executionTimeMs: 0.05,
     stateDiff: [{ key: 'totalDistanceKm', from: 0, to: 10 }],
     seed: 'test-seed',
@@ -21,14 +27,20 @@ const mockLogs = [
   {
     id: 'log-2',
     timestamp: Date.now() + 1000,
-    actionType: 'APP_SUSPEND',
+    actionType: 'IDLE_PROGRESSION',
+    category: 'ENGINE_TICK',
     executionTimeMs: 0.03,
     stateDiff: [{ key: 'elapsedSeconds', from: 0, to: 1 }],
     seed: 'test-seed-2',
   },
 ];
 
-const mockUseDebugLogs = (overrides = {}) => {
+const mockUseDebugLogs = (overrides: Partial<{
+  logs: typeof mockLogs;
+  isLoading: boolean;
+  refresh: ReturnType<typeof vi.fn>;
+  clear: ReturnType<typeof vi.fn>;
+}> = {}) => {
   vi.mocked(useDebugLogs).mockReturnValue({
     logs: overrides.logs ?? [],
     isLoading: overrides.isLoading ?? false,
@@ -44,7 +56,9 @@ describe('DebugConsole', () => {
 
   it('should not render when visible is false', () => {
     mockUseDebugLogs();
-    const { container } = render(<DebugConsole visible={false} onClose={vi.fn()} />);
+    const { container } = render(
+      <DebugConsole visible={false} onClose={vi.fn()} />,
+    );
     expect(container.firstChild).toBeNull();
   });
 
@@ -57,6 +71,7 @@ describe('DebugConsole', () => {
   it('should display log entries when loaded', () => {
     mockUseDebugLogs({ logs: mockLogs });
     render(<DebugConsole visible={true} onClose={vi.fn()} />);
+
     expect(screen.getByTestId('log-entry-log-1')).toBeInTheDocument();
     expect(screen.getByTestId('log-entry-log-2')).toBeInTheDocument();
   });
@@ -81,10 +96,14 @@ describe('DebugConsole', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('should not render a category filter dropdown', () => {
+  it('should render a filter dropdown with ALL and category options', () => {
     mockUseDebugLogs({ logs: mockLogs });
     render(<DebugConsole visible={true} onClose={vi.fn()} />);
-    expect(screen.queryByTestId('debug-filter')).not.toBeInTheDocument();
+
+    const filter = screen.getByTestId('debug-filter');
+    expect(filter).toBeInTheDocument();
+    expect(screen.getByText('All')).toBeInTheDocument();
+    expect(screen.getByText(LogCategory.ENGINE_TICK, { selector: 'option' })).toBeInTheDocument();
   });
 
   it('should call refresh when the Refresh button is clicked', () => {
@@ -106,7 +125,11 @@ describe('DebugConsole', () => {
   it('should expand state-diff details when a log entry is clicked', () => {
     mockUseDebugLogs({ logs: mockLogs });
     render(<DebugConsole visible={true} onClose={vi.fn()} />);
+
+    // Diff details should not be visible initially
     expect(screen.queryByTestId('log-diff-log-1')).not.toBeInTheDocument();
+
+    // Click the log meta to expand
     fireEvent.click(screen.getByTestId('log-entry-log-1').firstChild!);
     expect(screen.getByTestId('log-diff-log-1')).toBeInTheDocument();
   });
