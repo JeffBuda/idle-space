@@ -9,6 +9,8 @@ describe('SettingsMenu', () => {
     onToggleDebugConsole: vi.fn(),
     gameStateVisible: false,
     onToggleGameState: vi.fn(),
+    appStatusVisible: false,
+    onToggleAppStatus: vi.fn(),
   };
 
   beforeEach(() => {
@@ -89,6 +91,34 @@ describe('SettingsMenu', () => {
     expect(screen.getByTestId('settings-card')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('toggle-game-state'));
+    expect(screen.queryByTestId('settings-card')).not.toBeInTheDocument();
+  });
+
+  it('calls onToggleAppStatus when toggle button is clicked', () => {
+    render(<SettingsMenu {...defaultProps} />);
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    fireEvent.click(screen.getByTestId('toggle-app-status'));
+    expect(defaultProps.onToggleAppStatus).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows "View App Status" when status viewer is hidden', () => {
+    render(<SettingsMenu {...defaultProps} />);
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    expect(screen.getByTestId('toggle-app-status').textContent).toContain('View App Status');
+  });
+
+  it('shows "Hide App Status" when status viewer is visible', () => {
+    render(<SettingsMenu {...defaultProps} appStatusVisible={true} />);
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    expect(screen.getByTestId('toggle-app-status').textContent).toContain('Hide App Status');
+  });
+
+  it('closes settings card after toggling app status', () => {
+    render(<SettingsMenu {...defaultProps} />);
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    expect(screen.getByTestId('settings-card')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('toggle-app-status'));
     expect(screen.queryByTestId('settings-card')).not.toBeInTheDocument();
   });
 });
