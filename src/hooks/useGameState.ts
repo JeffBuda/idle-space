@@ -5,7 +5,7 @@ import { type GameState } from '../engine/time';
 import type { IdleGateStatus } from '../types/game-state';
 import { engineReducer, type GameAction } from '../engine/reducer';
 import { withLogging } from '../logging/logger';
-import { getGameState, saveGameState, initGameState, initDB } from '../db';
+import { getGameState, saveGameState, initGameState, initDB, migrateGameState } from '../db';
 
 export type { GameState };
 
@@ -55,6 +55,11 @@ export const useGameState = (): UseGameStateResult => {
 
       if (!savedState) {
         savedState = await initGameState();
+      } else {
+        // Migrate legacy saves (persisted before the onboarding flow) that lack
+        // `screen`, `oreCounts`, `constants`, etc. — otherwise screen is
+        // undefined and App.tsx renders nothing inside <main>.
+        savedState = migrateGameState(savedState);
       }
 
       const now = Date.now();
@@ -195,8 +200,11 @@ export const useGameState = (): UseGameStateResult => {
     saveGameState({ ...newState, lastError: null });
   }, []);
 
-  const screen = gameState ? gameState.screen : 'WELCOME';
-  const oreCounts = gameState ? gameState.oreCounts : { commonOre: 0, rareOre: 0 };
+  // `?.` + `??` safety net: even after migrateGameState, a partially-written
+  // save could have screen/oreCounts as undefined. Default to WELCOME so the
+  // player always lands on the Welcome screen rather than a blank page.
+  const screen = gameState?.screen ?? 'WELCOME';
+  const oreCounts = gameState?.oreCounts ?? { commonOre: 0, rareOre: 0 };
 
   // Derive a presentation-only view of the active gate from the persisted
   // idleTimer so presentational screen components receive ready-to-render data
