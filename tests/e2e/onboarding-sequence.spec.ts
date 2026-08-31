@@ -67,7 +67,7 @@ async function writeGameState(page: Page, overrides: Record<string, unknown>): P
 test.describe.serial('Onboarding flow', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByTestId('flow-screen')).toBeVisible();
+    await expect(page.getByTestId('settings-gear')).toBeVisible();
 
     // Clear the game_state store for test isolation.
     await page.evaluate(async () => {
@@ -89,12 +89,12 @@ test.describe.serial('Onboarding flow', () => {
     // Reload to recreate a fresh save, then override gate timing to 1s so the
     // cycle runs quickly (Rare Ore stays 2s via rareOreTimeMultiplier).
     await page.reload();
-    await expect(page.getByTestId('flow-screen')).toBeVisible();
+    await expect(page.getByTestId('settings-gear')).toBeVisible();
     await writeGameState(page, {
       constants: { defaultActionTimeSeconds: 1, rareOreTimeMultiplier: 2 },
     });
     await page.reload();
-    await expect(page.getByTestId('flow-screen')).toBeVisible();
+    await expect(page.getByTestId('settings-gear')).toBeVisible();
 
     // Fresh save renders the Welcome screen (render gate: screen === 'WELCOME').
     await expect(page.getByTestId('welcome-screen')).toBeVisible();
