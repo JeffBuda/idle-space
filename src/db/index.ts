@@ -79,6 +79,33 @@ const GAME_STATE_DEFAULT: GameState = {
 };
 
 /**
+ * Migrates a legacy game state (persisted before the onboarding flow was added)
+ * to the current schema by filling in any missing fields with defaults from
+ * GAME_STATE_DEFAULT.
+ *
+ * The pre-onboarding GameState only carried: lastTimestamp, elapsedSeconds,
+ * rngSeed, totalDistanceKm, version. The onboarding-flow schema added:
+ * totalElapsedGameTime, screen, idleTimer, oreCounts, selectedOre, constants,
+ * lastError. Without migration, an old save's `screen` is `undefined`, which
+ * causes App.tsx's `screen === 'WELCOME'` gate to fail and renders a blank page.
+ *
+ * This function is pure (no I/O) so it can be unit-tested directly.
+ */
+export const migrateGameState = (savedState: GameState): GameState => ({
+  ...GAME_STATE_DEFAULT,
+  ...savedState,
+  // Nullish coalescing guards against fields that are present-but-undefined
+  // (possible if a save was partially written), not just missing keys.
+  screen: savedState.screen ?? 'WELCOME',
+  totalElapsedGameTime: savedState.totalElapsedGameTime ?? 0,
+  idleTimer: savedState.idleTimer ?? null,
+  oreCounts: savedState.oreCounts ?? { commonOre: 0, rareOre: 0 },
+  selectedOre: savedState.selectedOre ?? null,
+  constants: savedState.constants ?? GAME_STATE_DEFAULT.constants,
+  lastError: savedState.lastError ?? null,
+});
+
+/**
  * Opens (or creates) the IndexedDB database `space_idle_db` with a
  * key-value object store. If the `app_status` payload does not yet
  * exist it is seeded with a default value.
