@@ -120,7 +120,7 @@ test.describe.serial('debug console toggle flow', () => {
     await page.goto('/');
     // Wait for the app to finish loading (game state loaded via handleWake).
     // This ensures the APP_WAKE log entry has been dispatched before tests run.
-    await page.waitForSelector('[data-testid="flow-screen"]', {
+    await page.waitForSelector('[data-testid="settings-gear"]', {
       timeout: 10000,
     });
   });
