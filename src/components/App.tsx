@@ -20,8 +20,10 @@ const App = () => {
   const [installReady, setInstallReady] = useState(false);
   const [debugConsoleVisible, setDebugConsoleVisible] = useState(false);
   const [gameStateVisible, setGameStateVisible] = useState(false);
+  const [appStatusVisible, setAppStatusVisible] = useState(false);
   const toggleDebugConsole = () => setDebugConsoleVisible(!debugConsoleVisible);
   const toggleGameState = () => setGameStateVisible(!gameStateVisible);
+  const toggleAppStatus = () => setAppStatusVisible(!appStatusVisible);
 
   // ---- Service Worker registration status ----
   useEffect(() => {
@@ -71,6 +73,8 @@ const App = () => {
             onToggleDebugConsole={toggleDebugConsole}
             gameStateVisible={gameStateVisible}
             onToggleGameState={toggleGameState}
+            appStatusVisible={appStatusVisible}
+            onToggleAppStatus={toggleAppStatus}
           />
         </header>
         <main>
@@ -89,23 +93,26 @@ const App = () => {
           onToggleDebugConsole={toggleDebugConsole}
           gameStateVisible={gameStateVisible}
           onToggleGameState={toggleGameState}
+          appStatusVisible={appStatusVisible}
+          onToggleAppStatus={toggleAppStatus}
         />
       </header>
 
       <main>
-        <AppStatusViewer
-          gameState={gameState}
-          swStatus={swStatus}
-          dbStatus={dbStatus}
-          installReady={installReady}
-        />
+        {appStatusVisible && (
+          <AppStatusViewer
+            gameState={gameState}
+            swStatus={swStatus}
+            dbStatus={dbStatus}
+            installReady={installReady}
+          />
+        )}
 
-        {/* Onboarding-flow overlay. The screen -> component switch lives here in
-            App.tsx (NOT a hook) because src/engine/flow.ts is forbidden from
-            importing React/components, and a custom hook that imported the screen
-            components would violate the archunit "hooks -> components" rule.
-            AppStatusViewer stays rendered so the travel stats are never hidden
-            while a gate is ticking. */}
+        {/* App Status overlay — menu-gated. The screen -> component switch
+          lives here in App.tsx (NOT a hook) because src/engine/flow.ts is
+          forbidden from importing React/components, and a custom hook that
+          imported the screen components would violate the archunit
+          "hooks -> components" rule. */}
         {gameState && (
           <>
             {screen === 'WELCOME' && (

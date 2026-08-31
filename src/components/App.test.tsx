@@ -19,8 +19,8 @@ const mockGameStateData = {
   rngSeed: 'test-seed',
   totalDistanceKm: 1000,
   version: '0.1.0',
-  // Onboarding-flow fields (defaults to the PLANET hub so the always-visible
-  // status grid + PlanetHub overlay render as before the flow tests override).
+  // Onboarding-flow fields (defaults to the PLANET hub so the status
+  // grid + hub overlay render as before the flow tests override).
   screen: 'PLANET',
   idleTimer: null,
   oreCounts: { commonOre: 0, rareOre: 0 },
@@ -72,13 +72,26 @@ const mockServiceWorker = (controller: object | null = null) => {
   });
 };
 
+// ---------------------------------------------------------------------------
+// Helper: render the app and open the menu-gated App Status overlay.
+// Per docs/DESIGN_BIBLE.md, the status grid is hidden behind the SettingsMenu
+// "View App Status" toggle.
+// ---------------------------------------------------------------------------
+const openAppStatus = async () => {
+  await act(async () => {
+    render(<App />);
+  });
+  fireEvent.click(screen.getByTestId('settings-gear'));
+  fireEvent.click(screen.getByTestId('toggle-app-status'));
+  await waitFor(() => {
+    expect(screen.getByTestId('sw-status')).toBeInTheDocument();
+  });
+};
+
 describe('App', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Default: no active service worker
     mockServiceWorker(null);
-    // Reset the (mutable) mock back to the Planet hub so the always-on status
-    // grid + hub overlay render as before the onboarding override tests run.
     mockGameStateData.screen = 'PLANET';
   });
 
@@ -90,9 +103,7 @@ describe('App', () => {
   });
 
   it('renders all essential status widgets without errors', async () => {
-    await act(async () => {
-      render(<App />);
-    });
+    await openAppStatus();
     expect(screen.getByText('Service Worker')).toBeInTheDocument();
     expect(screen.getByText('IndexedDB')).toBeInTheDocument();
     expect(screen.getByText('Install Ready')).toBeInTheDocument();
@@ -103,44 +114,30 @@ describe('App', () => {
 
   it('updates the Service Worker status indicator to Active when registered', async () => {
     mockServiceWorker({} as ServiceWorker);
-    await act(async () => {
-      render(<App />);
-    });
-    await waitFor(() => {
-      expect(screen.getByTestId('sw-status').textContent).toBe('Active');
-    });
+    await openAppStatus();
+    expect(screen.getByTestId('sw-status').textContent).toBe('Active');
   });
 
   it('shows Inactive when no service worker controller is present', async () => {
     mockServiceWorker(null);
-    await act(async () => {
-      render(<App />);
-    });
+    await openAppStatus();
     expect(screen.getByTestId('sw-status').textContent).toBe('Inactive');
   });
 
   it('shows Connected for IndexedDB after successful init', async () => {
-    await act(async () => {
-      render(<App />);
-    });
-    await waitFor(() => {
-      expect(screen.getByTestId('db-status').textContent).toBe('Connected');
-    });
+    await openAppStatus();
+    expect(screen.getByTestId('db-status').textContent).toBe('Connected');
   });
 
   it('renders the engine section with game state information', async () => {
-    await act(async () => {
-      render(<App />);
-    });
+    await openAppStatus();
     expect(screen.getByText('Engine')).toBeInTheDocument();
     expect(screen.getByTestId('total-travel-time')).toBeInTheDocument();
     expect(screen.getByTestId('total-distance')).toBeInTheDocument();
   });
 
   it('renders the build information card with version and build date', async () => {
-    await act(async () => {
-      render(<App />);
-    });
+    await openAppStatus();
     expect(screen.getByText('Build Information')).toBeInTheDocument();
     expect(screen.getByTestId('app-version')).toBeInTheDocument();
     expect(screen.getByTestId('build-date')).toBeInTheDocument();
@@ -157,6 +154,36 @@ describe('App', () => {
     render(<App />);
     fireEvent.click(screen.getByTestId('settings-gear'));
     expect(screen.getByTestId('settings-card')).toBeInTheDocument();
+  });
+
+  it('does not render AppStatusViewer until "View App Status" is toggled', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+    expect(screen.queryByText('Application Status')).not.toBeInTheDocument();
+    expect(screen.queryByText('Engine')).not.toBeInTheDocument();
+    expect(screen.queryByText('Build Information')).not.toBeInTheDocument();
+  });
+
+  it('opens app status viewer when "View App Status" is clicked', async () => {
+    await openAppStatus();
+    expect(screen.getByText('Application Status')).toBeInTheDocument();
+  });
+
+  it('closes settings card after toggling app status', () => {
+    render(<App />);
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    expect(screen.getByTestId('settings-card')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('toggle-app-status'));
+    expect(screen.queryByTestId('settings-card')).not.toBeInTheDocument();
+  });
+
+  it('closes app status when "Hide App Status" is clicked', async () => {
+    await openAppStatus();
+    expect(screen.getByText('Application Status')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    fireEvent.click(screen.getByTestId('toggle-app-status'));
+    expect(screen.queryByText('Application Status')).not.toBeInTheDocument();
   });
 
   it('opens game state viewer when "View Game State" is clicked', async () => {
