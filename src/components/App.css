@@ -106,3 +106,56 @@ main {
     padding: var(--space-lg);
   }
 }
+
+/* ---- Onboarding flow screens (overlay below the always-visible status grid) ---- */
+.flow-screen {
+  background-color: var(--color-border-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-xl);
+  text-align: left;
+}
+.flow-screen h2 {
+  font-size: var(--font-size-125);
+  margin-bottom: var(--space-lg);
+  color: var(--color-white);
+}
+.flow-subtitle {
+  color: var(--color-text-secondary);
+  margin: var(--space-sm) 0 var(--space-lg);
+}
+.ore-controls {
+  display: flex;
+  gap: var(--space-sm);
+  margin: var(--space-md) 0;
+}
+.primary-btn {
+  background-color: var(--color-accent);
+  color: var(--color-white);
+  border: none;
+  border-radius: var(--radius-card);
+  padding: var(--space-md) var(--space-lg);
+  font-size: var(--font-size-1);
+  cursor: pointer;
+}
+.primary-btn:hover {
+  filter: brightness(1.1);
+}
+/* Gate progress bar. The CSS transition keeps the bar visually smooth between
+   the 1-second background ticks (independent of the state-processing cadence). */
+.gate-bar {
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  height: 1.25rem;
+  margin: var(--space-md) 0;
+  overflow: hidden;
+}
+.gate-fill {
+  height: 100%;
+  background-color: var(--color-accent);
+  width: 0%;
+  transition:
+    width 0.3s ease-out,
+    background-color 0.3s;
+}

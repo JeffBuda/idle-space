@@ -30,6 +30,13 @@ import { LogStorageService } from './storage';
 const ACTION_CATEGORY: Record<string, LogCategory> = {
   APP_WAKE: LogCategory.APP_EVENT,
   APP_SUSPEND: LogCategory.APP_EVENT,
+  // Flow events are logged (but IDLE_PROGRESSION ticks are not — see the
+  // early return below). Illegal flow transitions still land here; withLogging
+  // additionally flips them to VALIDATION_ERROR when the result has a lastError.
+  NAVIGATE: LogCategory.GAME_FLOW,
+  HURRY: LogCategory.GAME_FLOW,
+  COMPLETE_ACTION: LogCategory.GAME_FLOW,
+  ORE_SELECTED: LogCategory.GAME_FLOW,
 };
 
 /**
@@ -95,7 +102,11 @@ export const withLogging = (reducer: EngineReducerFn): EngineReducerFn => {
       id: generateLogEntryId(),
       timestamp: Date.now(),
       actionType: action.type,
-      category: ACTION_CATEGORY[action.type] ?? LogCategory.APP_EVENT,
+      // Illegal flow transitions set `lastError` on the result; surface those as
+      // VALIDATION_ERROR so the DebugConsole can filter them separately (answer 8).
+      category: newState.lastError
+        ? LogCategory.VALIDATION_ERROR
+        : (ACTION_CATEGORY[action.type] ?? LogCategory.APP_EVENT),
       executionTimeMs,
       stateDiff: calculateDiff(
         prevState as unknown as Record<string, unknown>,

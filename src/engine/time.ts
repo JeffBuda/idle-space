@@ -1,12 +1,12 @@
 // src/engine/time.ts
+//
+// Pure time-domain engine: idle progression (distance / elapsed time) and the
+// active idle-gate countdown. Imports the canonical GameState from
+// src/types/game-state.ts (engine -> types is an allowed dependency).
+// No Date / window / DOM — all time values are passed in explicitly.
+import { type GameState } from '../types/game-state';
 
-export interface GameState {
-  lastTimestamp: number;
-  elapsedSeconds: number;
-  rngSeed: string;
-  totalDistanceKm: number;
-  version: string;
-}
+export type { GameState };
 
 export interface EngineState {
   lastProcessedTime: number;
@@ -51,5 +51,30 @@ export const processIdleProgression = (
     lastTimestamp: currentTime,
     elapsedSeconds: prevState.elapsedSeconds + deltaSeconds,
     totalDistanceKm: prevState.totalDistanceKm + distanceTraveled,
+    // `?? 0` keeps legacy/partial (pre-onboarding) saves migratable.
+    totalElapsedGameTime: (prevState.totalElapsedGameTime ?? 0) + deltaSeconds,
+  };
+};
+
+/**
+ * Catch up the active idle gate countdown for time elapsed since `startedAt`
+ * (including while the app was backgrounded). Applies the leftover delta in one
+ * chunk on wake so a gate completes even when the app slept — no double-count
+ * vs. the 1s foreground ticks (startedAt advances on each tick). Pure: returns
+ * a new state, or the same ref when no gate is active.
+ */
+export const advanceIdleGate = (prevState: GameState, currentTime: number): GameState => {
+  const timer = prevState.idleTimer;
+  if (!timer || timer.screen !== prevState.screen) {
+    return prevState;
+  }
+  const deltaSeconds = Math.max(0, Math.floor((currentTime - timer.startedAt) / 1000));
+  if (deltaSeconds <= 0) {
+    return prevState;
+  }
+  const remaining = Math.max(0, timer.remainingSeconds - deltaSeconds);
+  return {
+    ...prevState,
+    idleTimer: { ...timer, remainingSeconds: remaining, startedAt: currentTime },
   };
 };

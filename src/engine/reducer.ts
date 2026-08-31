@@ -7,29 +7,16 @@
 // This module must remain PURE: no DOM access, no Date, no side effects.
 // All time/seed values are passed in as explicit parameters for
 // deterministic testability.
-import { processIdleProgression, type GameState } from './time';
+import { advanceIdleGate, processIdleProgression } from './time';
+import { processFlowAction } from './flow';
+import type { GameState, GameAction } from '../types/game-state';
 
 /**
- * Discriminated union of all engine actions.
- *
- * Each variant routes to a dedicated pure function in src/engine/.
- * To add a new action: add a variant here + a case in engineReducer.
- * The structure mirrors a Redux-style reducer so that the logging
- * interceptor can capture action metadata without coupling to
- * individual engine functions.
+ * Discriminated union of all engine actions — canonical definition lives in
+ * src/types/game-state.ts (shared by engine, hooks, and components to avoid
+ * cross-layer coupling).
  */
-export type GameAction =
-  | { type: 'IDLE_PROGRESSION' }
-  // Real-time game tick — dispatched every second by the 1-second interval.
-  // Uses the raw engineReducer (no logging) to avoid flooding the debug console.
-  | { type: 'APP_WAKE' }
-  // Resuming from idle / foregrounding — dispatched when the tab becomes
-  // visible again. Processed via the loggedReducer so it appears in the
-  // debug console as an event that affects the time aggregation calculation.
-  | { type: 'APP_SUSPEND' };
-// Going idle / backgrounding — dispatched when the tab is hidden or
-// the page is about to unload. Updates lastTimestamp (the idle baseline)
-// and is logged as an event.
+export type { GameAction };
 
 /**
  * Function signature for the engine reducer. Used by the logging
@@ -64,16 +51,22 @@ export const engineReducer: EngineReducerFn = (
 ) => {
   switch (action.type) {
     case 'IDLE_PROGRESSION':
-    case 'APP_WAKE':
-      // Both IDLE_PROGRESSION (real-time tick) and APP_WAKE (resume from idle)
-      // calculate accumulated idle distance. APP_WAKE is logged via the
-      // withLogging interceptor; IDLE_PROGRESSION bypasses logging to avoid
-      // flooding the debug console with per-second entries.
-      return processIdleProgression(prevState, currentTime, SPEED_KM_PER_SEC);
+    case 'APP_WAKE': {
+      // Both advance idle math, then catch up the active gate countdown so a
+      // backgrounded/idle phone still completes its gate (iOS ITP safe).
+      // APP_WAKE is logged via withLogging; IDLE_PROGRESSION bypasses logging.
+      const progressed = processIdleProgression(prevState, currentTime, SPEED_KM_PER_SEC);
+      return advanceIdleGate(progressed, currentTime);
+    }
     case 'APP_SUSPEND':
-      // Going idle — snapshot the current timestamp as the idle baseline.
-      // The next processIdleProgression call (on wake) will delta from this.
+      // Going idle — snapshot the time baseline. The gate is NOT advanced here;
+      // the wake pass above accounts for the full background stretch.
       return { ...prevState, lastTimestamp: currentTime };
+    case 'NAVIGATE':
+    case 'HURRY':
+    case 'COMPLETE_ACTION':
+    case 'ORE_SELECTED':
+      return processFlowAction(prevState, action, currentTime);
     default:
       return prevState;
   }

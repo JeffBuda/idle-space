@@ -1,5 +1,6 @@
 // src/db.ts
 import { openDB, type DBSchema } from 'idb';
+import type { GameState } from '../types/game-state';
 
 export interface AppStatus {
   installed: boolean;
@@ -7,13 +8,11 @@ export interface AppStatus {
   version: string;
 }
 
-export interface GameState {
-  lastTimestamp: number;
-  elapsedSeconds: number;
-  rngSeed: string;
-  totalDistanceKm: number;
-  version: string;
-}
+// Canonical GameState is defined in src/types/game-state.ts (engine-owned) and
+// re-exported here so the db layer is typed against the shared shape without
+// duplicating it. db -> types is an allowed dependency (db may not depend on
+// engine/hooks/components/utils, but `types` is a shared, dependency-free zone).
+export type { GameState };
 
 /**
  * A single diagnostic log entry persisted to the `space_idle_logs`
@@ -65,9 +64,18 @@ const APP_STATUS_DEFAULT: AppStatus = {
 const GAME_STATE_DEFAULT: GameState = {
   lastTimestamp: Date.now(),
   elapsedSeconds: 0,
+  totalElapsedGameTime: 0,
   rngSeed: Math.random().toString(36).substring(2, 15),
   totalDistanceKm: 0,
   version: '0.1.0',
+  // Brand-new save -> the engine renders the WELCOME screen (render gate is
+  // `screen === 'WELCOME'`, NOT the time fields, to avoid a 1s tick flicker).
+  screen: 'WELCOME',
+  idleTimer: null,
+  oreCounts: { commonOre: 0, rareOre: 0 },
+  selectedOre: null,
+  constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
+  lastError: null,
 };
 
 /**
