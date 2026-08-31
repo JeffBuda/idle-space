@@ -54,10 +54,20 @@ async function setGameTimestamp(page: Page, msAgo: number): Promise<void> {
   }, msAgo);
 }
 
+// ---------------------------------------------------------------------------
+// Helper: open the menu-gated App Status overlay so status widgets
+// (travel time, distance) are visible in the DOM.
+// ---------------------------------------------------------------------------
+const openAppStatus = async (page: Page) => {
+  await page.getByTestId('settings-gear').click();
+  await page.getByTestId('toggle-app-status').click();
+};
+
 test.describe.serial('Game State Interaction Tests', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate and ensure game state loads
     await page.goto('/');
+    await openAppStatus(page);
     await expect(page.getByTestId('total-travel-time')).toBeVisible();
 
     // Clear game state from IndexedDB to ensure test isolation
@@ -80,6 +90,7 @@ test.describe.serial('Game State Interaction Tests', () => {
 
     // Reload to create fresh game state
     await page.reload();
+    await openAppStatus(page);
     await expect(page.getByTestId('total-travel-time')).toBeVisible();
   });
 
