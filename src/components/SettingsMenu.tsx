@@ -7,6 +7,8 @@ interface SettingsMenuProps {
   onToggleDebugConsole: () => void;
   gameStateVisible: boolean;
   onToggleGameState: () => void;
+  appStatusVisible: boolean;
+  onToggleAppStatus: () => void;
 }
 
 /**
@@ -24,6 +26,8 @@ export const SettingsMenu = ({
   onToggleDebugConsole,
   gameStateVisible,
   onToggleGameState,
+  appStatusVisible,
+  onToggleAppStatus,
 }: SettingsMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -78,6 +82,17 @@ export const SettingsMenu = ({
             }}
           >
             {gameStateVisible ? 'Hide' : 'View'} Game State
+          </button>
+          <button
+            type="button"
+            className={`settings-toggle ${appStatusVisible ? 'settings-on' : 'settings-off'}`}
+            data-testid="toggle-app-status"
+            onClick={() => {
+              onToggleAppStatus();
+              setIsOpen(false);
+            }}
+          >
+            {appStatusVisible ? 'Hide' : 'View'} App Status
           </button>
         </div>
       )}
