@@ -112,3 +112,77 @@ describe('SPEED_KM_PER_SEC', () => {
     expect(SPEED_KM_PER_SEC).toBe(10);
   });
 });
+
+describe('onboarding flow dispatch', () => {
+  const TIME = 2_000_000;
+  const gate = (remaining: number, startedAt: number) => ({
+    screen: 'SPACE_TRAVEL' as const,
+    targetSeconds: 30,
+    remainingSeconds: remaining,
+    startedAt,
+  });
+  const flowState: GameState = {
+    lastTimestamp: 1_000_000,
+    elapsedSeconds: 0,
+    totalElapsedGameTime: 0,
+    totalDistanceKm: 0,
+    rngSeed: 'test-seed',
+    version: '0.1.0',
+    screen: 'WELCOME',
+    idleTimer: null,
+    oreCounts: { commonOre: 0, rareOre: 0 },
+    selectedOre: null,
+    constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
+    lastError: null,
+  };
+
+  it('NAVIGATE WELCOME -> SPACE_TRAVEL starts a 30s gate and seeds lastTimestamp', () => {
+    const r = engineReducer(flowState, { type: 'NAVIGATE', to: 'SPACE_TRAVEL' }, TIME, 'test-seed');
+    expect(r.screen).toBe('SPACE_TRAVEL');
+    expect(r.idleTimer?.remainingSeconds).toBe(30);
+    expect(r.lastTimestamp).toBe(TIME);
+    expect(r.lastError).toBeNull();
+  });
+
+  it('IDLE_PROGRESSION advances the gate; COMPLETE_ACTION fires when it expires', () => {
+    let s = engineReducer(flowState, { type: 'NAVIGATE', to: 'SPACE_TRAVEL' }, TIME, 'test-seed');
+    expect(s.idleTimer?.remainingSeconds).toBe(30);
+    // tick 25s -> 5s left
+    s = engineReducer(s, { type: 'IDLE_PROGRESSION' }, TIME + 25_000, 'test-seed');
+    expect(s.idleTimer?.remainingSeconds).toBe(5);
+    expect(s.idleTimer?.startedAt).toBe(TIME + 25_000);
+    // tick 5s more -> expired
+    s = engineReducer(s, { type: 'IDLE_PROGRESSION' }, TIME + 30_000, 'test-seed');
+    expect(s.idleTimer?.remainingSeconds).toBe(0);
+    s = engineReducer(s, { type: 'COMPLETE_ACTION' }, TIME + 30_000, 'test-seed');
+    expect(s.screen).toBe('PLANET');
+    expect(s.idleTimer).toBeNull();
+  });
+
+  it('HURRY shaves 1s off the active gate', () => {
+    const s = { ...flowState, screen: 'SPACE_TRAVEL', idleTimer: gate(10, TIME) };
+    expect(engineReducer(s, { type: 'HURRY' }, TIME, 'test-seed').idleTimer?.remainingSeconds).toBe(
+      9,
+    );
+  });
+
+  it('illegal NAVIGATE is rejected and sets lastError', () => {
+    const s = { ...flowState, screen: 'SPACE_TRAVEL', idleTimer: gate(5, TIME) };
+    const r = engineReducer(s, { type: 'NAVIGATE', to: 'LANDING' }, TIME, 'test-seed');
+    expect(r.lastError).toContain('Illegal navigation');
+    expect(r.screen).toBe('SPACE_TRAVEL');
+  });
+
+  it('ORE_SELECTED Rare starts a 60s gate; COMPLETE awards rareOre', () => {
+    const mining = { ...flowState, screen: 'MINING', idleTimer: null };
+    let s = engineReducer(mining, { type: 'ORE_SELECTED', ore: 'rareOre' }, TIME, 'test-seed');
+    expect(s.selectedOre).toBe('rareOre');
+    expect(s.idleTimer?.targetSeconds).toBe(60);
+    expect(s.idleTimer?.remainingSeconds).toBe(60);
+    // jump to expiry, then complete
+    s = { ...s, idleTimer: { ...s.idleTimer!, remainingSeconds: 0 } };
+    s = engineReducer(s, { type: 'COMPLETE_ACTION' }, TIME, 'test-seed');
+    expect(s.screen).toBe('PLANET');
+    expect(s.oreCounts).toEqual({ commonOre: 0, rareOre: 1 });
+  });
+});

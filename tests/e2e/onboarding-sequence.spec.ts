@@ -1,0 +1,171 @@
+// tests/e2e/onboarding-sequence.spec.ts
+//
+// End-to-end coverage for the idle-gated onboarding state machine
+// (docs/onboarding-flow.md §6). The full Launch! -> Land -> Mine -> Collect
+// cycle is exercised with 1-second gates (fast-test override written straight
+// to IndexedDB, mirroring the SettingsMenu "fast action time" toggle) so the
+// cycle completes in seconds rather than ~90s.
+import { test, expect, type Page } from '@playwright/test';
+
+test.use({ viewport: { width: 1280, height: 720 } });
+
+// ---------------------------------------------------------------------------
+// IDB helpers
+// ---------------------------------------------------------------------------
+interface GameStateSnapshot {
+  screen: string;
+  oreCounts?: { commonOre: number; rareOre: number };
+  [key: string]: unknown;
+}
+
+async function readGameState(page: Page): Promise<GameStateSnapshot | null> {
+  return page.evaluate(async () => {
+    if (!('indexedDB' in window)) return null;
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const req = indexedDB.open('space_idle_db');
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    const tx = db.transaction(['game_state'], 'readonly');
+    const store = tx.objectStore('game_state');
+    const value = await new Promise<unknown>((resolve, reject) => {
+      const getReq = store.get('game_state');
+      getReq.onsuccess = () => resolve(getReq.result);
+      getReq.onerror = () => reject(getReq.error);
+    });
+    db.close();
+    return value as GameStateSnapshot;
+  });
+}
+
+async function writeGameState(page: Page, overrides: Record<string, unknown>): Promise<void> {
+  await page.evaluate(async (overrides) => {
+    if (!('indexedDB' in window)) return;
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const req = indexedDB.open('space_idle_db');
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    const tx = db.transaction(['game_state'], 'readwrite');
+    const store = tx.objectStore('game_state');
+    const existing = await new Promise<Record<string, unknown>>((resolve, reject) => {
+      const getReq = store.get('game_state');
+      getReq.onsuccess = () => resolve(getReq.result as Record<string, unknown>);
+      getReq.onerror = () => reject(getReq.error);
+    });
+    if (existing) {
+      await store.put({ ...existing, ...overrides }, 'game_state');
+    }
+    db.close();
+  }, overrides);
+}
+
+// ---------------------------------------------------------------------------
+// Full onboarding cycle with 1s gates. Serial + clears the game_state store
+// before each test (IDB-modifying tests per the e2e isolation rules).
+// ---------------------------------------------------------------------------
+test.describe.serial('Onboarding flow', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByTestId('total-travel-time')).toBeVisible();
+
+    // Clear the game_state store for test isolation.
+    await page.evaluate(async () => {
+      const db = await new Promise<IDBDatabase>((resolve, reject) => {
+        const req = indexedDB.open('space_idle_db');
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+      const tx = db.transaction(['game_state'], 'readwrite');
+      const store = tx.objectStore('game_state');
+      await new Promise<void>((resolve, reject) => {
+        const delReq = store.delete('game_state');
+        delReq.onsuccess = () => resolve();
+        delReq.onerror = () => reject(delReq.error);
+      });
+      db.close();
+    });
+
+    // Reload to recreate a fresh save, then override gate timing to 1s so the
+    // cycle runs quickly (Rare Ore stays 2s via rareOreTimeMultiplier).
+    await page.reload();
+    await expect(page.getByTestId('total-travel-time')).toBeVisible();
+    await writeGameState(page, {
+      constants: { defaultActionTimeSeconds: 1, rareOreTimeMultiplier: 2 },
+    });
+    await page.reload();
+    await expect(page.getByTestId('total-travel-time')).toBeVisible();
+
+    // Fresh save renders the Welcome screen (render gate: screen === 'WELCOME').
+    await expect(page.getByTestId('welcome-screen')).toBeVisible();
+  });
+
+  test('full onboarding cycle: Launch! -> Land -> Mine (Common) -> Collect', async ({ page }) => {
+    console.log('Start onboarding cycle');
+
+    // Step 1 - Welcome: player must tap Launch! to begin.
+    await page.getByTestId('launch-btn').click();
+
+    // Step 2 - Space Travel gate (1s), then complete -> Planet hub.
+    await expect(page.getByTestId('space-travel-screen')).toBeVisible();
+    await expect(page.getByTestId('complete-action-btn')).toBeVisible({ timeout: 10000 });
+    console.log('Space Travel gate complete');
+    await page.getByTestId('complete-action-btn').click();
+
+    // Step 3 - Planet hub -> Land.
+    await expect(page.getByTestId('planet-hub-screen')).toBeVisible();
+    await page.getByTestId('nav-landing').click();
+
+    // Step 4 - Landing gate (1s), then complete -> Mining.
+    await expect(page.getByTestId('landing-screen')).toBeVisible();
+    await expect(page.getByTestId('complete-action-btn')).toBeVisible({ timeout: 10000 });
+    console.log('Landing gate complete');
+    await page.getByTestId('complete-action-btn').click();
+
+    // Step 5 - Mining: select Common Ore (1s gate), collect.
+    await expect(page.getByTestId('mining-screen')).toBeVisible();
+    await page.getByTestId('ore-common').click();
+    await expect(page.getByTestId('complete-action-btn')).toBeVisible({ timeout: 10000 });
+    console.log('Mining gate complete');
+    await page.getByTestId('complete-action-btn').click();
+
+    // Step 6 - Back on the Planet hub with Common Ore awarded.
+    await expect(page.getByTestId('planet-hub-screen')).toBeVisible();
+    const oreTally = await page.getByTestId('ore-tally').textContent();
+    console.log('Ore tally after cycle:', oreTally);
+    expect(oreTally).toContain('Common Ore: 1');
+
+    // The award is persisted in IndexedDB.
+    const gameState = await readGameState(page);
+    expect(gameState).not.toBeNull();
+    expect(gameState.screen).toBe('PLANET');
+    expect(gameState.oreCounts?.commonOre).toBe(1);
+  });
+
+  test('Rare Ore gate is twice as long (2s) before collecting', async ({ page }) => {
+    console.log('Start rare-ore cycle');
+
+    await page.getByTestId('launch-btn').click();
+    await expect(page.getByTestId('complete-action-btn')).toBeVisible({ timeout: 10000 });
+    await page.getByTestId('complete-action-btn').click();
+
+    await expect(page.getByTestId('planet-hub-screen')).toBeVisible();
+    await page.getByTestId('nav-landing').click();
+    await expect(page.getByTestId('landing-screen')).toBeVisible();
+    await expect(page.getByTestId('complete-action-btn')).toBeVisible({ timeout: 10000 });
+    await page.getByTestId('complete-action-btn').click();
+
+    await expect(page.getByTestId('mining-screen')).toBeVisible();
+    await page.getByTestId('ore-rare').click();
+    await expect(page.getByTestId('complete-action-btn')).toBeVisible({ timeout: 10000 });
+    await page.getByTestId('complete-action-btn').click();
+
+    await expect(page.getByTestId('planet-hub-screen')).toBeVisible();
+    const oreTally = await page.getByTestId('ore-tally').textContent();
+    console.log('Rare ore tally after cycle:', oreTally);
+    expect(oreTally).toContain('Rare Ore: 1');
+
+    const gameState = await readGameState(page);
+    expect(gameState.oreCounts?.rareOre).toBe(1);
+  });
+});

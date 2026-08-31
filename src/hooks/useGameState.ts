@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { calculateElapsedSeconds } from '../utils/time';
 import { type GameState } from '../engine/time';
+import type { IdleGateStatus } from '../types/game-state';
 import { engineReducer, type GameAction } from '../engine/reducer';
 import { withLogging } from '../logging/logger';
 import { getGameState, saveGameState, initGameState, initDB } from '../db';
@@ -20,9 +21,13 @@ const SAVE_INTERVAL_MS = 10000;
 
 export interface UseGameStateResult {
   gameState: GameState | null;
+  screen: GameState['screen'];
+  oreCounts: GameState['oreCounts'];
   offlineSeconds: number | null;
   clearOfflineSeconds: () => void;
   isLoading: boolean;
+  dispatch: (action: GameAction) => void;
+  gate: IdleGateStatus | null;
 }
 
 export const useGameState = (): UseGameStateResult => {
@@ -66,7 +71,9 @@ export const useGameState = (): UseGameStateResult => {
       const newState = loggedReducer(savedState, action, now, savedState.rngSeed);
       setGameState(newState);
       lastTickRef.current = now;
-      await saveGameState(newState);
+      // lastError is transient engine-only — reset before persisting so no
+      // stale validation message lands in IndexedDB.
+      await saveGameState({ ...newState, lastError: null });
     } catch (error) {
       console.error('Failed to process game state on wake:', error);
     } finally {
@@ -85,7 +92,7 @@ export const useGameState = (): UseGameStateResult => {
         const newState = loggedReducer(currentState, action, now, currentState.rngSeed);
         gameStateRef.current = newState;
         setGameState(newState);
-        await saveGameState(newState);
+        await saveGameState({ ...newState, lastError: null });
       } else {
         // Save current timestamp even if we haven't loaded state yet
         const defaultState = await initGameState();
@@ -153,6 +160,7 @@ export const useGameState = (): UseGameStateResult => {
           const stateToSave = {
             ...currentState,
             lastTimestamp: Date.now(),
+            lastError: null,
           };
           saveGameState(stateToSave);
         }
@@ -174,5 +182,50 @@ export const useGameState = (): UseGameStateResult => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { gameState, offlineSeconds, clearOfflineSeconds, isLoading };
+  // Dispatch a flow action (NAVIGATE / HURRY / COMPLETE_ACTION / ORE_SELECTED)
+  // through the logged reducer so it appears in the debug console, then persist
+  // the result. lastError is stripped from the saved copy (transient only).
+  const dispatch = useCallback((action: GameAction) => {
+    const currentState = gameStateRef.current;
+    if (!currentState) return;
+    const now = Date.now();
+    const newState = loggedReducer(currentState, action, now, currentState.rngSeed);
+    gameStateRef.current = newState;
+    setGameState(newState);
+    saveGameState({ ...newState, lastError: null });
+  }, []);
+
+  const screen = gameState ? gameState.screen : 'WELCOME';
+  const oreCounts = gameState ? gameState.oreCounts : { commonOre: 0, rareOre: 0 };
+
+  // Derive a presentation-only view of the active gate from the persisted
+  // idleTimer so presentational screen components receive ready-to-render data
+  // (no game math / time-to-distance conversion in React).
+  const timer = gameState?.idleTimer ?? null;
+  const gate: IdleGateStatus | null = timer
+    ? {
+        active: true,
+        targetSeconds: timer.targetSeconds,
+        remainingSeconds: timer.remainingSeconds,
+        elapsedSeconds: timer.targetSeconds - timer.remainingSeconds,
+        expired: timer.remainingSeconds <= 0,
+        progressPercent:
+          timer.targetSeconds > 0
+            ? Math.round(
+                ((timer.targetSeconds - timer.remainingSeconds) / timer.targetSeconds) * 100,
+              )
+            : 0,
+      }
+    : null;
+
+  return {
+    gameState,
+    screen,
+    oreCounts,
+    gate,
+    offlineSeconds,
+    clearOfflineSeconds,
+    isLoading,
+    dispatch,
+  };
 };

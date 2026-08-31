@@ -15,17 +15,33 @@ vi.mock('../hooks/useDbStatus', () => ({
 const mockGameStateData = {
   lastTimestamp: Date.now(),
   elapsedSeconds: 100,
+  totalElapsedGameTime: 100,
   rngSeed: 'test-seed',
   totalDistanceKm: 1000,
   version: '0.1.0',
+  // Onboarding-flow fields (defaults to the PLANET hub so the always-visible
+  // status grid + PlanetHub overlay render as before the flow tests override).
+  screen: 'PLANET',
+  idleTimer: null,
+  oreCounts: { commonOre: 0, rareOre: 0 },
+  selectedOre: null,
+  constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
+  lastError: null,
 };
+
+// Stable dispatch mock so App tests can assert on dispatched flow actions.
+const mockDispatch = vi.fn();
 
 vi.mock('../hooks/useGameState', () => ({
   useGameState: () => ({
     gameState: mockGameStateData,
+    screen: mockGameStateData.screen,
+    oreCounts: mockGameStateData.oreCounts,
+    gate: null,
     offlineSeconds: null,
     clearOfflineSeconds: vi.fn(),
     isLoading: false,
+    dispatch: mockDispatch,
   }),
 }));
 
@@ -61,6 +77,9 @@ describe('App', () => {
     vi.clearAllMocks();
     // Default: no active service worker
     mockServiceWorker(null);
+    // Reset the (mutable) mock back to the Planet hub so the always-on status
+    // grid + hub overlay render as before the onboarding override tests run.
+    mockGameStateData.screen = 'PLANET';
   });
 
   it('renders the landing page title', async () => {
@@ -174,5 +193,43 @@ describe('App', () => {
 
     fireEvent.click(screen.getByTestId('game-state-close'));
     expect(screen.queryByTestId('game-state-viewer')).not.toBeInTheDocument();
+  });
+
+  it('renders the Welcome overlay on a fresh (WELCOME) save', async () => {
+    mockGameStateData.screen = 'WELCOME';
+    await act(async () => {
+      render(<App />);
+    });
+    expect(screen.getByTestId('welcome-screen')).toBeInTheDocument();
+    expect(screen.getByTestId('launch-btn')).toBeInTheDocument();
+  });
+
+  it('dispatches NAVIGATE -> SPACE_TRAVEL when Launch! is clicked', async () => {
+    mockGameStateData.screen = 'WELCOME';
+    await act(async () => {
+      render(<App />);
+    });
+    fireEvent.click(screen.getByTestId('launch-btn'));
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'NAVIGATE', to: 'SPACE_TRAVEL' });
+  });
+
+  it('renders the Mining overlay with ore selection buttons', async () => {
+    mockGameStateData.screen = 'MINING';
+    mockGameStateData.oreCounts = { commonOre: 2, rareOre: 1 };
+    await act(async () => {
+      render(<App />);
+    });
+    expect(screen.getByTestId('mining-screen')).toBeInTheDocument();
+    expect(screen.getByTestId('ore-common')).toBeInTheDocument();
+    expect(screen.getByTestId('ore-rare')).toBeInTheDocument();
+    expect(screen.getByTestId('ore-counts').textContent).toContain('2');
+    expect(screen.getByTestId('ore-counts').textContent).toContain('1');
+  });
+
+  it('renders the Planet hub with Land / Depart navigation on PLANET', () => {
+    render(<App />);
+    expect(screen.getByTestId('planet-hub-screen')).toBeInTheDocument();
+    expect(screen.getByTestId('nav-landing')).toBeInTheDocument();
+    expect(screen.getByTestId('nav-space-travel')).toBeInTheDocument();
   });
 });

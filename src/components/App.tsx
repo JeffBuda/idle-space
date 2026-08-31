@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
 import { IOSInstallBanner } from './IOSInstallBanner';
+import { AppStatusViewer } from './AppStatusViewer';
+import { WelcomeScreen } from './screens/WelcomeScreen';
+import { SpaceTravelScreen } from './screens/SpaceTravelScreen';
+import { LandingScreen } from './screens/LandingScreen';
+import { MiningScreen } from './screens/MiningScreen';
+import { PlanetHubScreen } from './screens/PlanetHubScreen';
 import { useGameState } from '../hooks/useGameState';
 import { useDbStatus } from '../hooks/useDbStatus';
-import { APP_VERSION, BUILD_TIME } from '../config';
-import { formatElapsedTime } from '../utils/time';
 import OfflineGreeting from './OfflineGreeting';
 import { SettingsMenu } from './SettingsMenu';
 import { DebugConsole } from './DebugConsole';
@@ -43,7 +47,16 @@ const App = () => {
   }, []);
 
   // Idle progression & offline tracking
-  const { gameState, offlineSeconds, clearOfflineSeconds, isLoading } = useGameState();
+  const {
+    gameState,
+    screen,
+    oreCounts,
+    gate,
+    offlineSeconds,
+    clearOfflineSeconds,
+    isLoading,
+    dispatch,
+  } = useGameState();
   const handleCollectRewards = () => {
     clearOfflineSeconds();
   };
@@ -80,65 +93,56 @@ const App = () => {
       </header>
 
       <main>
-        <section className="status-card">
-          <h2>Application Status</h2>
-          <div className="status-item">
-            <span className="label">Service Worker</span>
-            <span data-testid="sw-status" className="value">
-              {swStatus}
-            </span>
-          </div>
-          <div className="status-item">
-            <span className="label">IndexedDB</span>
-            <span data-testid="db-status" className="value">
-              {dbStatus}
-            </span>
-          </div>
-          <div className="status-item">
-            <span className="label">Install Ready</span>
-            <span data-testid="install-status" className="value">
-              {installReady ? 'Yes' : 'No'}
-            </span>
-          </div>
-        </section>
+        <AppStatusViewer
+          gameState={gameState}
+          swStatus={swStatus}
+          dbStatus={dbStatus}
+          installReady={installReady}
+        />
 
-        <section className="time-delta">
-          <h2>Engine</h2>
-          {gameState ? (
-            <>
-              <div className="status-item">
-                <span className="label">Total Travel Time</span>
-                <span data-testid="total-travel-time" className="value">
-                  {formatElapsedTime(gameState.elapsedSeconds)}
-                </span>
-              </div>
-              <div className="status-item">
-                <span className="label">Distance Traveled</span>
-                <span data-testid="total-distance" className="value">
-                  {Math.round(gameState.totalDistanceKm).toLocaleString()} km
-                </span>
-              </div>
-            </>
-          ) : (
-            <p>No game state loaded</p>
-          )}
-        </section>
-
-        <section className="status-card">
-          <h2>Build Information</h2>
-          <div className="status-item">
-            <span className="label">Version</span>
-            <span data-testid="app-version" className="value">
-              {APP_VERSION}
-            </span>
-          </div>
-          <div className="status-item">
-            <span className="label">Build Date</span>
-            <span data-testid="build-date" className="value">
-              {new Date(BUILD_TIME).toLocaleString()}
-            </span>
-          </div>
-        </section>
+        {/* Onboarding-flow overlay. The screen -> component switch lives here in
+            App.tsx (NOT a hook) because src/engine/flow.ts is forbidden from
+            importing React/components, and a custom hook that imported the screen
+            components would violate the archunit "hooks -> components" rule.
+            AppStatusViewer stays rendered so the travel stats are never hidden
+            while a gate is ticking. */}
+        {gameState && (
+          <>
+            {screen === 'WELCOME' && (
+              <WelcomeScreen onLaunch={() => dispatch({ type: 'NAVIGATE', to: 'SPACE_TRAVEL' })} />
+            )}
+            {screen === 'SPACE_TRAVEL' && (
+              <SpaceTravelScreen
+                gate={gate}
+                onHurry={() => dispatch({ type: 'HURRY' })}
+                onComplete={() => dispatch({ type: 'COMPLETE_ACTION' })}
+              />
+            )}
+            {screen === 'LANDING' && (
+              <LandingScreen
+                gate={gate}
+                onHurry={() => dispatch({ type: 'HURRY' })}
+                onComplete={() => dispatch({ type: 'COMPLETE_ACTION' })}
+              />
+            )}
+            {screen === 'MINING' && (
+              <MiningScreen
+                gameState={gameState}
+                oreCounts={oreCounts}
+                gate={gate}
+                onOreSelect={(ore) => dispatch({ type: 'ORE_SELECTED', ore })}
+                onHurry={() => dispatch({ type: 'HURRY' })}
+                onComplete={() => dispatch({ type: 'COMPLETE_ACTION' })}
+              />
+            )}
+            {screen === 'PLANET' && (
+              <PlanetHubScreen
+                gameState={gameState}
+                onNavigate={(to) => dispatch({ type: 'NAVIGATE', to })}
+              />
+            )}
+          </>
+        )}
       </main>
 
       {/* Offline greeting modal */}

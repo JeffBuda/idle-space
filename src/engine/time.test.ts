@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  advanceIdleGate,
   calculateIdleDistance,
   processIdleProgression,
   type EngineState,
@@ -66,15 +67,23 @@ describe('processIdleProgression', () => {
   const baseGameState: GameState = {
     lastTimestamp: 1_000_000,
     elapsedSeconds: 500,
-    rngSeed: 'test-seed',
+    totalElapsedGameTime: 500,
     totalDistanceKm: 5000,
+    rngSeed: 'test-seed',
     version: '0.1.0',
+    screen: 'PLANET',
+    idleTimer: null,
+    oreCounts: { commonOre: 0, rareOre: 0 },
+    selectedOre: null,
+    constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
+    lastError: null,
   };
 
   it('should calculate idle progression deterministically based on time deltas', () => {
     // 1000 seconds elapsed → 1000 * 10 = 10 000 km added
     const result = processIdleProgression(baseGameState, 2_000_000);
     expect(result.elapsedSeconds).toBe(500 + 1000);
+    expect(result.totalElapsedGameTime).toBe(500 + 1000);
     expect(result.totalDistanceKm).toBe(5000 + 10000);
   });
 
@@ -125,5 +134,62 @@ describe('processIdleProgression', () => {
   it('should preserve the version field from previous state', () => {
     const result = processIdleProgression(baseGameState, 2_000_000);
     expect(result.version).toBe(baseGameState.version);
+  });
+});
+
+describe('advanceIdleGate', () => {
+  const baseGate = (over: Partial<GameState> = {}): GameState => ({
+    lastTimestamp: 1_000_000,
+    elapsedSeconds: 0,
+    totalElapsedGameTime: 0,
+    totalDistanceKm: 0,
+    rngSeed: 's',
+    version: '0.1.0',
+    screen: 'SPACE_TRAVEL',
+    idleTimer: null,
+    oreCounts: { commonOre: 0, rareOre: 0 },
+    selectedOre: null,
+    constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
+    lastError: null,
+    ...over,
+  });
+  const gate = (remaining: number, startedAt: number) => ({
+    screen: 'SPACE_TRAVEL' as const,
+    targetSeconds: 30,
+    remainingSeconds: remaining,
+    startedAt,
+  });
+
+  it('decays remainingSeconds by the delta since startedAt and advances startedAt', () => {
+    const s = baseGate({ idleTimer: gate(30, 1_000_000) });
+    const r = advanceIdleGate(s, 1_005_000); // 5s elapsed
+    expect(r.idleTimer?.remainingSeconds).toBe(25);
+    expect(r.idleTimer?.startedAt).toBe(1_005_000);
+  });
+
+  it('clamps remaining at 0 when the gate fully expires', () => {
+    const s = baseGate({ idleTimer: gate(5, 1_000_000) });
+    expect(advanceIdleGate(s, 1_060_000).idleTimer?.remainingSeconds).toBe(0);
+  });
+
+  it('returns the same ref when no gate is active', () => {
+    const s = baseGate();
+    expect(advanceIdleGate(s, 2_000_000)).toBe(s);
+  });
+
+  it('returns the same ref when the gate screen does not match the current screen', () => {
+    const s = baseGate({ screen: 'PLANET', idleTimer: gate(30, 1_000_000) });
+    expect(advanceIdleGate(s, 2_000_000)).toBe(s);
+  });
+
+  it('returns the same ref when the delta is sub-second (floor -> 0)', () => {
+    const s = baseGate({ idleTimer: gate(30, 2_000_000) });
+    expect(advanceIdleGate(s, 2_000_500)).toBe(s);
+  });
+
+  it('never mutates the input', () => {
+    const s = baseGate({ idleTimer: gate(30, 1_000_000) });
+    advanceIdleGate(s, 1_005_000);
+    expect(s.idleTimer?.remainingSeconds).toBe(30);
   });
 });
