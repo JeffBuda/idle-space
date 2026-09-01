@@ -40,6 +40,8 @@ vi.mock('../hooks/useGameState', () => ({
     gate: null,
     offlineSeconds: null,
     clearOfflineSeconds: vi.fn(),
+    idleReward: null,
+    clearIdleReward: vi.fn(),
     isLoading: false,
     dispatch: mockDispatch,
   }),

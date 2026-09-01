@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { calculateElapsedSeconds } from '../utils/time';
 import { type GameState } from '../engine/time';
-import type { IdleGateStatus } from '../types/game-state';
+import type { IdleGateStatus, IdleRewardSummary } from '../types/game-state';
 import { engineReducer, type GameAction } from '../engine/reducer';
 import { withLogging } from '../logging/logger';
 import { getGameState, saveGameState, initGameState, initDB, migrateGameState } from '../db';
@@ -25,6 +25,8 @@ export interface UseGameStateResult {
   oreCounts: GameState['oreCounts'];
   offlineSeconds: number | null;
   clearOfflineSeconds: () => void;
+  idleReward: IdleRewardSummary | null;
+  clearIdleReward: () => void;
   isLoading: boolean;
   dispatch: (action: GameAction) => void;
   gate: IdleGateStatus | null;
@@ -33,6 +35,7 @@ export interface UseGameStateResult {
 export const useGameState = (): UseGameStateResult => {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [offlineSeconds, setOfflineSeconds] = useState<number | null>(null);
+  const [idleReward, setIdleReward] = useState<IdleRewardSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Refs to hold mutable state without triggering re-renders
@@ -65,15 +68,31 @@ export const useGameState = (): UseGameStateResult => {
       const now = Date.now();
       const elapsed = calculateElapsedSeconds(savedState.lastTimestamp, now);
 
-      // Only show offline modal if the user was gone for more than 1 minute
-      if (elapsed > OFFLINE_THRESHOLD_SECONDS) {
-        setOfflineSeconds(elapsed);
-      }
+      // Capture ore counts BEFORE wake processing — processMiningGate in the
+      // wake pass auto-awards ore while idle, and we need the delta for the
+      // welcome-back modal that surfaces on resume-from-idle (MINING screen).
+      const oreCountsBefore = savedState.oreCounts;
 
       // APP_WAKE: resuming from idle — process idle progression through the
       // logged engine reducer so the event appears in the debug console.
       const action: GameAction = { type: 'APP_WAKE' };
       const newState = loggedReducer(savedState, action, now, savedState.rngSeed);
+
+      // If the user was mining while away the auto-loop collected ore. Surface
+      // a welcome-back modal with time-away + ore delta. For other screens,
+      // keep the existing offline greeting (time-away only).
+      if (elapsed > OFFLINE_THRESHOLD_SECONDS) {
+        if (savedState.screen === 'MINING') {
+          const oreCollected = {
+            commonOre: newState.oreCounts.commonOre - oreCountsBefore.commonOre,
+            rareOre: newState.oreCounts.rareOre - oreCountsBefore.rareOre,
+          };
+          setIdleReward({ secondsAway: elapsed, oreCollected });
+        } else {
+          setOfflineSeconds(elapsed);
+        }
+      }
+
       setGameState(newState);
       lastTickRef.current = now;
       // lastError is transient engine-only — reset before persisting so no
@@ -121,6 +140,10 @@ export const useGameState = (): UseGameStateResult => {
 
   const clearOfflineSeconds = useCallback(() => {
     setOfflineSeconds(null);
+  }, []);
+
+  const clearIdleReward = useCallback(() => {
+    setIdleReward(null);
   }, []);
 
   // Real-time tick to update elapsed seconds every second.
@@ -233,6 +256,8 @@ export const useGameState = (): UseGameStateResult => {
     gate,
     offlineSeconds,
     clearOfflineSeconds,
+    idleReward,
+    clearIdleReward,
     isLoading,
     dispatch,
   };

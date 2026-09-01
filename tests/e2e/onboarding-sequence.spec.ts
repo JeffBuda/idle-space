@@ -88,8 +88,12 @@ test.describe.serial('Onboarding flow', () => {
 
     // Reload to recreate a fresh save, then override gate timing to 1s so the
     // cycle runs quickly (Rare Ore stays 2s via rareOreTimeMultiplier).
+    // Wait for welcome-screen (not just settings-gear) so handleWake has fully
+    // completed and persisted the fresh state to IndexedDB -- otherwise
+    // writeGameState may find no existing record and silently no-op on its
+    // merge, leaving gates at the 30s default.
     await page.reload();
-    await expect(page.getByTestId('settings-gear')).toBeVisible();
+    await expect(page.getByTestId('welcome-screen')).toBeVisible();
     await writeGameState(page, {
       constants: { defaultActionTimeSeconds: 1, rareOreTimeMultiplier: 2 },
     });
@@ -122,24 +126,30 @@ test.describe.serial('Onboarding flow', () => {
     console.log('Landing gate complete');
     await page.getByTestId('complete-action-btn').click();
 
-    // Step 5 - Mining: select Common Ore (1s gate), collect.
+    // Step 5 - Mining: select Common Ore (1s gate). With the auto-mining loop,
+    // ore is awarded automatically once the gate reaches 0s and a fresh gate
+    // starts — no "Collect Ore" tap needed. Wait for the first auto-award.
     await expect(page.getByTestId('mining-screen')).toBeVisible();
     await page.getByTestId('ore-common').click();
-    await expect(page.getByTestId('complete-action-btn')).toBeVisible({ timeout: 10000 });
-    console.log('Mining gate complete');
-    await page.getByTestId('complete-action-btn').click();
+    await expect(page.locator('[data-testid="ore-counts"]')).toContainText(/Common: [1-9]/, {
+      timeout: 10000,
+    });
+    console.log('Mining loop auto-awarded first Common Ore');
 
-    // Step 6 - Back on the Planet hub with Common Ore awarded.
+    // Navigate back to the Planet hub — "Back to Planet" stops mining.
+    await page.getByTestId('back-to-planet-btn').click();
+
+    // Step 6 - Back on the Planet hub with Common Ore awarded by the auto-loop.
     await expect(page.getByTestId('planet-hub-screen')).toBeVisible();
     const oreTally = await page.getByTestId('ore-tally').textContent();
     console.log('Ore tally after cycle:', oreTally);
-    expect(oreTally).toContain('Common Ore: 1');
+    expect(oreTally).toMatch(/Common Ore: [1-9]/);
 
     // The award is persisted in IndexedDB.
     const gameState = await readGameState(page);
     expect(gameState).not.toBeNull();
     expect(gameState.screen).toBe('PLANET');
-    expect(gameState.oreCounts?.commonOre).toBe(1);
+    expect(gameState.oreCounts?.commonOre).toBeGreaterThanOrEqual(1);
   });
 
   test('Rare Ore gate is twice as long (2s) before collecting', async ({ page }) => {
@@ -157,15 +167,20 @@ test.describe.serial('Onboarding flow', () => {
 
     await expect(page.getByTestId('mining-screen')).toBeVisible();
     await page.getByTestId('ore-rare').click();
-    await expect(page.getByTestId('complete-action-btn')).toBeVisible({ timeout: 10000 });
-    await page.getByTestId('complete-action-btn').click();
+    // Rare Ore uses a 2s gate (1s default × 2 multiplier); the auto-loop
+    // awards it automatically once the gate expires — no "Collect Ore" tap.
+    await expect(page.locator('[data-testid="ore-counts"]')).toContainText(/Rare: [1-9]/, {
+      timeout: 10000,
+    });
+    console.log('Mining loop auto-awarded first Rare Ore');
+    await page.getByTestId('back-to-planet-btn').click();
 
     await expect(page.getByTestId('planet-hub-screen')).toBeVisible();
     const oreTally = await page.getByTestId('ore-tally').textContent();
     console.log('Rare ore tally after cycle:', oreTally);
-    expect(oreTally).toContain('Rare Ore: 1');
+    expect(oreTally).toMatch(/Rare Ore: [1-9]/);
 
     const gameState = await readGameState(page);
-    expect(gameState.oreCounts?.rareOre).toBe(1);
+    expect(gameState.oreCounts?.rareOre).toBeGreaterThanOrEqual(1);
   });
 });

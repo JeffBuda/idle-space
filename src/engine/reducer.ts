@@ -9,6 +9,7 @@
 // deterministic testability.
 import { advanceIdleGate, processIdleProgression } from './time';
 import { processFlowAction } from './flow';
+import { processMiningGate } from './mining';
 import type { GameState, GameAction } from '../types/game-state';
 
 /**
@@ -56,6 +57,12 @@ export const engineReducer: EngineReducerFn = (
       // backgrounded/idle phone still completes its gate (iOS ITP safe).
       // APP_WAKE is logged via withLogging; IDLE_PROGRESSION bypasses logging.
       const progressed = processIdleProgression(prevState, currentTime, SPEED_KM_PER_SEC);
+      // MINING gates auto-resolve (auto-award ore + restart) on every tick and on
+      // wake-up, so ore accrues without interaction even while the app is idle.
+      // Other screens keep the tap-to-complete gate behavior (advanceIdleGate).
+      if (progressed.screen === 'MINING') {
+        return processMiningGate(progressed, currentTime);
+      }
       return advanceIdleGate(progressed, currentTime);
     }
     case 'APP_SUSPEND':

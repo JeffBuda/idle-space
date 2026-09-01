@@ -103,3 +103,17 @@ export interface IdleGateStatus {
   /** 0–100 visual progress for the gate bar. */
   progressPercent: number;
 }
+
+/**
+ * Transient summary of an idle-resume reward, captured by `useGameState` on
+ * `APP_WAKE` and surfaced to the MiningIdleReward modal. NOT persisted to
+ * IndexedDB (like `lastError`, it is stripped before any save) — it is a
+ * one-shot presentation value derived from the ore delta the auto-mining loop
+ * awarded while the app was backgrounded.
+ */
+export interface IdleRewardSummary {
+  /** Wall-clock seconds the player was away (idle) before this resume. */
+  secondsAway: number;
+  /** Ore auto-collected by the mining loop during the idle span. */
+  oreCollected: { commonOre: number; rareOre: number };
+}
