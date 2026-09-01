@@ -339,7 +339,7 @@ New file: **`tests/e2e/onboarding-sequence.spec.ts`**,
 `test.describe.serial` (mutates IndexedDB; per `.clinerules/e2e.md`).
 
 ```ts
-test.use({ viewport: { width: 1280, height: 720 } });
+test.use({ viewport: { width: 390, height: 844 } });
 
 test.describe.serial('Onboarding Flow — full user cycle', () => {
   // beforeEach: best-effort deleteDatabase('space_idle_db') then reload

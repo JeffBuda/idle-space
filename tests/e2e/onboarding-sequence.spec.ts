@@ -6,8 +6,9 @@
 // to IndexedDB, mirroring the SettingsMenu "fast action time" toggle) so the
 // cycle completes in seconds rather than ~90s.
 import { test, expect, type Page } from '@playwright/test';
+import { captureScreenshot } from './screenshot-helpers';
 
-test.use({ viewport: { width: 1280, height: 720 } });
+test.use({ viewport: { width: 390, height: 844 } });
 
 // ---------------------------------------------------------------------------
 // IDB helpers
@@ -104,24 +105,30 @@ test.describe.serial('Onboarding flow', () => {
     await expect(page.getByTestId('welcome-screen')).toBeVisible();
   });
 
-  test('full onboarding cycle: Launch! -> Land -> Mine (Common) -> Collect', async ({ page }) => {
+  test('full onboarding cycle: Launch! -> Land -> Mine (Common) -> Collect', async ({
+    page,
+  }, testInfo) => {
     console.log('Start onboarding cycle');
+    await captureScreenshot(page, testInfo, 'welcome-screen', 1);
 
     // Step 1 - Welcome: player must tap Launch! to begin.
     await page.getByTestId('launch-btn').click();
 
     // Step 2 - Space Travel gate (1s), then complete -> Planet hub.
     await expect(page.getByTestId('space-travel-screen')).toBeVisible();
+    await captureScreenshot(page, testInfo, 'space-travel-gate', 2);
     await expect(page.getByTestId('complete-action-btn')).toBeVisible({ timeout: 10000 });
     console.log('Space Travel gate complete');
     await page.getByTestId('complete-action-btn').click();
 
     // Step 3 - Planet hub -> Land.
     await expect(page.getByTestId('planet-hub-screen')).toBeVisible();
+    await captureScreenshot(page, testInfo, 'planet-hub-after-travel', 3);
     await page.getByTestId('nav-landing').click();
 
     // Step 4 - Landing gate (1s), then complete -> Mining.
     await expect(page.getByTestId('landing-screen')).toBeVisible();
+    await captureScreenshot(page, testInfo, 'landing-gate', 4);
     await expect(page.getByTestId('complete-action-btn')).toBeVisible({ timeout: 10000 });
     console.log('Landing gate complete');
     await page.getByTestId('complete-action-btn').click();
@@ -135,12 +142,14 @@ test.describe.serial('Onboarding flow', () => {
       timeout: 10000,
     });
     console.log('Mining loop auto-awarded first Common Ore');
+    await captureScreenshot(page, testInfo, 'mining-first-ore', 5);
 
     // Navigate back to the Planet hub — "Back to Planet" stops mining.
     await page.getByTestId('back-to-planet-btn').click();
 
     // Step 6 - Back on the Planet hub with Common Ore awarded by the auto-loop.
     await expect(page.getByTestId('planet-hub-screen')).toBeVisible();
+    await captureScreenshot(page, testInfo, 'planet-hub-with-ore', 6);
     const oreTally = await page.getByTestId('ore-tally').textContent();
     console.log('Ore tally after cycle:', oreTally);
     expect(oreTally).toMatch(/Common Ore: [1-9]/);
@@ -152,16 +161,20 @@ test.describe.serial('Onboarding flow', () => {
     expect(gameState.oreCounts?.commonOre).toBeGreaterThanOrEqual(1);
   });
 
-  test('Rare Ore gate is twice as long (2s) before collecting', async ({ page }) => {
+  test('Rare Ore gate is twice as long (2s) before collecting', async ({ page }, testInfo) => {
     console.log('Start rare-ore cycle');
+    await captureScreenshot(page, testInfo, 'welcome-screen', 1);
 
     await page.getByTestId('launch-btn').click();
     await expect(page.getByTestId('complete-action-btn')).toBeVisible({ timeout: 10000 });
+    await captureScreenshot(page, testInfo, 'space-travel-gate', 2);
     await page.getByTestId('complete-action-btn').click();
 
     await expect(page.getByTestId('planet-hub-screen')).toBeVisible();
+    await captureScreenshot(page, testInfo, 'planet-hub-after-travel', 3);
     await page.getByTestId('nav-landing').click();
     await expect(page.getByTestId('landing-screen')).toBeVisible();
+    await captureScreenshot(page, testInfo, 'landing-gate', 4);
     await expect(page.getByTestId('complete-action-btn')).toBeVisible({ timeout: 10000 });
     await page.getByTestId('complete-action-btn').click();
 
@@ -173,9 +186,11 @@ test.describe.serial('Onboarding flow', () => {
       timeout: 10000,
     });
     console.log('Mining loop auto-awarded first Rare Ore');
+    await captureScreenshot(page, testInfo, 'mining-first-rare-ore', 5);
     await page.getByTestId('back-to-planet-btn').click();
 
     await expect(page.getByTestId('planet-hub-screen')).toBeVisible();
+    await captureScreenshot(page, testInfo, 'planet-hub-with-rare-ore', 6);
     const oreTally = await page.getByTestId('ore-tally').textContent();
     console.log('Rare ore tally after cycle:', oreTally);
     expect(oreTally).toMatch(/Rare Ore: [1-9]/);

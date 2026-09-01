@@ -1,5 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 
+test.use({ viewport: { width: 390, height: 844 } });
+
 // ---------------------------------------------------------------------------
 // Helper: read the game_state payload from IndexedDB inside the browser.
 // ---------------------------------------------------------------------------
