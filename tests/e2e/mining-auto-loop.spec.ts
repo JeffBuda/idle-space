@@ -6,6 +6,7 @@
 // Also covers the welcome-back reward modal that surfaces when the player
 // resumes the app after being idle on the Mining screen.
 import { test, expect, type Page } from '@playwright/test';
+import { captureScreenshot } from './screenshot-helpers';
 
 test.use({ viewport: { width: 1280, height: 720 } });
 
@@ -128,9 +129,10 @@ test.describe.serial('Mining Auto-Loop', () => {
     await setupFastGates(page);
   });
 
-  test('ore is awarded automatically without tapping Collect Ore', async ({ page }) => {
+  test('ore is awarded automatically without tapping Collect Ore', async ({ page }, testInfo) => {
     console.log('--- Test: auto-award first ore ---');
     await navigateToMining(page);
+    await captureScreenshot(page, testInfo, 'mining-screen-initial', 1);
 
     // Select Common Ore (1s gate) — the auto-loop will fire on the next tick
     await page.getByTestId('ore-common').click();
@@ -140,6 +142,7 @@ test.describe.serial('Mining Auto-Loop', () => {
       timeout: 10000,
     });
     console.log('First Common Ore auto-awarded by mining loop');
+    await captureScreenshot(page, testInfo, 'ore-auto-awarded', 2);
 
     // "Collect Ore" should never appear — the gate auto-restarts at 0s
     await expect(page.getByTestId('complete-action-btn')).not.toBeVisible();
@@ -149,6 +152,7 @@ test.describe.serial('Mining Auto-Loop', () => {
     // Navigate back — the NAVIGATE dispatch saves the auto-awarded ore to IDB
     await page.getByTestId('back-to-planet-btn').click();
     await expect(page.getByTestId('planet-hub-screen')).toBeVisible();
+    await captureScreenshot(page, testInfo, 'planet-hub-after-auto-mine', 3);
 
     // Verify persisted state reflects the auto-awarded ore
     const gameState = await readGameState(page);
@@ -158,9 +162,10 @@ test.describe.serial('Mining Auto-Loop', () => {
     console.log('Persisted commonOre after auto-award:', gameState.oreCounts?.commonOre);
   });
 
-  test('auto-loop continues awarding ore across multiple cycles', async ({ page }) => {
+  test('auto-loop continues awarding ore across multiple cycles', async ({ page }, testInfo) => {
     console.log('--- Test: multiple cycles ---');
     await navigateToMining(page);
+    await captureScreenshot(page, testInfo, 'mining-screen-initial', 1);
 
     await page.getByTestId('ore-common').click();
 
@@ -169,6 +174,7 @@ test.describe.serial('Mining Auto-Loop', () => {
       timeout: 10000,
     });
     console.log('First ore detected; waiting for additional cycles');
+    await captureScreenshot(page, testInfo, 'ore-auto-awarded', 2);
 
     // Wait 6 more seconds — with 1s gates and 1s ticks, ~5-6 additional cycles
     await page.waitForTimeout(6000);
@@ -180,6 +186,7 @@ test.describe.serial('Mining Auto-Loop', () => {
     const commonCount = match ? parseInt(match[1], 10) : 0;
     expect(commonCount).toBeGreaterThanOrEqual(3);
     console.log('Common Ore count after multiple cycles:', commonCount);
+    await captureScreenshot(page, testInfo, 'multiple-ore-cycles', 3);
 
     // The gate should still be active (never permanently expired)
     await expect(page.getByTestId('hurry-btn')).toBeVisible();
@@ -188,6 +195,7 @@ test.describe.serial('Mining Auto-Loop', () => {
     // "Back to Planet" is always available to stop mining
     await page.getByTestId('back-to-planet-btn').click();
     await expect(page.getByTestId('planet-hub-screen')).toBeVisible();
+    await captureScreenshot(page, testInfo, 'planet-hub-multi-ore', 4);
 
     // Verify multiple ores persisted
     const gameState = await readGameState(page);
@@ -196,9 +204,10 @@ test.describe.serial('Mining Auto-Loop', () => {
     expect(gameState.oreCounts?.commonOre).toBeGreaterThanOrEqual(3);
   });
 
-  test('"Faster!" button works during auto-loop', async ({ page }) => {
+  test('"Faster!" button works during auto-loop', async ({ page }, testInfo) => {
     console.log('--- Test: hurry during auto-loop ---');
     await navigateToMining(page);
+    await captureScreenshot(page, testInfo, 'mining-screen-initial', 1);
 
     await page.getByTestId('ore-common').click();
     await expect(page.locator('[data-testid="ore-counts"]')).toContainText(/Common: [1-9]/, {
@@ -211,9 +220,11 @@ test.describe.serial('Mining Auto-Loop', () => {
       (el) => el.textContent,
     );
     console.log('Gate remaining before hurry:', remainingBefore);
+    await captureScreenshot(page, testInfo, 'gate-before-hurry', 2);
 
     // Click "Faster!" to skip 1 second of gate time
     await page.getByTestId('hurry-btn').click();
+    await captureScreenshot(page, testInfo, 'after-hurry-click', 3);
 
     // A brief moment may show "Collect Ore" (expired) before the next tick
     // auto-restarts the gate — wait for the tick to fire and the gate to restart
@@ -225,6 +236,7 @@ test.describe.serial('Mining Auto-Loop', () => {
     // Navigate back — NAVIGATE dispatch saves state to IDB
     await page.getByTestId('back-to-planet-btn').click();
     await expect(page.getByTestId('planet-hub-screen')).toBeVisible();
+    await captureScreenshot(page, testInfo, 'planet-hub-after-hurry', 4);
 
     // Ore count should reflect at least 1 (auto-awarded by the loop)
     const gameState = await readGameState(page);
@@ -233,19 +245,22 @@ test.describe.serial('Mining Auto-Loop', () => {
     console.log('Persisted commonOre after hurry + navigation:', gameState.oreCounts?.commonOre);
   });
 
-  test('Back to Planet exits mining and stops the auto-loop', async ({ page }) => {
+  test('Back to Planet exits mining and stops the auto-loop', async ({ page }, testInfo) => {
     console.log('--- Test: back to planet ---');
     await navigateToMining(page);
+    await captureScreenshot(page, testInfo, 'mining-screen-initial', 1);
 
     await page.getByTestId('ore-common').click();
     await expect(page.locator('[data-testid="ore-counts"]')).toContainText(/Common: [1-9]/, {
       timeout: 10000,
     });
     console.log('Ore auto-awarded; navigating back');
+    await captureScreenshot(page, testInfo, 'ore-auto-awarded', 2);
 
     // Navigate back — NAVIGATE dispatch saves current React state to IDB
     await page.getByTestId('back-to-planet-btn').click();
     await expect(page.getByTestId('planet-hub-screen')).toBeVisible({ timeout: 10000 });
+    await captureScreenshot(page, testInfo, 'planet-hub-stops-loop', 3);
 
     // Read persisted ore count (should reflect auto-awarded ore via dispatch save)
     const gameState = await readGameState(page);
@@ -261,6 +276,7 @@ test.describe.serial('Mining Auto-Loop', () => {
     const gameStateAfterWait = await readGameState(page);
     expect(gameStateAfterWait?.oreCounts?.commonOre).toBe(oreAfterNav);
     console.log('Ore count stable after 3s on Planet:', gameStateAfterWait?.oreCounts?.commonOre);
+    await captureScreenshot(page, testInfo, 'ore-frozen', 4);
   });
 });
 
@@ -279,7 +295,7 @@ test.describe.serial('Mining Welcome-Back Modal', () => {
     await expect(page.getByTestId('settings-gear')).toBeVisible();
   });
 
-  test('modal appears when resuming from idle on the Mining screen', async ({ page }) => {
+  test('modal appears when resuming from idle on the Mining screen', async ({ page }, testInfo) => {
     console.log('--- Test: modal appears after idle ---');
 
     // Simulate 75 seconds of idle time while mining (threshold is 60s)
@@ -306,6 +322,7 @@ test.describe.serial('Mining Welcome-Back Modal', () => {
     await expect(page.getByTestId('mining-reward-modal')).toBeVisible();
     await expect(page.getByTestId('mining-reward-title')).toHaveText('Welcome Back, Explorer!');
     console.log('MiningRewardModal is visible');
+    await captureScreenshot(page, testInfo, 'modal-visible', 1);
 
     // Verify time-away display (75s → "1m 15s")
     const timeDisplay = await page.$eval(
@@ -333,7 +350,9 @@ test.describe.serial('Mining Welcome-Back Modal', () => {
     expect(rareDisplay).toMatch(/\+0$/);
   });
 
-  test('clicking Continue dismisses the modal and shows MiningScreen', async ({ page }) => {
+  test('clicking Continue dismisses the modal and shows MiningScreen', async ({
+    page,
+  }, testInfo) => {
     console.log('--- Test: Continue dismissal ---');
 
     const now = await page.evaluate(() => Date.now());
@@ -358,6 +377,7 @@ test.describe.serial('Mining Welcome-Back Modal', () => {
     // Modal should appear
     await expect(page.getByTestId('mining-reward-modal')).toBeVisible();
     console.log('Modal visible; clicking Continue');
+    await captureScreenshot(page, testInfo, 'modal-before-continue', 1);
 
     // Click "Continue"
     await page.getByTestId('dismiss-mining-reward-btn').click();
@@ -367,6 +387,7 @@ test.describe.serial('Mining Welcome-Back Modal', () => {
 
     // MiningScreen should be visible (player resumes mining)
     await expect(page.getByTestId('mining-screen')).toBeVisible();
+    await captureScreenshot(page, testInfo, 'mining-screen-after-dismiss', 2);
 
     // Ore should have been awarded
     const gameState = await readGameState(page);
@@ -375,7 +396,7 @@ test.describe.serial('Mining Welcome-Back Modal', () => {
     console.log('Persisted commonOre after dismissal:', gameState.oreCounts?.commonOre);
   });
 
-  test('clicking the backdrop also dismisses the modal', async ({ page }) => {
+  test('clicking the backdrop also dismisses the modal', async ({ page }, testInfo) => {
     console.log('--- Test: backdrop dismissal ---');
 
     const now = await page.evaluate(() => Date.now());
@@ -397,6 +418,7 @@ test.describe.serial('Mining Welcome-Back Modal', () => {
     await expect(page.getByTestId('settings-gear')).toBeVisible();
 
     await expect(page.getByTestId('mining-reward-modal')).toBeVisible();
+    await captureScreenshot(page, testInfo, 'modal-before-backdrop', 1);
 
     // Click the overlay backdrop (edge of the modal, outside content)
     const modal = page.getByTestId('mining-reward-modal');
@@ -404,6 +426,7 @@ test.describe.serial('Mining Welcome-Back Modal', () => {
 
     await expect(page.getByTestId('mining-reward-modal')).not.toBeVisible();
     await expect(page.getByTestId('mining-screen')).toBeVisible();
+    await captureScreenshot(page, testInfo, 'mining-screen-after-backdrop', 2);
     console.log('Modal dismissed via backdrop click');
   });
 });
