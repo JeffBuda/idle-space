@@ -50,7 +50,7 @@ export const MiningRewardModal = ({ reward, onDismiss }: MiningRewardModalProps)
         </div>
         <button
           type="button"
-          className="primary-btn"
+          className="btn btn--primary"
           data-testid="dismiss-mining-reward-btn"
           onClick={onDismiss}
         >

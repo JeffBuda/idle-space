@@ -17,11 +17,17 @@ export const PlanetHubScreen = ({ gameState, onNavigate }: PlanetHubScreenProps)
       Common Ore: {gameState.oreCounts.commonOre} | Rare Ore: {gameState.oreCounts.rareOre}
     </p>
     <div className="ore-controls">
-      <button type="button" data-testid="nav-landing" onClick={() => onNavigate('LANDING')}>
+      <button
+        type="button"
+        className="btn btn--primary"
+        data-testid="nav-landing"
+        onClick={() => onNavigate('LANDING')}
+      >
         Land
       </button>
       <button
         type="button"
+        className="btn btn--secondary"
         data-testid="nav-space-travel"
         onClick={() => onNavigate('SPACE_TRAVEL')}
       >

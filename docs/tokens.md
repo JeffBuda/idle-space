@@ -99,6 +99,27 @@ font-family:
 | Debug meta              | `0.8rem`                 | `400`   | varies                   | DebugConsole log entries             |
 | Debug monospace         | `0.75rem`                | `400`   | `rgba(255,255,255,0.6)`  | Log diffs — `font-family: monospace` |
 
+### iOS Portrait Baseline
+
+On iOS standalone / portrait, enforce these minimums:
+
+- body / status / button labels ≥ 17 px (`--font-size-1` = `1.0625rem`);
+- subtext / captions ≥ 14 px (`--font-size-875`);
+- debug caption / monospace ≥ 14 px (no `12px` debug text).
+
+### Touch Targets (iOS Portrait)
+
+Every interactive element must expose a minimum 44 × 44 px hit area (Apple HIG /
+WCAG 2.1 Target Size Enhanced, Level AAA). Frequent / primary actions
+(Launch!, Faster!, Collect Ore) get a 48 × 48 px minimum. Icon-only controls pad
+the invisible hit area via `min-width` / `min-height` — the glyph size does not
+define the tap zone.
+
+| Token                     | Value  | Usage                                                              |
+| ------------------------- | ------ | ------------------------------------------------------------------ |
+| `--touch-target-min`      | `44px` | Minimum hit area for every interactive element (DESIGN BIBLE §4.1) |
+| `--touch-target-frequent` | `48px` | Frequent / primary actions (Launch!, Faster!, Collect Ore)         |
+
 ### Tabular Numerals
 
 Use `font-variant-numeric: tabular-nums;` on any value that updates in real-time

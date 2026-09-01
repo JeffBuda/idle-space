@@ -12,7 +12,7 @@ export const WelcomeScreen = ({ onLaunch }: WelcomeScreenProps) => (
   <section className="flow-screen" data-testid="welcome-screen">
     <h2 data-testid="welcome-title">Welcome to Space Exploration Idle</h2>
     <p className="flow-subtitle">Command your ship and chart the stars.</p>
-    <button type="button" className="primary-btn" data-testid="launch-btn" onClick={onLaunch}>
+    <button type="button" className="btn btn--primary" data-testid="launch-btn" onClick={onLaunch}>
       Launch!
     </button>
   </section>

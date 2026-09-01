@@ -105,5 +105,6 @@
   }
   .gs-content {
     padding: var(--space-md) var(--space-lg);
+    padding-bottom: max(var(--space-md), var(--safe-area-bottom));
   }
 }

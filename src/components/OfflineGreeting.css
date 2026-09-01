@@ -29,6 +29,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-modal);
   padding: var(--space-2xl);
+  padding-bottom: max(var(--space-2xl), var(--safe-area-bottom));
   max-width: var(--width-modal);
   width: 100%;
   box-shadow: var(--shadow-card);
@@ -73,39 +74,9 @@
   flex-wrap: wrap;
 }
 
-.btn {
-  border: none;
-  border-radius: var(--radius-card);
-  padding: var(--space-md) var(--space-xl);
-  font-size: var(--font-size-1);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex: 1;
-  min-width: var(--width-btn-min);
-}
-
-.btn--primary {
-  background-color: var(--color-accent);
-  color: var(--color-bg);
-}
-
-.btn--primary:hover {
-  background-color: var(--color-accent-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-accent-hover);
-}
-
-.btn--secondary {
-  background-color: var(--color-border-subtle);
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-border);
-}
-
-.btn--secondary:hover {
-  background-color: var(--color-border);
-  color: var(--color-text-strong);
-}
+/* Canonical .btn / .btn--primary / .btn--secondary live in App.css.
+   They are global (plain CSS), so the modal action buttons above still style
+   correctly. (Duplicate definitions removed to keep a single source of truth.) */
 
 /* Responsive */
 @media (max-width: 600px) {
@@ -125,8 +96,5 @@
     flex-direction: column;
     gap: var(--space-md);
   }
-
-  .btn {
-    min-width: 100%;
-  }
+  /* .btn is full-width on mobile via the global rule in App.css */
 }

@@ -33,14 +33,19 @@ export const SpaceTravelScreen = ({ gate, onHurry, onComplete }: SpaceTravelScre
           {gate.expired ? (
             <button
               type="button"
-              className="primary-btn"
+              className="btn btn--primary"
               data-testid="complete-action-btn"
               onClick={onComplete}
             >
               Landed! Tap to continue
             </button>
           ) : (
-            <button type="button" data-testid="hurry-btn" onClick={onHurry}>
+            <button
+              type="button"
+              className="btn btn--primary"
+              data-testid="hurry-btn"
+              onClick={onHurry}
+            >
               Faster!
             </button>
           )}

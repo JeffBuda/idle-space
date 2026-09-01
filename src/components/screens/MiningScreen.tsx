@@ -30,10 +30,20 @@ export const MiningScreen = ({
     <section className="flow-screen" data-testid="mining-screen">
       <h2 data-testid="mining-title">Mining Operations</h2>
       <div className="ore-controls" data-testid="ore-controls">
-        <button type="button" data-testid="ore-common" onClick={() => onOreSelect('commonOre')}>
+        <button
+          type="button"
+          className="btn btn--primary"
+          data-testid="ore-common"
+          onClick={() => onOreSelect('commonOre')}
+        >
           Common Ore
         </button>
-        <button type="button" data-testid="ore-rare" onClick={() => onOreSelect('rareOre')}>
+        <button
+          type="button"
+          className="btn btn--primary"
+          data-testid="ore-rare"
+          onClick={() => onOreSelect('rareOre')}
+        >
           Rare Ore
         </button>
       </div>
@@ -50,14 +60,19 @@ export const MiningScreen = ({
           {gate.expired ? (
             <button
               type="button"
-              className="primary-btn"
+              className="btn btn--primary"
               data-testid="complete-action-btn"
               onClick={onComplete}
             >
               Collect Ore
             </button>
           ) : (
-            <button type="button" data-testid="hurry-btn" onClick={onHurry}>
+            <button
+              type="button"
+              className="btn btn--primary"
+              data-testid="hurry-btn"
+              onClick={onHurry}
+            >
               Faster!
             </button>
           )}

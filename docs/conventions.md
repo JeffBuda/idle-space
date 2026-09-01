@@ -76,12 +76,14 @@ Animate transform/opacity only — never layout properties (width/height).
 
 **Breakpoint:** `@media (max-width: 600px)`
 
-| Element         | Desktop  | Mobile                   |
-| --------------- | -------- | ------------------------ |
-| Page title (h1) | 2rem     | 1.5rem                   |
-| Card padding    | 1.5rem   | 1rem                     |
-| Modal padding   | 2rem     | 1.5rem                   |
-| Modal actions   | flex-row | flex-column (full width) |
+| Element          | Desktop  | Mobile                   |
+| ---------------- | -------- | ------------------------ |
+| Page title (h1)  | 2rem     | 1.5rem                   |
+| Card padding     | 1.5rem   | 1rem                     |
+| Modal padding    | 2rem     | 1.5rem                   |
+| Modal actions    | flex-row | flex-column (full width) |
+| **Touch target** | 44×44px  | 44×44px (iOS portrait)   |
+| Body font        | 1rem     | 1.0625rem (17px)         |
 
 ```css
 @media (max-width: 600px) {
@@ -179,13 +181,15 @@ describe('MyComponent', () => {
 
 ### Accessibility (a11y)
 
-| Requirement       | Details                                  |
-| ----------------- | ---------------------------------------- |
-| Button type       | ALWAYS `type="button"`                   |
-| Icon-only buttons | MUST have `aria-label`                   |
-| Dropdown buttons  | `aria-haspopup="true"` + `aria-expanded` |
-| Focus styles      | `:focus-visible` for keyboard nav        |
-| Close buttons     | `aria-label="Close"`                     |
+| Requirement       | Details                                                      |
+| ----------------- | ------------------------------------------------------------ |
+| Button type       | ALWAYS `type="button"`                                       |
+| Icon-only buttons | MUST have `aria-label`                                       |
+| Dropdown buttons  | `aria-haspopup="true"` + `aria-expanded`                     |
+| Focus styles      | `:focus-visible` for keyboard nav                            |
+| Close buttons     | `aria-label="Close"`                                         |
+| Touch targets     | `min-width`/`min-height` ≥ 44px on every interactive element |
+| Viewport          | `viewport-fit=cover` required for iOS safe-area `env()`      |
 
 ```css
 *:focus-visible {
