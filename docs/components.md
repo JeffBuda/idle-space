@@ -92,7 +92,7 @@ Engine stats).
 ```css
 .btn {
   border: none;
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-button);
   padding: var(--space-md) var(--space-xl);
   font-size: var(--font-size-1);
   font-weight: 600;
@@ -100,6 +100,16 @@ Engine stats).
   transition: all 0.2s ease;
   flex: 1;
   min-width: var(--width-btn-min);
+  /* iOS portrait — 44 x 44 px touch floor (DESIGN BIBLE §4.1) */
+  min-height: var(--touch-target-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Frequent / primary actions get a roomier 48 x 48 px minimum */
+.btn--primary {
+  min-height: var(--touch-target-frequent);
 }
 
 .btn--primary {
@@ -306,6 +316,54 @@ See `DebugConsole.tsx` + `DebugConsole.css`. Bottom-anchored panel.
 - ALWAYS has `aria-label` if the button content is an icon/emoji only.
 - Button groups: `display: flex; gap: var(--space-lg); justify-content: center; flex-wrap: wrap;`
 - Mobile: buttons stack full-width inside modal action containers.
+- iOS portrait: `min-height: var(--touch-target-min)` (44px) on every `.btn`; `min-height: var(--touch-target-frequent)` (48px) on `.btn--primary`.
+- Flow-screen primary action is wrapped in `.flow-actions { margin-top: auto; }` and pinned to the bottom (thumb zone, DESIGN BIBLE §4.4).
+
+## Flow Screen (Bottom-Pinned Actions)
+
+```tsx
+<section className="flow-screen" data-testid="mining-screen">
+  <h2>Mining Operations</h2>
+  <div className="ore-controls">{/* selection buttons */}</div>
+  {/* gate bar / progress */}
+  <div className="flow-actions">
+    <button type="button" className="btn btn--primary" data-testid="hurry-btn">
+      Faster!
+    </button>
+    <button type="button" className="btn btn--secondary" data-testid="back-to-planet-btn">
+      Back to Planet
+    </button>
+  </div>
+</section>
+```
+
+```
+
+### CSS
+```
+
+.flow-screen {
+display: flex;
+flex-direction: column;
+gap: var(--space-md);
+}
+
+.flow-actions {
+margin-top: auto; /* pin primary action to the bottom thumb zone */
+display: flex;
+flex-direction: column;
+gap: var(--space-md);
+}
+
+/* full-width action buttons on mobile */
+@media (max-width: 600px) {
+.flow-actions > .btn {
+width: 100%;
+flex: none;
+}
+}
+
+````
 
 ### Rules
 
@@ -322,7 +380,7 @@ See `DebugConsole.tsx` + `DebugConsole.css`. Bottom-anchored panel.
   <h1>Space Exploration Idle PWA</h1>
   <SettingsMenu ...props />
 </header>
-```
+````
 
 ---
 

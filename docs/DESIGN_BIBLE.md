@@ -99,6 +99,7 @@ font-family:
 | 1   | Imperative Navigation Rules | `#1-imperative-navigation-rules`             |
 | 2   | Screen Routing & Transition | `#2-screen-routing--transition-architecture` |
 | 3   | Layout Blueprint            | `#3-standard-screen-layout-blueprint`        |
+| 4   | iOS Portrait Usability      | `#4-ios-phone-portrait-usability-standard`   |
 
 ---
 
@@ -247,3 +248,64 @@ Every newly designed mobile screen must map to this structural skeleton:
 | **Top Safe Area (Header)**        | 44px          | Read-only metrics, active location status, and main menu trigger. No high-frequency interactive buttons.                                                                |
 | **Primary Viewport (Center 65%)** | ~65% of 100vh | Pure spatial data (Star Map canvas, interactive planet renderer, visual progress meters).                                                                               |
 | **Bottom Safe Area / Drawer**     | ~35% of 100vh | Interactive controls, choice selections, confirm/cancel logic, and navigation tabs. Must respect `env(safe-area-inset-bottom)` to clear native iOS home indicator bars. |
+
+---
+
+## 4. iOS Phone Portrait Usability Standard
+
+> **Normative.** All interactive UI must conform when rendered on an iPhone in
+> **standalone / portrait** mode. If a component cannot meet this standard, it
+> must not ship.
+
+### 4.1 Touch Targets — 44 × 44 px minimum
+
+- **Requirement:** every `button`, `select`, toggle, and tappable affordance must expose a
+  **minimum 44 × 44 CSS px hit area** (Apple HIG 44 × 44 pt; WCAG 2.1 Target Size
+  Enhanced, Level AAA). The most frequent / primary actions (`Launch!`, `Faster!`,
+  `Collect Ore`, navigation choices) must be **≥ 48 × 48 px**.
+- **Icon-only controls** (`✕` close, gear `⚙️`, iOS banner dismiss) keep their visual glyph but
+  pad the invisible hit area to 44 × 44 px with `min-width: 44px; min-height: 44px; padding` —
+  never shrink a tap zone below 44 px.
+- **Hit-slop rule:** small inline tappables (log rows, status items) must extend their touch target
+  to ≥ 44 px; do not rely on the visual element size alone.
+
+### 4.2 Typography — legible on a 5.4"-class screen
+
+- **Body / status values / button labels:** `≥ 17 px` (`1.0625rem`). Apple system body is 17 pt;
+  16 px is accepted but 17 px is the portrait baseline on dark backgrounds.
+- **Subtext / captions:** `≥ 14 px` (`0.875rem`); debug caption / monospace must not fall below
+  13 px.
+- Use `font-variant-numeric: tabular-nums` on any live-updating counter (seconds, ore totals) to
+  prevent layout shift.
+
+### 4.3 Layout — iPhone Safe-Area Grid (portrait)
+
+- **Prerequisite:** `index.html` MUST set
+  `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">`
+  so `env(safe-area-inset-*)` is live on iOS (notch top ≈ 44 px, home indicator bottom ≈ 34 px on
+  iPhone X+ in portrait).
+- Fixed **bottom** elements (iOS install banner, slide-up DebugConsole, bottom-pinned action bars)
+  sit at `bottom: env(safe-area-inset-bottom)` and pad content by
+  `max(var(--space-*), env(safe-area-inset-bottom))` on the bottom edge.
+- Centered **modals** (OfflineGreeting, MiningRewardModal) pad their overlay by the safe-area insets
+  so the primary button is never hidden under the home indicator.
+
+### 4.4 Thumb Zone & Primary Action Placement
+
+- The most frequent action per screen must live in the **bottom 35 %** of the viewport (the thumb
+  zone) and be the **last** element in the screen flow.
+- Flow screens (`Welcome`, `SpaceTravel`, `Landing`, `Mining`, `PlanetHub`) render as flex-columns
+  (`.flow-screen`) with the primary action wrapped in a bottom-pinned `.flow-actions`
+  (`margin-top: auto`), so it is always at the very bottom, above the home-indicator safe area.
+- Secondary navigation (e.g. `Back to Planet`) sits directly above the primary action; destructive
+  actions are never adjacent to primary buttons.
+
+### 4.5 Button System Consistency
+
+- **All buttons use the canonical system** (`.btn` / `.btn--primary` / `.btn--secondary`). There is
+  no `.primary-btn` token.
+- **No unstyled buttons.** A bare `<button>` with no component class is a bug — it renders as the
+  browser default and fails the 44 px rule on iOS.
+- Every `button` has `type="button"` and a `data-testid`.
+- Buttons in modal / screen action rows stack **full-width** on mobile
+  (`@media (max-width: 600px)`).
