@@ -74,3 +74,22 @@
   border-color: var(--color-border);
   color: var(--color-text-dim);
 }
+
+/* Warning / destructive action — visually distinct from standard toggles.
+   Uses the negative (red) accent to signal a non-reversible cache wipe. */
+.settings-toggle--warning {
+  border-color: var(--color-negative);
+  color: var(--color-text-strong);
+  background: rgba(248, 113, 119, 0.1);
+}
+
+.settings-toggle--warning:hover {
+  background: rgba(248, 113, 119, 0.2);
+  color: var(--color-negative);
+}
+
+.settings-toggle--warning:focus-visible {
+  outline: 2px solid var(--color-negative);
+  outline-offset: 2px;
+  border-radius: var(--radius-small);
+}

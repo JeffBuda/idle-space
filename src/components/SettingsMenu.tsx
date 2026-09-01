@@ -9,6 +9,8 @@ interface SettingsMenuProps {
   onToggleGameState: () => void;
   appStatusVisible: boolean;
   onToggleAppStatus: () => void;
+  /** Handler for the 'Force UI Update' button — clears SW cache while preserving IndexedDB. */
+  onForceUpdate: () => void;
 }
 
 /**
@@ -28,6 +30,7 @@ export const SettingsMenu = ({
   onToggleGameState,
   appStatusVisible,
   onToggleAppStatus,
+  onForceUpdate,
 }: SettingsMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -93,6 +96,17 @@ export const SettingsMenu = ({
             }}
           >
             {appStatusVisible ? 'Hide' : 'View'} App Status
+          </button>
+          <button
+            type="button"
+            className="settings-toggle settings-toggle--warning"
+            data-testid="force-ui-update"
+            onClick={() => {
+              onForceUpdate();
+              setIsOpen(false);
+            }}
+          >
+            Force UI Update (Preserve Save)
           </button>
         </div>
       )}
