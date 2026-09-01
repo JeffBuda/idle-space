@@ -6,7 +6,7 @@ interface GameStateSnapshot {
   [key: string]: unknown;
 }
 
-test.use({ viewport: { width: 1280, height: 720 } });
+test.use({ viewport: { width: 390, height: 844 } });
 
 async function getGameStateFromIDB(page: Page): Promise<unknown | null> {
   return page.evaluate(async () => {

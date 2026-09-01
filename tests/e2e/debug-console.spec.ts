@@ -16,7 +16,7 @@ import { test, expect, type Page } from '@playwright/test';
  */
 
 // Viewport size per E2E test conventions
-test.use({ viewport: { width: 1280, height: 720 } });
+test.use({ viewport: { width: 390, height: 844 } });
 
 /** Clears IndexedDB to isolate each test's state.
  *

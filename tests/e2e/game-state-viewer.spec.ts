@@ -12,7 +12,7 @@ import { test, expect, type Page } from '@playwright/test';
  *   - The close button hides the viewer
  */
 
-test.use({ viewport: { width: 1280, height: 720 } });
+test.use({ viewport: { width: 390, height: 844 } });
 
 test.describe.serial('game state viewer', () => {
   /** Clears IndexedDB game_state and keyval stores for test isolation. */

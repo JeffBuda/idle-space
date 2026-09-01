@@ -6,7 +6,7 @@ paths:
 # Playwright E2E Testing Rules
 
 - **Test Isolation:** Tests that modify IndexedDB state must run within a `test.describe.serial` block with a `beforeEach` hook that clears the `game_state` store before each test.
-- **Browser Viewport:** Set `test.use({ viewport: { width: 1280, height: 720 } })` at the top of each test file.
+- **Browser Viewport:** Set `test.use({ viewport: { width: 390, height: 844 } })` at the top of each test file (iPhone 12 resolution for mobile-first PWA testing). The `iPhone 12` project in `playwright.config.ts` adds proper mobile emulation (isMobile, hasTouch, deviceScaleFactor).
 - **Dev Server:** Always wait for the Vite dev server to be ready before running tests. The `playwright.config.ts` `webServer` config handles this automatically.
 - **Test Conventions:**
   - Use `data-testid` selectors (via `page.getByTestId()`) for all element queries.
