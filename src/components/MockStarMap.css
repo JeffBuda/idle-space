@@ -97,7 +97,7 @@
 .mock-star-map__edge-path {
   fill: none;
   stroke: var(--color-path-inactive);
-  stroke-width: 1;
+  stroke-width: 0.5;
   stroke-dasharray: 2;
 }
 
@@ -157,8 +157,8 @@
 }
 
 .mock-star-map__node-dot {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
 }
 
@@ -172,8 +172,8 @@
 }
 
 .mock-star-map__node--selected .mock-star-map__node-dot {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   background-color: var(--color-star-selected);
   box-shadow: 0 0 12px var(--color-star-selected);
 }
