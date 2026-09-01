@@ -25,6 +25,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-modal);
   padding: var(--space-2xl);
+  padding-bottom: max(var(--space-2xl), var(--safe-area-bottom));
   max-width: var(--width-modal);
   width: 100%;
   box-shadow: var(--shadow-card);

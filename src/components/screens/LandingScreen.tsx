@@ -32,14 +32,19 @@ export const LandingScreen = ({ gate, onHurry, onComplete }: LandingScreenProps)
           {gate.expired ? (
             <button
               type="button"
-              className="primary-btn"
+              className="btn btn--primary"
               data-testid="complete-action-btn"
               onClick={onComplete}
             >
               Touchdown! Continue to Mining
             </button>
           ) : (
-            <button type="button" data-testid="hurry-btn" onClick={onHurry}>
+            <button
+              type="button"
+              className="btn btn--primary"
+              data-testid="hurry-btn"
+              onClick={onHurry}
+            >
               Faster!
             </button>
           )}

@@ -5,6 +5,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: var(--safe-area-top) var(--safe-area-right) var(--safe-area-bottom) var(--safe-area-left);
 }
 
 .app-header {
@@ -105,6 +106,12 @@ main {
   .time-delta {
     padding: var(--space-lg);
   }
+
+  /* Full-width action buttons on mobile (iOS portrait thumb zone) */
+  .btn {
+    width: 100%;
+    flex: none;
+  }
 }
 
 /* ---- Onboarding flow screens (overlay below the always-visible status grid) ---- */
@@ -129,17 +136,43 @@ main {
   gap: var(--space-sm);
   margin: var(--space-md) 0;
 }
-.primary-btn {
-  background-color: var(--color-accent);
-  color: var(--color-white);
+/* Canonical button system (docs/components.md) — 44x44px min touch target */
+.btn {
   border: none;
-  border-radius: var(--radius-card);
-  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-button);
+  padding: var(--space-md) var(--space-xl);
   font-size: var(--font-size-1);
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: var(--width-btn-min);
+  min-height: var(--touch-target-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
-.primary-btn:hover {
-  filter: brightness(1.1);
+
+.btn--primary {
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.btn--primary:hover {
+  background-color: var(--color-accent-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-accent-hover);
+}
+
+.btn--secondary {
+  background-color: var(--color-border-subtle);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.btn--secondary:hover {
+  background-color: var(--color-border);
+  color: var(--color-text-strong);
 }
 /* Gate progress bar. The CSS transition keeps the bar visually smooth between
    the 1-second background ticks (independent of the state-processing cadence). */
@@ -158,4 +191,28 @@ main {
   transition:
     width 0.3s ease-out,
     background-color 0.3s;
+}
+
+/* Bottom-pinned primary action (thumb zone, DESIGN BIBLE §4.4) */
+.flow-actions {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: 100%;
+}
+
+/* iOS portrait — 44x44px hit area on small/icon controls (§4.1) */
+.settings-gear,
+.settings-toggle,
+.ore-controls button,
+.debug-close,
+.gs-close,
+.mining-reward-close,
+.ios-install-banner__dismiss,
+.debug-btn,
+.debug-filter,
+.log-meta {
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
 }

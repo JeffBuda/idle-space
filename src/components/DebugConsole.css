@@ -173,6 +173,7 @@
   .debug-console {
     height: var(--height-debug-mobile-viewport);
     max-height: var(--height-full-viewport);
+    padding-bottom: max(var(--space-md), var(--safe-area-bottom));
   }
 
   .debug-controls {

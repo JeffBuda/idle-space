@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
 import App from './App';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 // ---------------------------------------------------------------------------
 // Mock the useDbStatus hook so tests don't require a real IDB.
@@ -260,5 +262,48 @@ describe('App', () => {
     expect(screen.getByTestId('planet-hub-screen')).toBeInTheDocument();
     expect(screen.getByTestId('nav-landing')).toBeInTheDocument();
     expect(screen.getByTestId('nav-space-travel')).toBeInTheDocument();
+  });
+
+  // ---------------------------------------------------------------------------
+  // iOS portrait-mode touch-target & canonical-button regression tests
+  // (docs/DESIGN_BIBLE.md §4.1–4.3)
+  // ---------------------------------------------------------------------------
+  it('WELCOME launch button uses the canonical .btn system, not the deprecated .primary-btn', () => {
+    mockGameStateData.screen = 'WELCOME';
+    render(<App />);
+    const launchBtn = screen.getByTestId('launch-btn');
+    expect(launchBtn).toHaveClass('btn', 'btn--primary');
+    expect(launchBtn.className).not.toContain('primary-btn');
+  });
+
+  it('MINING ore-selection buttons use .btn btn--primary (44px minimum touch target)', () => {
+    mockGameStateData.screen = 'MINING';
+    render(<App />);
+    const commonOreBtn = screen.getByTestId('ore-common');
+    const rareOreBtn = screen.getByTestId('ore-rare');
+    expect(commonOreBtn).toHaveClass('btn', 'btn--primary');
+    expect(rareOreBtn).toHaveClass('btn', 'btn--primary');
+  });
+
+  it('PLANET hub nav buttons use canonical .btn classes', () => {
+    mockGameStateData.screen = 'PLANET';
+    render(<App />);
+    expect(screen.getByTestId('nav-landing')).toHaveClass('btn', 'btn--primary');
+    expect(screen.getByTestId('nav-space-travel')).toHaveClass('btn', 'btn--secondary');
+  });
+
+  it('app shell applies safe-area insets and canonical touch-target tokens via CSS', () => {
+    mockGameStateData.screen = 'PLANET';
+    const { container } = render(<App />);
+    const appDiv = container.querySelector('.app');
+    expect(appDiv).not.toBeNull();
+    // jsdom does not load CSS imports, so verify the source CSS declares the
+    // safe-area and touch-target custom properties (docs/tokens.md §3)
+    const indexCss = readFileSync(resolve(__dirname, '../index.css'), 'utf-8');
+    expect(indexCss).toContain('--safe-area-top');
+    expect(indexCss).toContain('--safe-area-right');
+    expect(indexCss).toContain('--safe-area-bottom');
+    expect(indexCss).toContain('--safe-area-left');
+    expect(indexCss).toContain('--touch-target-min');
   });
 });

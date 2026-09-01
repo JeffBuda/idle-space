@@ -22,6 +22,7 @@
   border-top-right-radius: var(--radius-modal);
   box-shadow: var(--shadow-ios);
   padding: var(--space-1p25);
+  padding-bottom: max(var(--space-1p25), var(--safe-area-bottom));
   z-index: var(--z-ios-banner);
   color: var(--color-text);
 }
