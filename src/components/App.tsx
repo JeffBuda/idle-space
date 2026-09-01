@@ -11,6 +11,7 @@ import { useDbStatus } from '../hooks/useDbStatus';
 import OfflineGreeting from './OfflineGreeting';
 import { MiningRewardModal } from './MiningRewardModal';
 import { SettingsMenu } from './SettingsMenu';
+import { MockStarMap } from './MockStarMap';
 import { clearCacheAndUpdate } from '../utils/cache';
 import { DebugConsole } from './DebugConsole';
 import { GameStateViewer } from './GameStateViewer';
@@ -23,12 +24,15 @@ const App = () => {
   const [debugConsoleVisible, setDebugConsoleVisible] = useState(false);
   const [gameStateVisible, setGameStateVisible] = useState(false);
   const [appStatusVisible, setAppStatusVisible] = useState(false);
+  const [starMapSandboxVisible, setStarMapSandboxVisible] = useState(false);
   const toggleDebugConsole = () => setDebugConsoleVisible(!debugConsoleVisible);
   const toggleGameState = () => setGameStateVisible(!gameStateVisible);
   const toggleAppStatus = () => setAppStatusVisible(!appStatusVisible);
   const handleForceUpdate = () => {
     clearCacheAndUpdate();
   };
+  const handleOpenStarMapSandbox = () => setStarMapSandboxVisible(true);
+  const handleCloseStarMapSandbox = () => setStarMapSandboxVisible(false);
 
   // ---- Service Worker registration status ----
   useEffect(() => {
@@ -83,6 +87,7 @@ const App = () => {
             appStatusVisible={appStatusVisible}
             onToggleAppStatus={toggleAppStatus}
             onForceUpdate={handleForceUpdate}
+            onOpenStarMapSandbox={handleOpenStarMapSandbox}
           />
         </header>
         <main>
@@ -104,6 +109,7 @@ const App = () => {
           appStatusVisible={appStatusVisible}
           onToggleAppStatus={toggleAppStatus}
           onForceUpdate={handleForceUpdate}
+          onOpenStarMapSandbox={handleOpenStarMapSandbox}
         />
       </header>
 
@@ -194,6 +200,9 @@ const App = () => {
         gameState={gameState}
         onClose={() => setGameStateVisible(false)}
       />
+
+      {/* Star Map UI Sandbox overlay — isolated, no engine/IndexedDB coupling */}
+      {starMapSandboxVisible && <MockStarMap onDismiss={handleCloseStarMapSandbox} />}
     </div>
   );
 };

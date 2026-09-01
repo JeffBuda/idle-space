@@ -129,6 +129,15 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Star Map Sandbox — isolated UI sandbox (no engine coupling) */
+  --color-star-current: #2ea043;
+  --color-star-unknown: #6e7681;
+  --color-star-selected: #58a6ff;
+  --color-path-inactive: #30363d;
+  --color-info-bg-subtle: rgba(99, 179, 237, 0.1);
+  --color-negative-bg-subtle: rgba(248, 113, 119, 0.1);
+  --color-negative-bg-hover: rgba(248, 113, 119, 0.2);
 }
 
 * {
