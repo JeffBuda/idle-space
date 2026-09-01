@@ -212,16 +212,26 @@ test.describe.serial('star map state transitions', () => {
   });
 
   test('per-stop remove button removes a single stop from itinerary', async ({ page }) => {
+    // Build a 3-stop route so removing one still leaves >= 2 stops (State 3)
     await page.getByTestId('star-map-node-sysA').click();
     await page.getByTestId('star-map-node-sysB').click();
+    await page.getByTestId('star-map-node-sysC').click();
+
+    // Verify State 3 with 3 stops
+    await expect(page.getByTestId('sheet-multi-content')).toBeVisible();
+    await expect(page.getByTestId('itinerary-stop-sysA')).toBeVisible();
+    await expect(page.getByTestId('itinerary-stop-sysB')).toBeVisible();
+    await expect(page.getByTestId('itinerary-stop-sysC')).toBeVisible();
+    console.log('State 3 with 3 stops (sysA, sysB, sysC)');
 
     // Remove sysA from the itinerary
     await page.getByTestId('remove-stop-sysA').click();
 
-    // Should show sysB only
-    await expect(page.getByTestId('itinerary-stop-sysB')).toBeVisible();
+    // sysA should be gone, sysB and sysC should remain
     expect(await page.getByTestId('itinerary-stop-sysA').count()).toBe(0);
-    console.log('Removed sysA from itinerary - only sysB remains');
+    await expect(page.getByTestId('itinerary-stop-sysB')).toBeVisible();
+    await expect(page.getByTestId('itinerary-stop-sysC')).toBeVisible();
+    console.log('Removed sysA from itinerary - sysB and sysC remain');
   });
 
   test('screenshot: State 1 (default exploration)', async ({ page }, testInfo) => {
