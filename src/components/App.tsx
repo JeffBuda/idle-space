@@ -9,6 +9,7 @@ import { PlanetHubScreen } from './screens/PlanetHubScreen';
 import { useGameState } from '../hooks/useGameState';
 import { useDbStatus } from '../hooks/useDbStatus';
 import OfflineGreeting from './OfflineGreeting';
+import { MiningRewardModal } from './MiningRewardModal';
 import { SettingsMenu } from './SettingsMenu';
 import { DebugConsole } from './DebugConsole';
 import { GameStateViewer } from './GameStateViewer';
@@ -56,6 +57,8 @@ const App = () => {
     gate,
     offlineSeconds,
     clearOfflineSeconds,
+    idleReward,
+    clearIdleReward,
     isLoading,
     dispatch,
   } = useGameState();
@@ -140,6 +143,7 @@ const App = () => {
                 onOreSelect={(ore) => dispatch({ type: 'ORE_SELECTED', ore })}
                 onHurry={() => dispatch({ type: 'HURRY' })}
                 onComplete={() => dispatch({ type: 'COMPLETE_ACTION' })}
+                onNavigate={(to) => dispatch({ type: 'NAVIGATE', to })}
               />
             )}
             {screen === 'PLANET' && (
@@ -152,12 +156,25 @@ const App = () => {
         )}
       </main>
 
-      {/* Offline greeting modal */}
-      <OfflineGreeting
-        offlineSeconds={offlineSeconds}
-        onDismiss={clearOfflineSeconds}
-        onCollectRewards={handleCollectRewards}
-      />
+      {/* Offline greeting modal (non-mining screens) */}
+      {idleReward === null && (
+        <OfflineGreeting
+          offlineSeconds={offlineSeconds}
+          onDismiss={clearOfflineSeconds}
+          onCollectRewards={handleCollectRewards}
+        />
+      )}
+
+      {/* Welcome-back modal for resume-from-idle while mining */}
+      {idleReward !== null && (
+        <MiningRewardModal
+          reward={idleReward}
+          onDismiss={() => {
+            clearIdleReward();
+            clearOfflineSeconds();
+          }}
+        />
+      )}
 
       {/* iOS install banner */}
       <IOSInstallBanner />

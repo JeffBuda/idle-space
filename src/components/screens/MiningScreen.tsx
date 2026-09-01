@@ -2,8 +2,11 @@
 //
 // Idle-gate view for surface mining. The player picks Common or Rare ore (a 30s
 // or 60s gate respectively — target computed by engine/flow.ts `gateTarget`),
-// then taps "Faster!" to rush it, or "Collect Ore" once it has expired.
-import type { GameState, IdleGateStatus, OreType } from '../../types/game-state';
+// then taps "Faster!" to rush it. With the auto-mining loop, ore is awarded
+// automatically once the gate reaches 0s and a fresh gate starts — no manual
+// "Collect Ore" tap needed. A "Back to Planet" button lets the player stop
+// mining and return to the hub at any time.
+import type { GameState, IdleGateStatus, OreType, Screen } from '../../types/game-state';
 
 interface MiningScreenProps {
   gameState: GameState;
@@ -11,6 +14,7 @@ interface MiningScreenProps {
   onOreSelect: (ore: OreType) => void;
   onHurry: () => void;
   onComplete: () => void;
+  onNavigate: (to: Screen) => void;
 }
 
 export const MiningScreen = ({
@@ -19,6 +23,7 @@ export const MiningScreen = ({
   onOreSelect,
   onHurry,
   onComplete,
+  onNavigate,
 }: MiningScreenProps) => {
   const remaining = gate ? Math.round(gate.remainingSeconds) : 0;
   return (
@@ -58,6 +63,15 @@ export const MiningScreen = ({
           )}
         </>
       )}
+
+      <button
+        type="button"
+        className="btn btn--secondary"
+        data-testid="back-to-planet-btn"
+        onClick={() => onNavigate('PLANET')}
+      >
+        Back to Planet
+      </button>
     </section>
   );
 };
