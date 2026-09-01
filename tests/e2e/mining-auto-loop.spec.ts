@@ -98,7 +98,7 @@ async function setupFastGates(page: Page): Promise<void> {
   await expect(page.getByTestId('settings-gear')).toBeVisible();
   await clearGameState(page);
   await page.reload();
-  await expect(page.getByTestId('settings-gear')).toBeVisible();
+  await expect(page.getByTestId('welcome-screen')).toBeVisible();
   await writeGameState(page, {
     constants: { defaultActionTimeSeconds: 1, rareOreTimeMultiplier: 2 },
   });

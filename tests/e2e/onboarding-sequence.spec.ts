@@ -88,8 +88,12 @@ test.describe.serial('Onboarding flow', () => {
 
     // Reload to recreate a fresh save, then override gate timing to 1s so the
     // cycle runs quickly (Rare Ore stays 2s via rareOreTimeMultiplier).
+    // Wait for welcome-screen (not just settings-gear) so handleWake has fully
+    // completed and persisted the fresh state to IndexedDB -- otherwise
+    // writeGameState may find no existing record and silently no-op on its
+    // merge, leaving gates at the 30s default.
     await page.reload();
-    await expect(page.getByTestId('settings-gear')).toBeVisible();
+    await expect(page.getByTestId('welcome-screen')).toBeVisible();
     await writeGameState(page, {
       constants: { defaultActionTimeSeconds: 1, rareOreTimeMultiplier: 2 },
     });
