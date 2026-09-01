@@ -93,3 +93,21 @@
   outline-offset: 2px;
   border-radius: var(--radius-small);
 }
+
+/* Sandbox / debug tool — info-blue accent to distinguish from normal
+   toggles (green) and destructive actions (red). */
+.settings-toggle--sandbox {
+  border-color: var(--color-info);
+  color: var(--color-info);
+}
+
+.settings-toggle--sandbox:hover {
+  background-color: var(--color-info-bg-subtle);
+  color: var(--color-white);
+}
+
+.settings-toggle--sandbox:focus-visible {
+  outline: 2px solid var(--color-info);
+  outline-offset: 2px;
+  border-radius: var(--radius-small);
+}
