@@ -11,6 +11,7 @@ import { useDbStatus } from '../hooks/useDbStatus';
 import OfflineGreeting from './OfflineGreeting';
 import { MiningRewardModal } from './MiningRewardModal';
 import { SettingsMenu } from './SettingsMenu';
+import { clearCacheAndUpdate } from '../utils/cache';
 import { DebugConsole } from './DebugConsole';
 import { GameStateViewer } from './GameStateViewer';
 import './App.css';
@@ -25,6 +26,9 @@ const App = () => {
   const toggleDebugConsole = () => setDebugConsoleVisible(!debugConsoleVisible);
   const toggleGameState = () => setGameStateVisible(!gameStateVisible);
   const toggleAppStatus = () => setAppStatusVisible(!appStatusVisible);
+  const handleForceUpdate = () => {
+    clearCacheAndUpdate();
+  };
 
   // ---- Service Worker registration status ----
   useEffect(() => {
@@ -78,6 +82,7 @@ const App = () => {
             onToggleGameState={toggleGameState}
             appStatusVisible={appStatusVisible}
             onToggleAppStatus={toggleAppStatus}
+            onForceUpdate={handleForceUpdate}
           />
         </header>
         <main>
@@ -98,6 +103,7 @@ const App = () => {
           onToggleGameState={toggleGameState}
           appStatusVisible={appStatusVisible}
           onToggleAppStatus={toggleAppStatus}
+          onForceUpdate={handleForceUpdate}
         />
       </header>
 

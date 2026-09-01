@@ -48,6 +48,15 @@ export default defineConfig(({ mode }) => {
           ],
         },
         workbox: {
+          // Force the Service Worker to immediately activate (skip the
+          // 'waiting' phase) and claim all open clients. On iOS Safari and
+          // standalone (Add-to-Home-Screen) PWAs, this ensures the latest
+          // deployment takes effect without requiring a manual browser restart.
+          skipWaiting: true,
+          clientsClaim: true,
+          // Remove outdated precache entries from previous deployments so
+          // stale hashed assets don't linger in CacheStorage.
+          cleanupOutdatedCaches: true,
           runtimeCaching: [
             {
               urlPattern: ({ request }) => request.destination === 'document',

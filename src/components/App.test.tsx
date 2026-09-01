@@ -49,6 +49,11 @@ vi.mock('../hooks/useGameState', () => ({
   }),
 }));
 
+// Mock the cache utility so App tests don't trigger a real page reload
+vi.mock('../utils/cache', () => ({
+  clearCacheAndUpdate: vi.fn(),
+}));
+
 // Mock the useDebugLogs hook so App tests don't require a real IDB
 vi.mock('../hooks/useDebugLogs', () => ({
   useDebugLogs: () => ({

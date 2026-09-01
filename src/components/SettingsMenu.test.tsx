@@ -11,6 +11,7 @@ describe('SettingsMenu', () => {
     onToggleGameState: vi.fn(),
     appStatusVisible: false,
     onToggleAppStatus: vi.fn(),
+    onForceUpdate: vi.fn(),
   };
 
   beforeEach(() => {
@@ -119,6 +120,35 @@ describe('SettingsMenu', () => {
     expect(screen.getByTestId('settings-card')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('toggle-app-status'));
+    expect(screen.queryByTestId('settings-card')).not.toBeInTheDocument();
+  });
+
+  it('renders the Force UI Update button', () => {
+    render(<SettingsMenu {...defaultProps} />);
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    expect(screen.getByTestId('force-ui-update')).toBeInTheDocument();
+  });
+
+  it('has the warning styled class on the force update button', () => {
+    render(<SettingsMenu {...defaultProps} />);
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    const btn = screen.getByTestId('force-ui-update');
+    expect(btn.className).toContain('settings-toggle--warning');
+  });
+
+  it('calls onForceUpdate when the force update button is clicked', () => {
+    render(<SettingsMenu {...defaultProps} />);
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    fireEvent.click(screen.getByTestId('force-ui-update'));
+    expect(defaultProps.onForceUpdate).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes settings card after triggering force update', () => {
+    render(<SettingsMenu {...defaultProps} />);
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    expect(screen.getByTestId('settings-card')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('force-ui-update'));
     expect(screen.queryByTestId('settings-card')).not.toBeInTheDocument();
   });
 });
