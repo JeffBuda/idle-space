@@ -144,6 +144,30 @@ test.describe('Star Map Flow', () => {
     expect(removeStopBox.height).toBeCloseTo(44, 0);
   });
 
+  test('edges connecting route nodes are highlighted green', async ({ page }, testInfo) => {
+    await openStarMapViaWelcome(page, testInfo);
+    // Add two stops to create a route with an edge between them
+    await clickNode(page, 'sys_1');
+    await clickNode(page, 'sys_2');
+    await expect(page.getByTestId('stop-name-sys_1')).toBeVisible();
+    await expect(page.getByTestId('stop-name-sys_2')).toBeVisible();
+    // Find all edge lines in the SVG
+    const edges = page.locator('line.star-map-edge');
+    const edgeCount = await edges.count();
+    console.log(`Total edges found: ${edgeCount}`);
+    // At least one edge should have the star-map-edge--route class (green)
+    const routeEdges = page.locator('line.star-map-edge.star-map-edge--route');
+    const routeEdgeCount = await routeEdges.count();
+    console.log(`Route edges found: ${routeEdgeCount}`);
+    expect(routeEdgeCount).toBeGreaterThan(0);
+    // Verify the route edges have the green stroke color
+    const firstRouteEdgeStroke = await routeEdges.first().getAttribute('stroke');
+    console.log('Route edge stroke:', firstRouteEdgeStroke);
+    // The stroke should reference the accent color variable (green)
+    expect(firstRouteEdgeStroke).toContain('var(--color-star-route)');
+    await captureScreenshot(page, testInfo, 'route-edges-highlighted-green', 2);
+  });
+
   test('Back button returns to PLANET from star map', async ({ page }, testInfo) => {
     await openStarMapViaWelcome(page, testInfo);
     await page.getByTestId('back-btn').click();

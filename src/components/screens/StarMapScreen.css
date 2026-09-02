@@ -60,6 +60,13 @@
   stroke-dasharray: 1 1;
 }
 
+/* Route edges — green to indicate they're part of the selected route */
+.star-map-edge--route {
+  stroke: var(--color-star-route);
+  stroke-width: 0.5;
+  stroke-linecap: round;
+}
+
 .star-map-node {
   transition: r 0.2s ease;
 }
@@ -69,26 +76,26 @@
 }
 
 .star-map-node--current circle {
-  fill: var(--color-star-current, #00aaff);
+  fill: var(--color-star-current);
 }
 
 .star-map-node--visited circle {
-  fill: var(--color-star-visited, #555);
+  fill: var(--color-star-visited);
 }
 
 .star-map-node--unknown circle {
-  fill: var(--color-star-unknown, #888);
+  fill: var(--color-star-unknown);
 }
 
 .star-map-label {
   font-size: 2.5px;
-  fill: var(--color-text-secondary, #666);
+  fill: var(--color-text-secondary);
   pointer-events: none;
 }
 
 .route-panel {
-  background: var(--color-panel, #222);
-  border-top: 2px solid var(--color-border, #444);
+  background: var(--color-panel);
+  border-top: 2px solid var(--color-border);
   padding: 12px 16px;
   max-height: 40vh;
   overflow-y: auto;
@@ -96,7 +103,7 @@
 
 .route-panel p {
   margin: 0;
-  color: var(--color-text-secondary, #888);
+  color: var(--color-text-secondary);
   font-size: 0.85rem;
 }
 
@@ -109,10 +116,20 @@
 
 .itinerary-stop span {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
+/* Ensure itinerary-stop buttons stay at 44x44px — override any flex stretching */
 .itinerary-stop button {
-  flex-shrink: 0;
+  flex: none !important;
+  flex-shrink: 0 !important;
+  width: var(--touch-target-min) !important;
+  height: var(--touch-target-min) !important;
+  min-width: var(--touch-target-min) !important;
+  min-height: var(--touch-target-min) !important;
 }
 
 .route-summary {
@@ -156,6 +173,7 @@
    DESIGN BIBLE §4.1: icon buttons must remain 44x44px, not full-width. */
 @media (max-width: 600px) {
   .btn--icon,
+  .btn--small,
   .btn--icon.btn--small {
     width: var(--touch-target-min) !important;
     height: var(--touch-target-min) !important;

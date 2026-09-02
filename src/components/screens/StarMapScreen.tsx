@@ -45,6 +45,16 @@ export const StarMapScreen = ({
   // Determine the node IDs that are part of the computed route path visual.
   const pathNodeIds = new Set(routePath.slice(1, -1).filter((id) => id !== currentLocationId));
 
+  // Build a set of route edge pairs for highlighting edges in the selected route.
+  // An edge is a "route edge" if both endpoints are in plannedRoute and adjacent.
+  const routeEdgePairs = new Set<string>();
+  for (let i = 0; i < plannedRoute.length - 1; i++) {
+    const a = plannedRoute[i];
+    const b = plannedRoute[i + 1];
+    routeEdgePairs.add(`${a}->${b}`);
+    routeEdgePairs.add(`${b}->${a}`);
+  }
+
   // Helper: generate SVG polyline points for the active route path
   const getRoutePoints = (): string => {
     if (routePath.length === 0) return '';
@@ -112,9 +122,17 @@ export const StarMapScreen = ({
                 y1={fromNode.y}
                 x2={toNode.x}
                 y2={toNode.y}
-                className="star-map-edge"
-                stroke="var(--color-star-edge)"
-                strokeWidth="0.3"
+                className={
+                  routeEdgePairs.has(`${edge.from}->${edge.to}`)
+                    ? 'star-map-edge star-map-edge--route'
+                    : 'star-map-edge'
+                }
+                stroke={
+                  routeEdgePairs.has(`${edge.from}->${edge.to}`)
+                    ? 'var(--color-star-route)'
+                    : 'var(--color-star-edge)'
+                }
+                strokeWidth={routeEdgePairs.has(`${edge.from}->${edge.to}`) ? '0.5' : '0.3'}
               />
             );
           })}
