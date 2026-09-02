@@ -68,13 +68,34 @@ Add cases before the `default:` (after the existing `ORE_SELECTED` case):
     }
 ```
 
-> **Note:** `makeTimer` is currently private to `flow.ts`. We need to either
-> export it or use the existing `startGate` helper. Since `confirmRoute` needs
-> the travel time (which is `routeTravelTimeSeconds`), we can't use `startGate`
-> directly (it uses `gateTarget` which returns `30` for SPACE_TRAVEL). The
-> `STAR_MAP_GO` case must set `idleTimer` with `targetSeconds` and
-> `remainingSeconds` both equal to `routeTravelTimeSeconds`, and `screen:
-'SPACE_TRAVEL'`. See §5.3 below.
+> **IMPORTANT:** `makeTimer` uses `gateTarget(state, screen)` which returns `30`
+> for `SPACE_TRAVEL`. The `STAR_MAP_GO` case needs a **custom** gate time equal
+> to `routeTravelTimeSeconds`. Solution: add a `makeTimerWithTarget` helper in
+> `flow.ts` and export it:
+
+```ts
+// In flow.ts — new exported helper:
+export const makeTimerWithTarget = (
+  state: GameState,
+  screen: Screen,
+  target: number,
+  currentTime: number,
+): IdleTimer => ({
+  screen,
+  targetSeconds: target,
+  remainingSeconds: target,
+  startedAt: currentTime,
+});
+
+// In reducer.ts STAR_MAP_GO case:
+import { makeTimerWithTarget } from './flow';
+idleTimer: makeTimerWithTarget(
+  prevState,
+  'SPACE_TRAVEL',
+  result.routeTravelTimeSeconds,
+  currentTime,
+);
+```
 
 ---
 

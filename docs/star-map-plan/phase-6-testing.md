@@ -146,9 +146,9 @@ Verify `tests/architecture.test.ts` doesn't flag `.test.tsx` files.
 
 ---
 
-## 6.4 CI Pipeline Updates
+## 6.3 CI Pipeline Updates
 
-### 6.4.1 `npm run test` (Vitest)
+### 6.3.1 `npm run test` (Vitest)
 
 Add to the `test` script in `package.json` — already covers both `src/` unit
 and component tests:
@@ -160,7 +160,7 @@ and component tests:
 New files (`starmap.test.ts`, `StarMapScreen.test.tsx`) are auto-discovered.
 No script changes needed.
 
-### 6.4.2 `npm run build` (Vite + TypeScript)
+### 6.3.2 `npm run build` (Vite + TypeScript)
 
 This is the **authoritative** type check (per project rules — `npx tsc --noEmit`
 has pre-existing TS6305/6306/6310 errors). New files must:
@@ -169,7 +169,7 @@ has pre-existing TS6305/6306/6310 errors). New files must:
 - Type `confirmRoute` return value matches `StarMapConfirmResult`
 - `engine/starmap.ts` imports only from `../types/game-state`
 
-### 6.4.3 Playwright E2E
+### 6.3.3 Playwright E2E
 
 ```bash
 npx playwright test --project="iPhone 12"
@@ -178,7 +178,7 @@ npx playwright test --project="iPhone 12"
 New spec `tests/e2e/star-map.spec.ts` runs alongside existing specs.
 Verify all existing specs still pass (no regressions).
 
-### 6.4.4 GitHub Actions (`.github/workflows/deploy.yml`)
+### 6.3.4 GitHub Actions (`.github/workflows/deploy.yml`)
 
 > **MUST halt on test failures before deploying to GitHub Pages.**
 > Verify the workflow's `npm run test` step has `set -e` or equivalent.
@@ -189,7 +189,7 @@ step includes the new test files (they're auto-globbed by vitest config).
 
 ---
 
-## 6.3 E2E Tests (`tests/e2e/star-map.spec.ts`)
+## 6.4 E2E Tests (`tests/e2e/star-map.spec.ts`)
 
 Playwright, mobile viewport (iPhone 12), serial block for IDB tests.
 
