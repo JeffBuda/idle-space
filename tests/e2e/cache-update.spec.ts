@@ -132,8 +132,10 @@ test.describe.serial('PWA Cache Invalidation', () => {
     await openSettings(page);
     await expect(page.getByTestId('force-ui-update')).toBeVisible();
 
-    // The button calls clearCacheAndUpdate() which ends with window.location.replace()
-    // — this triggers a page navigation. We race the click against the navigation.
+    // The button calls clearCacheAndUpdate() which ends with either
+    // window.location.reload() (SW update lifecycle succeeded) or
+    // window.location.replace() (nuclear fallback) — both trigger a
+    // page navigation. We race the click against the navigation.
     const [navigationResult] = await Promise.all([
       page.waitForNavigation({ waitUntil: 'load' }),
       page.getByTestId('force-ui-update').click(),
