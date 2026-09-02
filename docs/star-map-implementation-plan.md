@@ -9,13 +9,13 @@ This plan is broken into per-phase detail files under `docs/star-map-plan/`:
 
 | File                                                                                               | Phase                           |
 | -------------------------------------------------------------------------------------------------- | ------------------------------- |
-| [[./star-map-plan/phase-1-types-and-engine.md]](./star-map-plan/phase-1-types-and-engine.md)       | TS types + engine functions     |
-| [[./star-map-plan/phase-2-state-and-migration.md]](./star-map-plan/phase-2-state-and-migration.md) | GameState + migration           |
-| [[./star-map-plan/phase-3-hooks.md]](./star-map-plan/phase-3-hooks.md)                             | Hook layer exposure             |
-| [[./star-map-plan/phase-4-components-and-css.md]](./star-map-plan/phase-4-components-and-css.md)   | React components + CSS          |
-| [[./star-map-plan/phase-5-app-integration.md]](./star-map-plan/phase-5-app-integration.md)         | App.tsx + PlanetHub integration |
-| [[./star-map-plan/phase-6-testing.md]](./star-map-plan/phase-6-testing.md)                         | Unit, component, E2E tests      |
-| [[./star-map-plan/questions.md]](./star-map-plan/questions.md)                                     | Open questions for review       |
+| [phase-1-types-and-engine.md](./star-map-plan/phase-1-types-and-engine.md)       | TS types + engine functions     |
+| [phase-2-state-and-migration.md](./star-map-plan/phase-2-state-and-migration.md) | GameState + migration           |
+| [phase-3-hooks.md](./star-map-plan/phase-3-hooks.md)                             | Hook layer exposure             |
+| [phase-4-components-and-css.md](./star-map-plan/phase-4-components-and-css.md)   | React components + CSS          |
+| [phase-5-app-integration.md](./star-map-plan/phase-5-app-integration.md)         | App.tsx + PlanetHub integration |
+| [phase-6-testing.md](./star-map-plan/phase-6-testing.md)                         | Unit, component, E2E tests      |
+| [questions.md](./star-map-plan/questions.md)                                     | Open questions for review       |
 
 ---
 
