@@ -16,4 +16,10 @@ export enum LogCategory {
   GAME_FLOW = 'GAME_FLOW',
   /** A rejected / invalid action (surfaced on an illegal flow transition). */
   VALIDATION_ERROR = 'VALIDATION_ERROR',
+  /**
+   * Service Worker update lifecycle events (Force UI Update milestones).
+   * Enables filtering the DebugConsole to trace cache-invalidation / SW
+   * update flows — critical for debugging iOS-specific update failures.
+   */
+  SW_UPDATE = 'SW_UPDATE',
 }

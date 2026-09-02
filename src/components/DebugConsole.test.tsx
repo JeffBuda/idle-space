@@ -11,7 +11,7 @@ vi.mock('../hooks/useDebugLogs', () => ({
 }));
 
 vi.mock('../logging/types', () => ({
-  LogCategory: { APP_EVENT: 'APP_EVENT' },
+  LogCategory: { APP_EVENT: 'APP_EVENT', SW_UPDATE: 'SW_UPDATE' },
 }));
 
 const mockLogs = [
