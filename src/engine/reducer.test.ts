@@ -9,6 +9,9 @@ const baseState: GameState = {
   rngSeed: 'test-seed',
   totalDistanceKm: 5_000,
   version: '0.1.0',
+  starMap: null,
+  routePath: [],
+  routeTravelTimeSeconds: 0,
 };
 
 describe('engineReducer', () => {

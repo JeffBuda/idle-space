@@ -1,0 +1,224 @@
+// src/components/screens/StarMapScreen.tsx
+//
+// Production star map screen: renders the generated graph as an interactive
+// SVG, a draggable bottom-sheet-style route panel, and zoom controls.
+//
+// Per the architecture rules (docs/star-map-plan/phase-4-components-and-css.md):
+//   - Imports ONLY from types/ and CSS — NO engine/ or db/ imports.
+//   - All game logic (graph generation, pathfinding, route validation) lives
+//     in src/engine/starmap.ts and is dispatched via props callbacks.
+//   - Component-level logic is UI transforms only (status->CSS class, zoom
+//     display, empty/disabled states).
+import type { StarMapState, GameState } from '../../types/game-state';
+import './StarMapScreen.css';
+
+export interface StarMapScreenProps {
+  gameState: GameState | null;
+  starMap: StarMapState | null;
+  routePath: string[];
+  routeTravelTimeSeconds: number;
+  onNodeToggle: (nodeId: string) => void;
+  onRemoveStop: (nodeId: string) => void;
+  onClearRoute: () => void;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  onGo: () => void;
+  onBack: () => void;
+}
+
+export const StarMapScreen = ({
+  starMap,
+  routePath,
+  routeTravelTimeSeconds,
+  onNodeToggle,
+  onRemoveStop,
+  onClearRoute,
+  onZoomIn,
+  onZoomOut,
+  onGo,
+  onBack,
+}: StarMapScreenProps) => {
+  if (!starMap) return null;
+
+  const { nodes, plannedRoute, zoomLevel, currentLocationId } = starMap;
+
+  // Determine the node IDs that are part of the computed route path visual.
+  const pathNodeIds = new Set(routePath.slice(1, -1).filter((id) => id !== currentLocationId));
+
+  // Helper: generate SVG polyline points for the active route path
+  const getRoutePoints = (): string => {
+    if (routePath.length === 0) return '';
+    return routePath
+      .map((id) => {
+        const node = nodes.find((n) => n.id === id);
+        return node ? `${node.x} ${node.y}` : '';
+      })
+      .filter(Boolean)
+      .join(' ');
+  };
+
+  return (
+    <section className="star-map-screen" data-testid="star-map-screen">
+      {/* Header: title + zoom controls + Back */}
+      <header className="star-map-header">
+        <h2 data-testid="star-map-title">Stellar Cartography</h2>
+        <div className="zoom-controls">
+          <button
+            type="button"
+            className="btn btn--icon"
+            data-testid="zoom-out"
+            onClick={onZoomOut}
+            aria-label="Zoom out"
+          >
+            −
+          </button>
+          <span data-testid="zoom-level">{Math.round(zoomLevel * 100)}%</span>
+          <button
+            type="button"
+            className="btn btn--icon"
+            data-testid="zoom-in"
+            onClick={onZoomIn}
+            aria-label="Zoom in"
+          >
+            +
+          </button>
+        </div>
+        <button
+          type="button"
+          className="btn btn--secondary"
+          data-testid="back-btn"
+          onClick={onBack}
+        >
+          Back
+        </button>
+      </header>
+
+      {/* SVG graph canvas */}
+      <div
+        className="star-map-canvas"
+        data-testid="star-map-canvas"
+        style={{ transform: `scale(${zoomLevel})` }}
+      >
+        <svg viewBox="0 0 100 100" className="star-map-svg" data-testid="star-map-svg">
+          {/* Render edges as lines */}
+          {starMap.edges.map((edge, i) => {
+            const fromNode = nodes.find((n) => n.id === edge.from);
+            const toNode = nodes.find((n) => n.id === edge.to);
+            if (!fromNode || !toNode) return null;
+            return (
+              <line
+                key={`edge-${i}`}
+                x1={fromNode.x}
+                y1={fromNode.y}
+                x2={toNode.x}
+                y2={toNode.y}
+                className="star-map-edge"
+                stroke="var(--color-star-edge)"
+                strokeWidth="0.3"
+              />
+            );
+          })}
+          {/* Render route path polyline over edges */}
+          {routePath.length > 1 && (
+            <polyline
+              points={getRoutePoints()}
+              className="star-map-route"
+              fill="none"
+              stroke="var(--color-star-route)"
+              strokeWidth="0.5"
+            />
+          )}
+
+          {/* Render nodes */}
+          {nodes.map((node) => {
+            const isCurrent = node.id === currentLocationId;
+            const isInRoute = plannedRoute.includes(node.id);
+            const nodeClass = `star-map-node star-map-node--${node.status}`;
+            return (
+              <g
+                key={node.id}
+                className={nodeClass}
+                data-testid={`node-${node.id}`}
+                onClick={() => onNodeToggle(node.id)}
+                style={{ cursor: isCurrent ? 'default' : 'pointer' }}
+              >
+                <circle
+                  cx={node.x}
+                  cy={node.y - 3}
+                  r={isCurrent ? 2.2 : isInRoute ? 1.6 : 1.2}
+                  fill={
+                    node.status === 'current'
+                      ? 'var(--color-star-current)'
+                      : node.status === 'visited'
+                        ? 'var(--color-star-visited)'
+                        : pathNodeIds.has(node.id)
+                          ? 'var(--color-star-route)'
+                          : 'var(--color-star-unknown)'
+                  }
+                />
+                <text
+                  x={node.x}
+                  y={node.y + 7}
+                  textAnchor="middle"
+                  className="star-map-label"
+                  fontSize="3.5"
+                  fill="var(--color-text-secondary)"
+                >
+                  {node.name}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+
+      {/* Route panel (bottom sheet) */}
+      <div className="route-panel" data-testid="route-panel">
+        {plannedRoute.length === 0 ? (
+          <p data-testid="route-empty">Click stars on the map to plot a course.</p>
+        ) : (
+          <>
+            <ul data-testid="itinerary-list">
+              {plannedRoute.map((nodeId, index) => {
+                const node = nodes.find((n) => n.id === nodeId);
+                return (
+                  <li key={nodeId} className="itinerary-stop">
+                    <span data-testid={`stop-index-${nodeId}`}>{index + 1}.</span>
+                    <span data-testid={`stop-name-${nodeId}`}>{node ? node.name : nodeId}</span>
+                    <button
+                      type="button"
+                      className="btn btn--icon btn--small"
+                      data-testid={`remove-stop-${nodeId}`}
+                      aria-label={`Remove ${node ? node.name : nodeId} from route`}
+                      onClick={() => onRemoveStop(nodeId)}
+                    >
+                      ✕
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="route-summary">
+              <span data-testid="total-travel-time">
+                Travel time: {Math.round(routeTravelTimeSeconds)}s
+              </span>
+            </div>
+            <button
+              type="button"
+              className="btn btn--secondary"
+              data-testid="clear-route"
+              onClick={onClearRoute}
+            >
+              Clear Route
+            </button>
+            <button type="button" className="btn btn--primary" data-testid="go-btn" onClick={onGo}>
+              Go!
+            </button>
+          </>
+        )}
+      </div>
+    </section>
+  );
+};
+
+export default StarMapScreen;

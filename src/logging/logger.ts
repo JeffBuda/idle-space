@@ -37,6 +37,12 @@ const ACTION_CATEGORY: Record<string, LogCategory> = {
   HURRY: LogCategory.GAME_FLOW,
   COMPLETE_ACTION: LogCategory.GAME_FLOW,
   ORE_SELECTED: LogCategory.GAME_FLOW,
+  STAR_MAP_NODE_TOGGLE: LogCategory.GAME_FLOW,
+  STAR_MAP_REMOVE_STOP: LogCategory.GAME_FLOW,
+  STAR_MAP_CLEAR_ROUTE: LogCategory.GAME_FLOW,
+  STAR_MAP_ZOOM_IN: LogCategory.GAME_FLOW,
+  STAR_MAP_ZOOM_OUT: LogCategory.GAME_FLOW,
+  STAR_MAP_GO: LogCategory.GAME_FLOW,
 };
 
 /**

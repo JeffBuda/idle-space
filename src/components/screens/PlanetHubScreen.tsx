@@ -8,9 +8,10 @@ import type { GameState, Screen } from '../../types/game-state';
 interface PlanetHubScreenProps {
   gameState: GameState;
   onNavigate: (to: Screen) => void;
+  onChartCourse: () => void;
 }
 
-export const PlanetHubScreen = ({ gameState, onNavigate }: PlanetHubScreenProps) => (
+export const PlanetHubScreen = ({ gameState, onNavigate, onChartCourse }: PlanetHubScreenProps) => (
   <section className="flow-screen" data-testid="planet-hub-screen">
     <h2 data-testid="planet-hub-title">Orbiting Planet X</h2>
     <p data-testid="ore-tally">
@@ -32,6 +33,14 @@ export const PlanetHubScreen = ({ gameState, onNavigate }: PlanetHubScreenProps)
         onClick={() => onNavigate('SPACE_TRAVEL')}
       >
         Depart
+      </button>
+      <button
+        type="button"
+        className="btn btn--secondary"
+        data-testid="nav-star-map"
+        onClick={onChartCourse}
+      >
+        Chart Course
       </button>
     </div>
   </section>

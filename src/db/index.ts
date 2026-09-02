@@ -76,6 +76,9 @@ const GAME_STATE_DEFAULT: GameState = {
   selectedOre: null,
   constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
   lastError: null,
+  starMap: null,
+  routePath: [],
+  routeTravelTimeSeconds: 0,
 };
 
 /**
@@ -103,6 +106,9 @@ export const migrateGameState = (savedState: GameState): GameState => ({
   selectedOre: savedState.selectedOre ?? null,
   constants: savedState.constants ?? GAME_STATE_DEFAULT.constants,
   lastError: savedState.lastError ?? null,
+  starMap: savedState.starMap ?? null,
+  routePath: savedState.routePath ?? [],
+  routeTravelTimeSeconds: savedState.routeTravelTimeSeconds ?? 0,
 });
 
 /**

@@ -4,6 +4,7 @@
 // mutates) and records a human-readable `lastError` on rejected transitions.
 // Illegal transitions are surfaced as VALIDATION_ERROR logs by logger.ts.
 import { type GameState, type GameAction, type Screen, type IdleTimer } from '../types/game-state';
+import { generateStarMap } from './starmap';
 
 /** Seconds a gate target should take for a given screen + chosen ore. */
 const gateTarget = (state: GameState, screen: Screen): number => {
@@ -24,6 +25,23 @@ const makeTimer = (state: GameState, screen: Screen, currentTime: number): IdleT
   return { screen, targetSeconds: target, remainingSeconds: target, startedAt: currentTime };
 };
 
+/**
+ * Build a fresh IdleTimer with a custom target (used for star map route
+ * confirmation, where the gate time is derived from the route length rather
+ * than the fixed game constants).
+ */
+export const makeTimerWithTarget = (
+  _state: GameState,
+  screen: Screen,
+  target: number,
+  currentTime: number,
+): IdleTimer => ({
+  screen,
+  targetSeconds: target,
+  remainingSeconds: target,
+  startedAt: currentTime,
+});
+
 /** Begin (or re-begin) a gate for `screen`, resetting its countdown to the target. */
 const startGate = (state: GameState, screen: Screen, currentTime: number): GameState => ({
   ...state,
@@ -31,6 +49,19 @@ const startGate = (state: GameState, screen: Screen, currentTime: number): GameS
   idleTimer: makeTimer(state, screen, currentTime),
   lastError: null,
 });
+
+/**
+ * Enter the STAR_MAP screen — lazily generating the star map graph by rngSeed
+ * if this is the player's first visit, or preserving the existing graph on
+ * return visits. Accessible from both WELCOME and PLANET (per Q8 decision).
+ */
+const enterStarMap = (state: GameState): GameState => {
+  if (state.starMap === null) {
+    const starMap = generateStarMap(state.rngSeed, 'sys_0');
+    return { ...state, screen: 'STAR_MAP', starMap, lastError: null };
+  }
+  return { ...state, screen: 'STAR_MAP', lastError: null };
+};
 
 export const navigate = (
   state: GameState,
@@ -51,10 +82,21 @@ export const navigate = (
           lastError: null,
         };
       }
+      if (to === 'STAR_MAP') {
+        return enterStarMap(state);
+      }
       break;
     case 'PLANET':
       if (to === 'LANDING') return startGate(state, 'LANDING', currentTime);
       if (to === 'SPACE_TRAVEL') return startGate(state, 'SPACE_TRAVEL', currentTime);
+      if (to === 'STAR_MAP') {
+        return enterStarMap(state);
+      }
+      break;
+    case 'STAR_MAP':
+      if (to === 'PLANET') {
+        return { ...state, screen: 'PLANET', starMap: null, lastError: null };
+      }
       break;
     case 'MINING':
       if (to === 'PLANET') {

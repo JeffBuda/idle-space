@@ -8,8 +8,9 @@
 // All time/seed values are passed in as explicit parameters for
 // deterministic testability.
 import { advanceIdleGate, processIdleProgression } from './time';
-import { processFlowAction } from './flow';
+import { processFlowAction, makeTimerWithTarget } from './flow';
 import { processMiningGate } from './mining';
+import { toggleRouteNode, removeRouteNode, clearRoute, handleZoom, confirmRoute } from './starmap';
 import type { GameState, GameAction } from '../types/game-state';
 
 /**
@@ -74,6 +75,58 @@ export const engineReducer: EngineReducerFn = (
     case 'COMPLETE_ACTION':
     case 'ORE_SELECTED':
       return processFlowAction(prevState, action, currentTime);
+    case 'STAR_MAP_NODE_TOGGLE': {
+      if (!prevState.starMap) return prevState;
+      const starMap = toggleRouteNode(prevState.starMap, action.nodeId);
+      return { ...prevState, starMap };
+    }
+
+    case 'STAR_MAP_REMOVE_STOP': {
+      if (!prevState.starMap) return prevState;
+      const starMap = removeRouteNode(prevState.starMap, action.nodeId);
+      return { ...prevState, starMap };
+    }
+
+    case 'STAR_MAP_CLEAR_ROUTE': {
+      if (!prevState.starMap) return prevState;
+      const starMap = clearRoute(prevState.starMap);
+      return { ...prevState, starMap, routePath: [], routeTravelTimeSeconds: 0 };
+    }
+
+    case 'STAR_MAP_ZOOM_IN': {
+      if (!prevState.starMap) return prevState;
+      const starMap = handleZoom(prevState.starMap, 'in');
+      return { ...prevState, starMap };
+    }
+
+    case 'STAR_MAP_ZOOM_OUT': {
+      if (!prevState.starMap) return prevState;
+      const starMap = handleZoom(prevState.starMap, 'out');
+      return { ...prevState, starMap };
+    }
+
+    case 'STAR_MAP_GO': {
+      if (!prevState.starMap) return prevState;
+      const result = confirmRoute(prevState.starMap, prevState.rngSeed);
+      if (result.error) {
+        return { ...prevState, lastError: result.error };
+      }
+      return {
+        ...prevState,
+        starMap: result.starMap,
+        routePath: result.routePath,
+        routeTravelTimeSeconds: result.routeTravelTimeSeconds,
+        screen: 'SPACE_TRAVEL',
+        idleTimer: makeTimerWithTarget(
+          prevState,
+          'SPACE_TRAVEL',
+          result.routeTravelTimeSeconds,
+          currentTime,
+        ),
+        lastError: null,
+      };
+    }
+
     default:
       return prevState;
   }

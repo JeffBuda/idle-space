@@ -12,7 +12,6 @@ describe('SettingsMenu', () => {
     appStatusVisible: false,
     onToggleAppStatus: vi.fn(),
     onForceUpdate: vi.fn(),
-    onOpenStarMapSandbox: vi.fn(),
   };
 
   beforeEach(() => {
@@ -150,31 +149,6 @@ describe('SettingsMenu', () => {
     expect(screen.getByTestId('settings-card')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('force-ui-update'));
-    expect(screen.queryByTestId('settings-card')).not.toBeInTheDocument();
-  });
-
-  it('renders the star map sandbox button', () => {
-    render(<SettingsMenu {...defaultProps} />);
-    fireEvent.click(screen.getByTestId('settings-gear'));
-    expect(screen.getByTestId('star-map-sandbox')).toBeInTheDocument();
-    expect(screen.getByTestId('star-map-sandbox').textContent).toContain(
-      'Test Star Map UI (Sandbox)',
-    );
-  });
-
-  it('calls onOpenStarMapSandbox when sandbox button is clicked', () => {
-    render(<SettingsMenu {...defaultProps} />);
-    fireEvent.click(screen.getByTestId('settings-gear'));
-    fireEvent.click(screen.getByTestId('star-map-sandbox'));
-    expect(defaultProps.onOpenStarMapSandbox).toHaveBeenCalledTimes(1);
-  });
-
-  it('closes settings card after clicking sandbox button', () => {
-    render(<SettingsMenu {...defaultProps} />);
-    fireEvent.click(screen.getByTestId('settings-gear'));
-    expect(screen.getByTestId('settings-card')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByTestId('star-map-sandbox'));
     expect(screen.queryByTestId('settings-card')).not.toBeInTheDocument();
   });
 });

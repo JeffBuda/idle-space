@@ -11,8 +11,6 @@ interface SettingsMenuProps {
   onToggleAppStatus: () => void;
   /** Handler for the 'Force UI Update' button — clears SW cache while preserving IndexedDB. */
   onForceUpdate: () => void;
-  /** Handler for the Star Map UI Sandbox button. */
-  onOpenStarMapSandbox: () => void;
 }
 
 /**
@@ -33,7 +31,6 @@ export const SettingsMenu = ({
   appStatusVisible,
   onToggleAppStatus,
   onForceUpdate,
-  onOpenStarMapSandbox,
 }: SettingsMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -110,17 +107,6 @@ export const SettingsMenu = ({
             }}
           >
             Force UI Update (Preserve Save)
-          </button>
-          <button
-            type="button"
-            className="settings-toggle settings-toggle--sandbox"
-            data-testid="star-map-sandbox"
-            onClick={() => {
-              onOpenStarMapSandbox();
-              setIsOpen(false);
-            }}
-          >
-            Test Star Map UI (Sandbox)
           </button>
         </div>
       )}
