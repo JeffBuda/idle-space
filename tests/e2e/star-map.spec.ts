@@ -111,6 +111,39 @@ test.describe('Star Map Flow', () => {
     await captureScreenshot(page, testInfo, 'zoomed-in', 3);
   });
 
+  test('zoom buttons are exactly 44x44px per iOS HIG (DESIGN BIBLE §4.1)', async ({
+    page,
+  }, testInfo) => {
+    await openStarMapViaWelcome(page, testInfo);
+    const zoomInBtn = page.getByTestId('zoom-in');
+    const zoomOutBtn = page.getByTestId('zoom-out');
+    await expect(zoomInBtn).toBeVisible();
+    await expect(zoomOutBtn).toBeVisible();
+    // Verify dimensions are exactly 44x44px (not flexing or too wide)
+    const zoomInBox = await zoomInBtn.boundingBox();
+    const zoomOutBox = await zoomOutBtn.boundingBox();
+    console.log('zoom-in dimensions:', zoomInBox);
+    console.log('zoom-out dimensions:', zoomOutBox);
+    // Width and height should both be exactly 44px (allowing small subpixel tolerance)
+    expect(zoomInBox.width).toBeCloseTo(44, 0);
+    expect(zoomInBox.height).toBeCloseTo(44, 0);
+    expect(zoomOutBox.width).toBeCloseTo(44, 0);
+    expect(zoomOutBox.height).toBeCloseTo(44, 0);
+  });
+
+  test('remove-stop buttons are exactly 44x44px per iOS HIG', async ({ page }, testInfo) => {
+    await openStarMapViaWelcome(page, testInfo);
+    await clickNode(page, 'sys_1');
+    await expect(page.getByTestId('stop-name-sys_1')).toBeVisible();
+    const removeStopBtn = page.getByTestId('remove-stop-sys_1');
+    await expect(removeStopBtn).toBeVisible();
+    const removeStopBox = await removeStopBtn.boundingBox();
+    console.log('remove-stop dimensions:', removeStopBox);
+    // Width and height should both be exactly 44px
+    expect(removeStopBox.width).toBeCloseTo(44, 0);
+    expect(removeStopBox.height).toBeCloseTo(44, 0);
+  });
+
   test('Back button returns to PLANET from star map', async ({ page }, testInfo) => {
     await openStarMapViaWelcome(page, testInfo);
     await page.getByTestId('back-btn').click();

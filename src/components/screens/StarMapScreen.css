@@ -5,7 +5,7 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: var(--color-bg-primary);
+  background: var(--color-bg);
 }
 
 .star-map-header {
@@ -13,14 +13,16 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: var(--color-header-bg);
+  padding-left: max(16px, var(--safe-area-left));
+  padding-right: max(16px, var(--safe-area-right));
+  background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
 }
 
 .star-map-header h2 {
   margin: 0;
-  font-size: 1.2rem;
-  color: var(--color-text-primary);
+  font-size: var(--font-size-125);
+  color: var(--color-white);
 }
 
 .zoom-controls {
@@ -125,6 +127,7 @@
   min-height: var(--touch-target-min);
   width: var(--touch-target-min);
   height: var(--touch-target-min);
+  flex: none;
   padding: 0;
   font-size: 1.2rem;
   line-height: 1;
@@ -134,7 +137,31 @@
 }
 
 .btn--small {
-  /* Smaller secondary buttons keep readability (≥17px body font) */
-  padding: 6px 12px;
-  font-size: var(--font-size-1);
+  /* Small icon buttons: still maintain 44x44px touch target */
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  width: var(--touch-target-min);
+  height: var(--touch-target-min);
+  flex: none;
+  padding: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Override App.css mobile media query (.btn { width: 100% }) for icon buttons.
+   Must come AFTER the base .btn--icon/.btn--small rules to win the cascade.
+   DESIGN BIBLE §4.1: icon buttons must remain 44x44px, not full-width. */
+@media (max-width: 600px) {
+  .btn--icon,
+  .btn--icon.btn--small {
+    width: var(--touch-target-min) !important;
+    height: var(--touch-target-min) !important;
+    min-width: var(--touch-target-min) !important;
+    min-height: var(--touch-target-min) !important;
+    flex: none !important;
+    padding: 0 !important;
+  }
 }
