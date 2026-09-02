@@ -2,8 +2,9 @@
 
 > **Files affected:** `src/components/App.tsx` (MODIFY),
 > `src/components/App.test.tsx` (MODIFY),
-> `src/engine/flow.ts` (MODIFY — navigate case for STAR_MAP),
+> `src/engine/flow.ts` (MODIFY — navigate case for STAR_MAP + makeTimerWithTarget),
 > `src/engine/reducer.ts` (MODIFY — route starmap actions),
+> `src/logging/logger.ts` (MODIFY — add STAR_MAP_* to ACTION_CATEGORY),
 > `src/components/screens/WelcomeScreen.tsx` (MODIFY — add onChartCourse prop)
 
 ---
@@ -97,6 +98,22 @@ idleTimer: makeTimerWithTarget(
   currentTime,
 );
 ```
+
+> **Logging note (Q4):** The `STAR_MAP_*` actions are NOT currently in the
+> `ACTION_CATEGORY` map in `src/logging/logger.ts`. Add them as `GAME_FLOW`
+> category entries so they appear correctly in the DebugConsole filter:
+>
+> ```ts
+> // In src/logging/logger.ts — extend ACTION_CATEGORY:
+> STAR_MAP_NODE_TOGGLE: LogCategory.GAME_FLOW,
+> STAR_MAP_REMOVE_STOP: LogCategory.GAME_FLOW,
+> STAR_MAP_CLEAR_ROUTE: LogCategory.GAME_FLOW,
+> STAR_MAP_ZOOM_IN: LogCategory.GAME_FLOW,
+> STAR_MAP_ZOOM_OUT: LogCategory.GAME_FLOW,
+> STAR_MAP_GO: LogCategory.GAME_FLOW,
+> ```
+>
+> Without this, they would fall into the default `APP_EVENT` bucket.
 
 ---
 

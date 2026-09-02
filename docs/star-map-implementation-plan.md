@@ -15,7 +15,6 @@ This plan is broken into per-phase detail files under `docs/star-map-plan/`:
 | [phase-4-components-and-css.md](./star-map-plan/phase-4-components-and-css.md)   | React components + CSS          |
 | [phase-5-app-integration.md](./star-map-plan/phase-5-app-integration.md)         | App.tsx + PlanetHub integration |
 | [phase-6-testing.md](./star-map-plan/phase-6-testing.md)                         | Unit, component, E2E tests      |
-| [questions.md](./star-map-plan/questions.md)                                     | Open questions for review       |
 
 ---
 
@@ -30,7 +29,7 @@ gate timer.
 
 The star map is accessible from **both** the Welcome screen and the Planet Hub.
 The existing `MockStarMap` sandbox prototype is **deleted** — superseded by the
-production `StarMapScreen` (see Q9 in `./star-map-plan/questions.md`).
+production `StarMapScreen` (see §9 Decisions below).
 
 ---
 
@@ -206,18 +205,43 @@ route is truncated.
 
 ---
 
-## 9. Open Questions
+## 9. Decisions
 
-See `./star-map-plan/questions.md` for 8 critical decisions that
-significantly affect the implementation. Please review before Phase 1.
+All open questions from the planning phase have been resolved. The decisions are
+distributed across the phase files as inline rationale, summarized here for
+reference:
 
-Key decisions:
+| #   | Question                                    | Decision                                               | Where                       |
+| --- | ------------------------------------------- | ------------------------------------------------------ | --------------------------- |
+| Q1  | Procedural graph vs hardcoded?              | Procedural via `generateStarMap(seed)`                 | Phase 1 §1.1                |
+| Q1A | Delete MockStarMap?                         | Yes — sandbox prototype removed                        | Phase 4 §4.4                |
+| Q2  | Replace "Depart" on PlanetHub?              | No — new "Chart Course" button alongside               | Phase 4 §4.1                |
+| Q3  | Travel time model?                          | Hop-based: 5s/hop, clamped [10, 300]                   | Phase 1 §1.4                |
+| Q4  | Log UI-only interactions (zoom)?            | Add STAR_MAP_* to `ACTION_CATEGORY` in logger.ts       | Phase 5 §5.1                |
+| Q5  | Zoom state: persisted or ephemeral?         | Persisted in IndexedDB on `StarMapState`               | Phase 2 §2.1                |
+| Q6  | Route selection: any node or edge-adjacent? | Any reachable node (BFS pathfinding)                   | Phase 1 §1.3                |
+| Q7  | Bottom pane: flow-screen or bottom-sheet?   | Bottom-sheet overlay on SVG canvas                     | Phase 4 §4.2                |
+| Q8  | Star map accessible from Welcome?           | Yes — from both Welcome and PlanetHub                  | Phase 4 §4.1b, Phase 5 §5.2 |
+| Q9  | Remove MockStarMap sandbox?                 | Yes — delete all sandbox files                         | Phase 4 §4.4                |
+| CSS | SVG zoom transition?                        | CSS `transform: scale()` on wrapper div, `will-change` | Phase 4 §4.3                |
 
-- **Q1:** Procedural graph (from rngSeed) vs. hardcoded 10-node graph?
-- **Q2:** Does STAR_MAP replace "Depart" on Planet hub?
-- **Q3:** Travel time: fixed, hop-based, or distance-based?
-- **Q4:** How to log UI-only interactions (zoom)?
-- **Q5:** Zoom state: persisted or ephemeral?
-- **Q6:** Route selection: any node (pathfinding) or edge-adjacent only?
-- **Q7:** Bottom pane: flow-screen pattern or bottom-sheet pattern?
-- **Q8:** Star map accessible from Welcome screen?
+Key decision rationale:
+
+- **Procedural graph (Q1):** The engine rules require deterministic execution
+  via RNG seed. A seeded PRNG graph satisfies this. E2E tests use known seeds
+  and BFS to assert reachability, not hardcoded positions.
+
+- **Hop-based travel (Q3):** `estimateTravelTime` sums all hops across route
+  segments, multiplies by 5, and clamps to [10, 300]. Deterministic and
+  testable without floating-point distance calculations. Travel time does NOT
+  use `rngSeed` — it's derived purely from graph structure.
+
+- **Auto-logging (Q4):** All star-map actions dispatch through `loggedReducer`,
+  so `withLogging` captures them. However, the `STAR_MAP_*` types are NOT in the
+  current `ACTION_CATEGORY` map in `logger.ts` — they must be **added** to that
+  map (categorized as `GAME_FLOW`) before they'll be categorized correctly.
+  Without this, they'd fall into the default `APP_EVENT` bucket.
+
+- **Persisted zoom (Q5):** `zoomLevel` lives on `StarMapState` in `GameState`,
+  saved to IndexedDB. Survives app restarts. Consistent with "no localStorage"
+  rule.

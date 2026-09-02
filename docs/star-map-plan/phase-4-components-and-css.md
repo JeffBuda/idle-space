@@ -37,8 +37,7 @@ Add inside the `<div className="ore-controls">`, after the Depart button:
 > **Q2 + Q8 note:** The "Chart Course" button appears on BOTH `PlanetHubScreen`
 > and `WelcomeScreen`. On PlanetHub, it opens the star map for route planning
 > post-arrival. On WelcomeScreen, it lets players plan their initial route
-> before launching. See questions.md Q2 and Q8. The star map is NOT accessible
-> from SpaceTravel (mid-travel).
+> before launching. The star map is NOT accessible from SpaceTravel (mid-travel).
 
 ## 4.1b `WelcomeScreen.tsx` — Add "Chart Course" Button
 
@@ -232,10 +231,12 @@ would be local React state instead. CSS: the SVG `transform: scale(zoomLevel)` i
 applied via inline style on `.star-map-canvas` for smooth CSS transition. Per Q5,
 zoom IS persisted (not local state).
 
-> **Q4 update:** Zoom actions (`STAR_MAP_ZOOM_IN`/`STAR_MAP_ZOOM_OUT`) are
-> dispatched GameActions, so they're automatically logged by `withLogging` as
-> `GAME_FLOW`. Route edits (`STAR_MAP_NODE_TOGGLE`, `STAR_MAP_REMOVE_STOP`,
-> `STAR_MAP_CLEAR_ROUTE`) are also auto-logged. No additional logging code needed.
+> **Q4 update:** Zoom actions (`STAR_MAP_ZOOM_IN`/`STAR_MAP_ZOOM_OUT`) and route
+> edits (`STAR_MAP_NODE_TOGGLE`, `STAR_MAP_REMOVE_STOP`, `STAR_MAP_CLEAR_ROUTE`)
+> are dispatched GameActions that `withLogging` captures. However, the `STAR_MAP_*`
+> types must be **added to** the `ACTION_CATEGORY` map in `src/logging/logger.ts`
+> (categorized as `GAME_FLOW`) — they are not in the current map. Without this
+> update, they'd fall into the default `APP_EVENT` bucket.
 
 ---
 
