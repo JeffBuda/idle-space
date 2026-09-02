@@ -67,8 +67,13 @@ const App = () => {
     isLoading,
     dispatch,
   } = useGameState();
+
   const handleCollectRewards = () => {
     clearOfflineSeconds();
+  };
+
+  const handleChartCourse = () => {
+    dispatch({ type: 'NAVIGATE', to: 'STAR_MAP' });
   };
 
   if (isLoading) {
@@ -128,7 +133,7 @@ const App = () => {
             {screen === 'WELCOME' && (
               <WelcomeScreen
                 onLaunch={() => dispatch({ type: 'NAVIGATE', to: 'SPACE_TRAVEL' })}
-                onChartCourse={() => dispatch({ type: 'NAVIGATE', to: 'STAR_MAP' })}
+                onChartCourse={handleChartCourse}
               />
             )}
             {screen === 'SPACE_TRAVEL' && (
@@ -160,7 +165,7 @@ const App = () => {
               <PlanetHubScreen
                 gameState={gameState}
                 onNavigate={(to) => dispatch({ type: 'NAVIGATE', to })}
-                onChartCourse={() => dispatch({ type: 'NAVIGATE', to: 'STAR_MAP' })}
+                onChartCourse={handleChartCourse}
               />
             )}
             {screen === 'STAR_MAP' && gameState?.starMap && (

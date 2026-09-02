@@ -49,6 +49,10 @@ vi.mock('../hooks/useGameState', () => ({
     clearIdleReward: vi.fn(),
     isLoading: false,
     dispatch: mockDispatch,
+    starMap: null,
+    routePath: [],
+    routeTravelTimeSeconds: 0,
+    navigateTo: vi.fn(),
   }),
 }));
 
