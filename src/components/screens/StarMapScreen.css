@@ -26,11 +26,11 @@
 .zoom-controls {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-sm);
 }
 
 .zoom-controls span {
-  font-size: 0.85rem;
+  font-size: var(--font-size-1);
   color: var(--color-text-secondary);
   min-width: 48px;
   text-align: center;
@@ -120,12 +120,21 @@
 }
 
 .btn--icon {
-  padding: 4px 8px;
+  /* Icon-only buttons: square 44x44px touch target (DESIGN BIBLE §4.1) */
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  width: var(--touch-target-min);
+  height: var(--touch-target-min);
+  padding: 0;
   font-size: 1.2rem;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn--small {
-  padding: 2px 6px;
-  font-size: 0.8rem;
+  /* Smaller secondary buttons keep readability (≥17px body font) */
+  padding: 6px 12px;
+  font-size: var(--font-size-1);
 }
