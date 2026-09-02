@@ -411,7 +411,8 @@ export const clearRoute = (state: StarMapState): StarMapState => {
 
 ## 1.3 Integrate with `src/engine/flow.ts`
 
-**Add `STAR_MAP` entry logic to `navigate()`:**
+**Add `STAR_MAP` entry logic to `navigate()`** — accessible from both `WELCOME`
+and `PLANET` (per Q8 decision):
 
 ```ts
 case 'NAVIGATE':
@@ -427,6 +428,11 @@ case 'NAVIGATE':
     /* ... */
   }
 ```
+
+This `case 'NAVIGATE'` logic handles `STAR_MAP` from **both** `WELCOME` and
+`PLANET` — the `navigate()` function's outer `switch` on `state.screen` has
+entries for both screens, and both route to the same `NAVIGATE` handler that
+checks `action.to === 'STAR_MAP'`.
 
 **Add route confirmation flow to `processFlowAction()`:**
 

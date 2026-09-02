@@ -3,7 +3,8 @@
 > **Files affected:** `src/components/App.tsx` (MODIFY),
 > `src/components/App.test.tsx` (MODIFY),
 > `src/engine/flow.ts` (MODIFY — navigate case for STAR_MAP),
-> `src/engine/reducer.ts` (MODIFY — route starmap actions)
+> `src/engine/reducer.ts` (MODIFY — route starmap actions),
+> `src/components/screens/WelcomeScreen.tsx` (MODIFY — add onChartCourse prop)
 
 ---
 
@@ -101,14 +102,14 @@ idleTimer: makeTimerWithTarget(
 
 ## 5.2 `src/engine/flow.ts` — STAR_MAP Navigation Case
 
-Add a `case 'STAR_MAP':` in the `NAVIGATE` branch of `navigate()`:
+Add `STAR_MAP` as a valid `NAVIGATE` target from **both** `WELCOME` and `PLANET`
+(per Q8 decision). The `navigate()` function has a `case` for each source screen:
 
 ```ts
-case 'PLANET':
-  if (to === 'LANDING') return startGate(state, 'LANDING', currentTime);
-  if (to === 'SPACE_TRAVEL') return startGate(state, 'SPACE_TRAVEL', currentTime);
+// In navigate() — WELCOME case:
+case 'WELCOME':
+  if (to === 'SPACE_TRAVEL') { /* existing Launch! logic */ }
   if (to === 'STAR_MAP') {
-    // Lazy-generate the star map if not yet present (deterministic by rngSeed)
     if (state.starMap === null) {
       const starMap = generateStarMap(state.rngSeed, 'sys_0');
       return { ...state, screen: 'STAR_MAP', starMap, lastError: null };
@@ -116,12 +117,21 @@ case 'PLANET':
     return { ...state, screen: 'STAR_MAP', lastError: null };
   }
   break;
-```
 
-Also add `case 'STAR_MAP':` to the `default:` fallthrough so `NAVIGATE` from
-STAR_MAP to PLANET/SPACE_TRAVEL is rejected (player uses Back button instead):
+// In navigate() — PLANET case:
+case 'PLANET':
+  if (to === 'LANDING') return startGate(state, 'LANDING', currentTime);
+  if (to === 'SPACE_TRAVEL') return startGate(state, 'SPACE_TRAVEL', currentTime);
+  if (to === 'STAR_MAP') {
+    if (state.starMap === null) {
+      const starMap = generateStarMap(state.rngSeed, 'sys_0');
+      return { ...state, screen: 'STAR_MAP', starMap, lastError: null };
+    }
+    return { ...state, screen: 'STAR_MAP', lastError: null };
+  }
+  break;
 
-```ts
+// In navigate() — STAR_MAP case (Back to Planet only):
 case 'STAR_MAP':
   if (to === 'PLANET') {
     return { ...state, screen: 'PLANET', starMap: null, lastError: null };
@@ -129,7 +139,8 @@ case 'STAR_MAP':
   break;
 ```
 
-> Importing `generateStarMap` into `flow.ts` is allowed — both are in `engine/`.
+Note: `STAR_MAP_GO` is a standalone action in `processFlowAction()`, not a `NAVIGATE`
+action. See §5.1 for its reducer case routing.
 
 ---
 
@@ -161,7 +172,7 @@ In the render block (after the PLANET block at line 166):
 }
 ```
 
-Also pass `onChartCourse` to PlanetHubScreen:
+Also pass `onChartCourse` to PlanetHubScreen AND WelcomeScreen:
 
 ```tsx
 {
@@ -169,6 +180,17 @@ Also pass `onChartCourse` to PlanetHubScreen:
     <PlanetHubScreen
       gameState={gameState}
       onNavigate={(to) => dispatch({ type: 'NAVIGATE', to })}
+      onChartCourse={() => dispatch({ type: 'NAVIGATE', to: 'STAR_MAP' })}
+    />
+  );
+}
+```
+
+```tsx
+{
+  screen === 'WELCOME' && (
+    <WelcomeScreen
+      onLaunch={() => dispatch({ type: 'NAVIGATE', to: 'SPACE_TRAVEL' })}
       onChartCourse={() => dispatch({ type: 'NAVIGATE', to: 'STAR_MAP' })}
     />
   );
@@ -197,6 +219,13 @@ it('renders Chart Course button on PlanetHub', () => {
     gameState: { ...baseGameState, screen: 'PLANET' },
   });
   expect(screen.getByTestId('nav-star-map')).toHaveTextContent('Chart Course');
+});
+
+it('renders Chart Course button on WelcomeScreen', () => {
+  render(<App />, {
+    gameState: { ...baseGameState, screen: 'WELCOME' },
+  });
+  expect(screen.getByTestId('welcome-chart-course')).toHaveTextContent('Chart Course');
 });
 ```
 

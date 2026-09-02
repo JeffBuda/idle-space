@@ -68,8 +68,8 @@ import type { IdleGateStatus, IdleRewardSummary, Screen } from '../types/game-st
 
 ## 3.2 App.tsx Callback Wiring
 
-In `src/components/App.tsx`, the `onNavigate` prop on `PlanetHubScreen` must
-gain a "Chart Course" button that navigates to `STAR_MAP`:
+In `src/components/App.tsx`, add a `handleChartCourse` callback and wire it
+to both `PlanetHubScreen` and `WelcomeScreen`:
 
 ```tsx
 const handleChartCourse = () => {
@@ -77,7 +77,7 @@ const handleChartCourse = () => {
 };
 ```
 
-And in the PlanetHubScreen render block:
+In the PlanetHubScreen render block:
 
 ```tsx
 {
@@ -85,6 +85,19 @@ And in the PlanetHubScreen render block:
     <PlanetHubScreen
       gameState={gameState}
       onNavigate={(to) => dispatch({ type: 'NAVIGATE', to })}
+      onChartCourse={handleChartCourse}
+    />
+  );
+}
+```
+
+In the WelcomeScreen render block:
+
+```tsx
+{
+  screen === 'WELCOME' && (
+    <WelcomeScreen
+      onLaunch={() => dispatch({ type: 'NAVIGATE', to: 'SPACE_TRAVEL' })}
       onChartCourse={handleChartCourse}
     />
   );

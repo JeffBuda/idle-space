@@ -3,7 +3,8 @@
 > **Files affected:** `src/components/screens/StarMapScreen.tsx` (NEW),
 > `src/components/screens/StarMapScreen.css` (NEW),
 > `src/components/screens/StarMapScreen.test.tsx` (NEW),
-> `src/components/screens/PlanetHubScreen.tsx` (MODIFY)
+> `src/components/screens/PlanetHubScreen.tsx` (MODIFY),
+> `src/components/screens/WelcomeScreen.tsx` (MODIFY — add Chart Course button)
 
 ---
 
@@ -33,9 +34,37 @@ Add inside the `<div className="ore-controls">`, after the Depart button:
 </button>
 ```
 
-> **Q2 note:** This button appears on the PlanetHub screen, NOT on SpaceTravel.
-> The star map is only accessible from the planet orbit hub (post-arrival),
-> not mid-travel. See questions.md Q2 for alternative.
+> **Q2 + Q8 note:** The "Chart Course" button appears on BOTH `PlanetHubScreen`
+> and `WelcomeScreen`. On PlanetHub, it opens the star map for route planning
+> post-arrival. On WelcomeScreen, it lets players plan their initial route
+> before launching. See questions.md Q2 and Q8. The star map is NOT accessible
+> from SpaceTravel (mid-travel).
+
+## 4.1b `WelcomeScreen.tsx` — Add "Chart Course" Button
+
+Per Q8, add a secondary "Chart Course" button alongside the primary "Launch!"
+button on the Welcome screen. This lets players plan their initial destination
+before launching:
+
+```tsx
+interface WelcomeScreenProps {
+  onLaunch: () => void;
+  onChartCourse: () => void; /* NEW */
+}
+```
+
+Add after the Launch! button:
+
+```tsx
+<button
+  type="button"
+  className="btn btn--secondary"
+  data-testid="welcome-chart-course"
+  onClick={onChartCourse}
+>
+  Chart Course
+</button>
+```
 
 ---
 
@@ -200,4 +229,44 @@ Mobile-first (390×844 viewport), matching existing `.flow-screen` patterns:
 **Q5 note:** The `zoomLevel` is currently persisted on `StarMapState` (Phase 2 §2.1).
 This means it survives app restarts. If we decide zoom should be ephemeral (Q5), it
 would be local React state instead. CSS: the SVG `transform: scale(zoomLevel)` is
-applied via inline style on `.star-map-canvas` for smooth CSS transition.
+applied via inline style on `.star-map-canvas` for smooth CSS transition. Per Q5,
+zoom IS persisted (not local state).
+
+> **Q4 update:** Zoom actions (`STAR_MAP_ZOOM_IN`/`STAR_MAP_ZOOM_OUT`) are
+> dispatched GameActions, so they're automatically logged by `withLogging` as
+> `GAME_FLOW`. Route edits (`STAR_MAP_NODE_TOGGLE`, `STAR_MAP_REMOVE_STOP`,
+> `STAR_MAP_CLEAR_ROUTE`) are also auto-logged. No additional logging code needed.
+
+---
+
+## 4.4 MockStarMap Removal (Q9)
+
+Delete the sandbox prototype entirely — the production `StarMapScreen` supersedes it.
+
+**Files to delete:**
+
+- `src/components/MockStarMap.tsx`
+- `src/components/MockStarMap.css`
+- `src/components/MockStarMap.test.tsx`
+
+**Files to modify (remove MockStarMap references):**
+
+### 4.4.1 `src/components/App.tsx`
+
+- Remove `import { MockStarMap } from './MockStarMap';`
+- Remove `starMapSandboxVisible` state + `handleOpenStarMapSandbox` + `handleCloseStarMapSandbox`
+- Remove `<MockStarMap onDismiss={...} />` render block (line ~205)
+
+### 4.4.2 `src/components/SettingsMenu.tsx`
+
+- Remove the "Test Star Map UI (Sandbox)" secondary button
+- Remove `onOpenStarMapSandbox` prop
+- Remove `onCloseStarMap` prop (if present)
+
+### 4.4.3 `src/components/SettingsMenu.test.tsx`
+
+- Remove test cases for the sandbox button
+
+**Boundary note:** Since MockStarMap was already sandbox-isolated (local state only),
+deleting it has zero impact on engine/db layer boundaries. The production
+StarMapScreen follows the same isolation pattern (no engine/db imports).

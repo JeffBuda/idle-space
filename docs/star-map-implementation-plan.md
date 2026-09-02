@@ -7,8 +7,8 @@
 
 This plan is broken into per-phase detail files under `docs/star-map-plan/`:
 
-| File                                                                                               | Phase                           |
-| -------------------------------------------------------------------------------------------------- | ------------------------------- |
+| File                                                                             | Phase                           |
+| -------------------------------------------------------------------------------- | ------------------------------- |
 | [phase-1-types-and-engine.md](./star-map-plan/phase-1-types-and-engine.md)       | TS types + engine functions     |
 | [phase-2-state-and-migration.md](./star-map-plan/phase-2-state-and-migration.md) | GameState + migration           |
 | [phase-3-hooks.md](./star-map-plan/phase-3-hooks.md)                             | Hook layer exposure             |
@@ -28,8 +28,9 @@ the actual edge-traversing path. Pressing **Go!** validates the route, persists 
 immutable game state, and navigates to **Approaching Planet** (`SPACE_TRAVEL`) with a
 gate timer.
 
-The existing `MockStarMap` (SettingsMenu sandbox) is a local-state UI prototype — it
-will be kept as-is for UI iteration; the production screen lives in `screens/`.
+The star map is accessible from **both** the Welcome screen and the Planet Hub.
+The existing `MockStarMap` sandbox prototype is **deleted** — superseded by the
+production `StarMapScreen` (see Q9 in `./star-map-plan/questions.md`).
 
 ---
 
@@ -114,6 +115,7 @@ export type Screen =
 
 ```
 WELCOME -> (Launch!) -> SPACE_TRAVEL -> PLANET
+  WELCOME -> (Chart Course) -> STAR_MAP -> (Go!) -> SPACE_TRAVEL -> PLANET
   PLANET -> (Chart Course) -> STAR_MAP -> (Go!) -> SPACE_TRAVEL -> PLANET
   PLANET -> (Land) -> LANDING -> MINING -> (Back) -> PLANET
 ```
