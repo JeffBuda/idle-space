@@ -34,4 +34,5 @@ node_modules
 
 # Playwright
 test-results/
+test-results-ci/
 playwright-report/
