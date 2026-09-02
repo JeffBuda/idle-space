@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type TestInfo } from '@playwright/test';
 import { captureScreenshot } from './screenshot-helpers';
 
 /**
@@ -25,7 +25,7 @@ const clickNode = async (page: Page, nodeId: string): Promise<void> => {
 test.describe('Star Map Flow', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  const openStarMapViaWelcome = async (page: Page, testInfo?: any) => {
+  const openStarMapViaWelcome = async (page: Page, testInfo?: TestInfo) => {
     await page.goto('/');
     await expect(page.getByTestId('welcome-screen')).toBeVisible();
     if (testInfo) await captureScreenshot(page, testInfo, 'welcome-screen', 1);

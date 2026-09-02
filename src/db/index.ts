@@ -48,7 +48,7 @@ export interface SpaceIdleDB extends DBSchema {
 }
 
 export const DB_NAME = 'space_idle_db';
-export const DB_VERSION = 3; // Bumped to add the space_idle_logs object store
+export const DB_VERSION = 4; // Bumped to 4: adds starMap/routePath/routeTravelTimeSeconds to GameState
 export const APP_STATUS_KEY = 'app_status';
 export const GAME_STATE_KEY = 'game_state';
 export const LOGS_STORE_NAME = 'space_idle_logs';
