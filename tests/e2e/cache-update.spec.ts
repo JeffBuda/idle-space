@@ -97,12 +97,11 @@ const clearIndexedDB = async (page: Page): Promise<void> => {
 test.describe.serial('PWA Cache Invalidation', () => {
   test.beforeEach(async ({ page }) => {
     await clearIndexedDB(page);
-    await page.goto('/');
-    await expect(page.getByTestId('settings-gear')).toBeVisible();
   });
 
   test('should clear Service Worker cache but preserve IndexedDB game state', async ({ page }) => {
-    // 1. Inject mock save state into IndexedDB before the cache wipe.
+    // 1. Inject mock save state into IndexedDB BEFORE the app loads, so the
+    //    auto-save interval (10s) doesn't overwrite it with the default state.
     const injectedState = {
       lastTimestamp: Date.now(),
       elapsedSeconds: 42,
@@ -116,8 +115,16 @@ test.describe.serial('PWA Cache Invalidation', () => {
       selectedOre: null,
       constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
       lastError: null,
+      starMap: null,
+      routePath: [],
+      routeTravelTimeSeconds: 0,
+      currentLocation: 'sys_0',
     };
     await injectGameState(page, injectedState);
+
+    // Navigate so the app reads the injected state on load (handleWake).
+    await page.goto('/');
+    await expect(page.getByTestId('settings-gear')).toBeVisible();
 
     // Verify the injected state is readable.
     const beforeState = await getGameStateFromIDB(page);
