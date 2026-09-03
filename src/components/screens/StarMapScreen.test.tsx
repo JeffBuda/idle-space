@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { StarMapScreen } from './StarMapScreen';
 import type { StarMapScreenProps } from './StarMapScreen';
 import { generateStarMap } from '../../engine/starmap';
-import type { StarMapState, StarMapRouteSegment, GameState } from '../../types/game-state';
+import type { StarMapState, StarMapRouteSegment } from '../../types/game-state';
 
 /**
  * Default mock callbacks shared across tests. Each is reset in beforeEach
