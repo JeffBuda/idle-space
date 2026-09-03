@@ -9,13 +9,13 @@
 //     in src/engine/starmap.ts and is dispatched via props callbacks.
 //   - Component-level logic is UI transforms only (status->CSS class, zoom
 //     display, empty/disabled states).
-import type { StarMapState, GameState } from '../../types/game-state';
+import type { StarMapState, StarMapRouteSegment, GameState } from '../../types/game-state';
 import './StarMapScreen.css';
 
 export interface StarMapScreenProps {
   gameState: GameState | null;
   starMap: StarMapState | null;
-  routePath: string[];
+  routePath: StarMapRouteSegment[];
   routeTravelTimeSeconds: number;
   onNodeToggle: (nodeId: string) => void;
   onRemoveStop: (nodeId: string) => void;
@@ -42,8 +42,18 @@ export const StarMapScreen = ({
 
   const { nodes, plannedRoute, zoomLevel, currentLocationId } = starMap;
 
+  // Flatten route segments into an ordered, deduplicated list of node IDs.
+  // Each StarMapRouteSegment.path is an ordered array of node IDs for one leg;
+  // concatenating all legs gives the full route as a flat path.
+  const routeNodeIds: string[] = routePath.reduce((acc: string[], seg) => {
+    for (const id of seg.path) {
+      if (!acc.includes(id)) acc.push(id);
+    }
+    return acc;
+  }, []);
+
   // Determine the node IDs that are part of the computed route path visual.
-  const pathNodeIds = new Set(routePath.slice(1, -1).filter((id) => id !== currentLocationId));
+  const pathNodeIds = new Set(routeNodeIds.slice(1, -1).filter((id) => id !== currentLocationId));
 
   // Build a set of route edge pairs for highlighting edges in the selected route.
   // An edge is a "route edge" if both endpoints are in plannedRoute and adjacent.
@@ -57,8 +67,8 @@ export const StarMapScreen = ({
 
   // Helper: generate SVG polyline points for the active route path
   const getRoutePoints = (): string => {
-    if (routePath.length === 0) return '';
-    return routePath
+    if (routeNodeIds.length === 0) return '';
+    return routeNodeIds
       .map((id) => {
         const node = nodes.find((n) => n.id === id);
         return node ? `${node.x} ${node.y}` : '';
@@ -137,7 +147,7 @@ export const StarMapScreen = ({
             );
           })}
           {/* Render route path polyline over edges */}
-          {routePath.length > 1 && (
+          {routeNodeIds.length > 1 && (
             <polyline
               points={getRoutePoints()}
               className="star-map-route"
