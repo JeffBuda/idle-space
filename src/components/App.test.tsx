@@ -281,7 +281,13 @@ describe('App', () => {
     expect(screen.getByTestId('nav-star-map')).toBeInTheDocument();
   });
 
-  it('renders the Star Map screen when gameState.starMap is populated', () => {
+  it('renders Chart Course button on WelcomeScreen', () => {
+    mockGameStateData.screen = 'WELCOME';
+    render(<App />);
+    expect(screen.getByTestId('welcome-chart-course')).toHaveTextContent('Chart Course');
+  });
+
+  it('renders the Star Map screen when gameState.starMap is populated', async () => {
     mockGameStateData.screen = 'STAR_MAP';
     mockGameStateData.starMap = {
       nodes: [{ id: 'sys_0', name: 'Test', x: 50, y: 50, status: 'current', edges: [] }],
