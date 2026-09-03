@@ -11,12 +11,27 @@ import { test, expect, type Page } from '@playwright/test';
 test.use({ viewport: { width: 390, height: 844 } });
 
 // ---------------------------------------------------------------------------
-// Helper: inject a mock save state into IndexedDB BEFORE the cache wipe.
+// Helper: inject a mock save state into IndexedDB BEFORE the app's JavaScript
+// runs.
+//
+// Why addInitScript instead of page.evaluate?  The test's beforeEach navigates
+// to about:blank, and Chromium denies IndexedDB access from about:blank
+// ("access to the Indexed Database API is denied in this context").  By using
+// addInitScript we queue a script that fires on the NEXT navigation — the
+// page.goto('/') call in the test body — before any of the app's own scripts.
+// The app's origin (http://localhost:5173) allows IndexedDB, so the injection
+// succeeds.
+//
+// A sessionStorage flag prevents the script from re-injecting on subsequent
+// navigations (e.g. the Force UI Update reload), so the test genuinely
+// verifies that the state was persisted rather than re-injected.
 // ---------------------------------------------------------------------------
 async function injectGameState(page: Page, payload: Record<string, unknown>): Promise<void> {
-  await page.evaluate(async (data) => {
+  await page.addInitScript((data) => {
+    if (sessionStorage.getItem('__idleSpace_injected') === 'true') return;
+    sessionStorage.setItem('__idleSpace_injected', 'true');
     if (!('indexedDB' in window)) return;
-    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+    try {
       const req = indexedDB.open('space_idle_db');
       req.onupgradeneeded = (e) => {
         const database = (e.target as IDBOpenDBRequest).result;
@@ -24,17 +39,19 @@ async function injectGameState(page: Page, payload: Record<string, unknown>): Pr
           database.createObjectStore('game_state');
         }
       };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-    const tx = db.transaction(['game_state'], 'readwrite');
-    const store = tx.objectStore('game_state');
-    await new Promise<void>((resolve, reject) => {
-      const putReq = store.put(data, 'game_state');
-      putReq.onsuccess = () => resolve();
-      putReq.onerror = () => reject(putReq.error);
-    });
-    db.close();
+      req.onsuccess = () => {
+        const db = req.result;
+        const tx = db.transaction(['game_state'], 'readwrite');
+        const store = tx.objectStore('game_state');
+        store.put(data, 'game_state');
+        tx.oncomplete = () => db.close();
+      };
+      req.onerror = () => {
+        /* best-effort */
+      };
+    } catch {
+      /* best-effort */
+    }
   }, payload);
 }
 
