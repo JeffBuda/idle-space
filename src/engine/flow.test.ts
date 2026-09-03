@@ -22,6 +22,10 @@ const base = (over: Partial<GameState> = {}): GameState => ({
   selectedOre: null,
   constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
   lastError: null,
+  starMap: null,
+  routePath: [],
+  routeTravelTimeSeconds: 0,
+  currentLocation: 'sys_0',
   ...over,
 });
 

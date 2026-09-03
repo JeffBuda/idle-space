@@ -29,6 +29,10 @@ const mockGameStateData = {
   selectedOre: null,
   constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
   lastError: null,
+  starMap: null,
+  routePath: [],
+  routeTravelTimeSeconds: 0,
+  currentLocation: 'sys_0',
 };
 
 // Stable dispatch mock so App tests can assert on dispatched flow actions.
@@ -46,6 +50,10 @@ vi.mock('../hooks/useGameState', () => ({
     clearIdleReward: vi.fn(),
     isLoading: false,
     dispatch: mockDispatch,
+    starMap: null,
+    routePath: [],
+    routeTravelTimeSeconds: 0,
+    navigateTo: vi.fn(),
   }),
 }));
 
@@ -267,6 +275,31 @@ describe('App', () => {
     expect(screen.getByTestId('planet-hub-screen')).toBeInTheDocument();
     expect(screen.getByTestId('nav-landing')).toBeInTheDocument();
     expect(screen.getByTestId('nav-space-travel')).toBeInTheDocument();
+  });
+
+  it('Planet hub has a Chart Course button linking to STAR_MAP', () => {
+    render(<App />);
+    expect(screen.getByTestId('nav-star-map')).toBeInTheDocument();
+  });
+
+  it('renders Chart Course button on WelcomeScreen', () => {
+    mockGameStateData.screen = 'WELCOME';
+    render(<App />);
+    expect(screen.getByTestId('welcome-chart-course')).toHaveTextContent('Chart Course');
+  });
+
+  it('renders the Star Map screen when gameState.starMap is populated', async () => {
+    mockGameStateData.screen = 'STAR_MAP';
+    mockGameStateData.starMap = {
+      nodes: [{ id: 'sys_0', name: 'Test', x: 50, y: 50, status: 'current', edges: [] }],
+      edges: [],
+      plannedRoute: [],
+      currentLocationId: 'sys_0',
+      zoomLevel: 1.0,
+    };
+    render(<App />);
+    expect(screen.getByTestId('star-map-screen')).toBeInTheDocument();
+    expect(screen.getByTestId('star-map-title')).toBeInTheDocument();
   });
 
   // ---------------------------------------------------------------------------

@@ -1,0 +1,187 @@
+/* src/components/screens/StarMapScreen.css */
+/* Mobile-first (390x844 viewport), matching existing .flow-screen patterns. */
+
+.star-map-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--color-bg);
+}
+
+.star-map-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  padding-left: max(16px, var(--safe-area-left));
+  padding-right: max(16px, var(--safe-area-right));
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.star-map-header h2 {
+  margin: 0;
+  font-size: var(--font-size-125);
+  color: var(--color-white);
+}
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.zoom-controls span {
+  font-size: var(--font-size-1);
+  color: var(--color-text-secondary);
+  min-width: 48px;
+  text-align: center;
+}
+
+.star-map-canvas {
+  flex: 1;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.star-map-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.star-map-edge {
+  stroke: var(--color-star-edge, #444);
+  stroke-width: 0.3;
+}
+
+.star-map-route {
+  stroke: var(--color-star-route, #00aaff);
+  stroke-width: 0.5;
+  stroke-dasharray: 1 1;
+}
+
+/* Route edges — green to indicate they're part of the selected route */
+.star-map-edge--route {
+  stroke: var(--color-star-route);
+  stroke-width: 0.5;
+  stroke-linecap: round;
+}
+
+.star-map-node {
+  transition: r 0.2s ease;
+}
+
+.star-map-node circle {
+  cursor: pointer;
+}
+
+.star-map-node rect {
+  /* Green filled-in square for current location (Endless Sky style) */
+  fill: var(--color-star-current);
+  cursor: default;
+}
+
+.star-map-node--visited circle {
+  fill: var(--color-star-visited);
+}
+
+.star-map-node--unknown circle {
+  fill: var(--color-star-unknown);
+}
+
+.star-map-label {
+  font-size: 2.5px;
+  fill: var(--color-text-secondary);
+  pointer-events: none;
+}
+
+.route-panel {
+  background: var(--color-panel);
+  border-top: 2px solid var(--color-border);
+  padding: 12px 16px;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.route-panel p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+}
+
+.itinerary-stop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.itinerary-stop span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Ensure itinerary-stop buttons stay at 44x44px — override any flex stretching */
+.itinerary-stop button {
+  flex: none !important;
+  flex-shrink: 0 !important;
+  width: var(--touch-target-min) !important;
+  height: var(--touch-target-min) !important;
+  min-width: var(--touch-target-min) !important;
+  min-height: var(--touch-target-min) !important;
+}
+
+.route-summary {
+  margin: 8px 0;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary, #888);
+}
+
+.btn--icon {
+  /* Icon-only buttons: square 44x44px touch target (DESIGN BIBLE §4.1) */
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  width: var(--touch-target-min);
+  height: var(--touch-target-min);
+  flex: none;
+  padding: 0;
+  font-size: 1.2rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn--small {
+  /* Small icon buttons: still maintain 44x44px touch target */
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  width: var(--touch-target-min);
+  height: var(--touch-target-min);
+  flex: none;
+  padding: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Override App.css mobile media query (.btn { width: 100% }) for icon buttons.
+   Must come AFTER the base .btn--icon/.btn--small rules to win the cascade.
+   DESIGN BIBLE §4.1: icon buttons must remain 44x44px, not full-width. */
+@media (max-width: 600px) {
+  .btn--icon,
+  .btn--small,
+  .btn--icon.btn--small {
+    width: var(--touch-target-min) !important;
+    height: var(--touch-target-min) !important;
+    min-width: var(--touch-target-min) !important;
+    min-height: var(--touch-target-min) !important;
+    flex: none !important;
+    padding: 0 !important;
+  }
+}

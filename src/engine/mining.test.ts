@@ -21,6 +21,7 @@ const baseMining = (over: Partial<GameState> = {}): GameState => ({
   selectedOre: null,
   constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
   lastError: null,
+  currentLocation: 'sys_0',
   ...over,
 });
 

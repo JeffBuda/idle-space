@@ -17,9 +17,20 @@ vi.mock('./storage', () => ({
 const baseState: GameState = {
   lastTimestamp: 1_000_000,
   elapsedSeconds: 500,
+  totalElapsedGameTime: 500,
   rngSeed: 'test-seed',
   totalDistanceKm: 5_000,
   version: '0.1.0',
+  screen: 'PLANET',
+  idleTimer: null,
+  oreCounts: { commonOre: 0, rareOre: 0 },
+  selectedOre: null,
+  constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
+  lastError: null,
+  starMap: null,
+  routePath: [],
+  routeTravelTimeSeconds: 0,
+  currentLocation: 'sys_0',
 };
 
 describe('calculateDiff', () => {

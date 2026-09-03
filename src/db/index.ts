@@ -48,7 +48,7 @@ export interface SpaceIdleDB extends DBSchema {
 }
 
 export const DB_NAME = 'space_idle_db';
-export const DB_VERSION = 3; // Bumped to add the space_idle_logs object store
+export const DB_VERSION = 5; // Bumped to 5: adds currentLocation to GameState
 export const APP_STATUS_KEY = 'app_status';
 export const GAME_STATE_KEY = 'game_state';
 export const LOGS_STORE_NAME = 'space_idle_logs';
@@ -76,6 +76,10 @@ const GAME_STATE_DEFAULT: GameState = {
   selectedOre: null,
   constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
   lastError: null,
+  starMap: null,
+  routePath: [],
+  routeTravelTimeSeconds: 0,
+  currentLocation: 'sys_0',
 };
 
 /**
@@ -103,6 +107,10 @@ export const migrateGameState = (savedState: GameState): GameState => ({
   selectedOre: savedState.selectedOre ?? null,
   constants: savedState.constants ?? GAME_STATE_DEFAULT.constants,
   lastError: savedState.lastError ?? null,
+  starMap: savedState.starMap ?? null,
+  routePath: savedState.routePath ?? [],
+  routeTravelTimeSeconds: savedState.routeTravelTimeSeconds ?? 0,
+  currentLocation: savedState.currentLocation ?? 'sys_0',
 });
 
 /**

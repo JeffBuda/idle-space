@@ -11,7 +11,7 @@ import { useDbStatus } from '../hooks/useDbStatus';
 import OfflineGreeting from './OfflineGreeting';
 import { MiningRewardModal } from './MiningRewardModal';
 import { SettingsMenu } from './SettingsMenu';
-import { MockStarMap } from './MockStarMap';
+import { StarMapScreen } from './screens/StarMapScreen';
 import { clearCacheAndUpdate } from '../utils/cache';
 import { DebugConsole } from './DebugConsole';
 import { GameStateViewer } from './GameStateViewer';
@@ -24,15 +24,12 @@ const App = () => {
   const [debugConsoleVisible, setDebugConsoleVisible] = useState(false);
   const [gameStateVisible, setGameStateVisible] = useState(false);
   const [appStatusVisible, setAppStatusVisible] = useState(false);
-  const [starMapSandboxVisible, setStarMapSandboxVisible] = useState(false);
   const toggleDebugConsole = () => setDebugConsoleVisible(!debugConsoleVisible);
   const toggleGameState = () => setGameStateVisible(!gameStateVisible);
   const toggleAppStatus = () => setAppStatusVisible(!appStatusVisible);
   const handleForceUpdate = () => {
     clearCacheAndUpdate();
   };
-  const handleOpenStarMapSandbox = () => setStarMapSandboxVisible(true);
-  const handleCloseStarMapSandbox = () => setStarMapSandboxVisible(false);
 
   // ---- Service Worker registration status ----
   useEffect(() => {
@@ -70,8 +67,13 @@ const App = () => {
     isLoading,
     dispatch,
   } = useGameState();
+
   const handleCollectRewards = () => {
     clearOfflineSeconds();
+  };
+
+  const handleChartCourse = () => {
+    dispatch({ type: 'NAVIGATE', to: 'STAR_MAP' });
   };
 
   if (isLoading) {
@@ -87,7 +89,6 @@ const App = () => {
             appStatusVisible={appStatusVisible}
             onToggleAppStatus={toggleAppStatus}
             onForceUpdate={handleForceUpdate}
-            onOpenStarMapSandbox={handleOpenStarMapSandbox}
           />
         </header>
         <main>
@@ -109,7 +110,6 @@ const App = () => {
           appStatusVisible={appStatusVisible}
           onToggleAppStatus={toggleAppStatus}
           onForceUpdate={handleForceUpdate}
-          onOpenStarMapSandbox={handleOpenStarMapSandbox}
         />
       </header>
 
@@ -131,7 +131,10 @@ const App = () => {
         {gameState && (
           <>
             {screen === 'WELCOME' && (
-              <WelcomeScreen onLaunch={() => dispatch({ type: 'NAVIGATE', to: 'SPACE_TRAVEL' })} />
+              <WelcomeScreen
+                onLaunch={() => dispatch({ type: 'NAVIGATE', to: 'SPACE_TRAVEL' })}
+                onChartCourse={handleChartCourse}
+              />
             )}
             {screen === 'SPACE_TRAVEL' && (
               <SpaceTravelScreen
@@ -162,6 +165,22 @@ const App = () => {
               <PlanetHubScreen
                 gameState={gameState}
                 onNavigate={(to) => dispatch({ type: 'NAVIGATE', to })}
+                onChartCourse={handleChartCourse}
+              />
+            )}
+            {screen === 'STAR_MAP' && gameState?.starMap && (
+              <StarMapScreen
+                gameState={gameState}
+                starMap={gameState.starMap}
+                routePath={gameState.routePath}
+                routeTravelTimeSeconds={gameState.routeTravelTimeSeconds}
+                onNodeToggle={(id) => dispatch({ type: 'STAR_MAP_NODE_TOGGLE', nodeId: id })}
+                onRemoveStop={(id) => dispatch({ type: 'STAR_MAP_REMOVE_STOP', nodeId: id })}
+                onClearRoute={() => dispatch({ type: 'STAR_MAP_CLEAR_ROUTE' })}
+                onZoomIn={() => dispatch({ type: 'STAR_MAP_ZOOM_IN' })}
+                onZoomOut={() => dispatch({ type: 'STAR_MAP_ZOOM_OUT' })}
+                onGo={() => dispatch({ type: 'STAR_MAP_GO' })}
+                onBack={() => dispatch({ type: 'NAVIGATE', to: 'PLANET' })}
               />
             )}
           </>
@@ -200,9 +219,6 @@ const App = () => {
         gameState={gameState}
         onClose={() => setGameStateVisible(false)}
       />
-
-      {/* Star Map UI Sandbox overlay — isolated, no engine/IndexedDB coupling */}
-      {starMapSandboxVisible && <MockStarMap onDismiss={handleCloseStarMapSandbox} />}
     </div>
   );
 };

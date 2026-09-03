@@ -23,7 +23,15 @@
 // NOTE: `lastError` is transient engine-only. `useGameState` strips it before
 // any `saveGameState` call so it never lands in IndexedDB.
 
-export type Screen = 'WELCOME' | 'SPACE_TRAVEL' | 'PLANET' | 'LANDING' | 'MINING';
+// --- Star Map constants ---
+export const STAR_MAP_NODE_COUNT = 10;
+export const STAR_MAP_MIN_EDGES = 1; /* minimum edges per node */
+export const STAR_MAP_MAX_EDGES = 3; /* per requirement: 1-3 edges */
+export const STAR_MAP_ZOOM_MIN = 0.4;
+export const STAR_MAP_ZOOM_MAX = 3.0;
+export const STAR_MAP_ZOOM_STEP = 0.3;
+
+export type Screen = 'WELCOME' | 'STAR_MAP' | 'SPACE_TRAVEL' | 'PLANET' | 'LANDING' | 'MINING';
 
 export interface IdleTimer {
   /** Which screen owns this gate (used to detect stale/gate-switch resets). */
@@ -49,6 +57,51 @@ export interface GameConstants {
   defaultActionTimeSeconds: number;
   /** Multiplier for Rare Ore gate vs Common (default 2 => 60s). */
   rareOreTimeMultiplier: number;
+}
+
+// --- Star Map types ---
+
+export type NodeStatus = 'current' | 'visited' | 'unknown';
+
+export interface StarMapNode {
+  id: string;
+  name: string;
+  x: number; /* percentage 0-100 for SVG viewBox */
+  y: number; /* percentage 0-100 for SVG viewBox */
+  status: NodeStatus;
+  edges: string[]; /* adjacency list: node IDs this node connects to */
+}
+
+export interface StarMapEdge {
+  from: string;
+  to: string;
+}
+
+export interface StarMapRouteSegment {
+  from: string;
+  to: string;
+  path: string[]; /* ordered node IDs from->to */
+  hops: number; /* path.length - 1 */
+}
+
+export interface StarMapState {
+  nodes: StarMapNode[];
+  edges: StarMapEdge[];
+  plannedRoute: string[]; /* ordered destination node IDs */
+  currentLocationId: string;
+  zoomLevel: number;
+}
+
+/**
+ * Result of confirmRoute(): bridges StarMapState (graph) with the route
+ * metadata that lives on GameState (routePath, routeTravelTimeSeconds).
+ * `error` is null on success, or a human-readable message on failure.
+ */
+export interface StarMapConfirmResult {
+  starMap: StarMapState;
+  routePath: StarMapRouteSegment[];
+  routeTravelTimeSeconds: number;
+  error: string | null;
 }
 
 export interface GameState {
@@ -77,6 +130,22 @@ export interface GameState {
    * NOT persisted (stripped by `useGameState` before save).
    */
   lastError: string | null;
+  /**
+   * Star map graph + planned route state. `null` until the player first
+   * enters the STAR_MAP screen (lazy generation by rngSeed).
+   */
+  starMap: StarMapState | null;
+  /** Computed BFS route segments (from->to with hop-by-hop path). */
+  routePath: StarMapRouteSegment[];
+  /** Total gate time in seconds for the current route (set by STAR_MAP_GO). */
+  routeTravelTimeSeconds: number;
+  /**
+   * The player's current star system ID. Updated to the route's final
+   * destination when a route is confirmed (STAR_MAP_GO). Survives navigation
+   * away from the star map so enterStarMap can generate the graph centered
+   * on the player's latest position.
+   */
+  currentLocation: string;
 }
 
 /** Discriminated union of all engine actions, shared by engine + hooks + tests. */
@@ -87,7 +156,13 @@ export type GameAction =
   | { type: 'NAVIGATE'; to: Screen }
   | { type: 'HURRY'; bySeconds?: number }
   | { type: 'COMPLETE_ACTION' }
-  | { type: 'ORE_SELECTED'; ore: OreType };
+  | { type: 'ORE_SELECTED'; ore: OreType }
+  | { type: 'STAR_MAP_NODE_TOGGLE'; nodeId: string }
+  | { type: 'STAR_MAP_REMOVE_STOP'; nodeId: string }
+  | { type: 'STAR_MAP_CLEAR_ROUTE' }
+  | { type: 'STAR_MAP_ZOOM_IN' }
+  | { type: 'STAR_MAP_ZOOM_OUT' }
+  | { type: 'STAR_MAP_GO' };
 
 /**
  * Presentation-derived view of the active idle gate, computed by `useGameState`

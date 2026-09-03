@@ -130,11 +130,15 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* Star Map Sandbox — isolated UI sandbox (no engine coupling) */
+  /* Star Map colors (shared by StarMapScreen + MockStarMap) */
   --color-star-current: #2ea043;
+  --color-star-visited: #6e7681;
   --color-star-unknown: #6e7681;
   --color-star-selected: #58a6ff;
+  --color-star-route: var(--color-accent);
+  --color-star-edge: rgba(255, 255, 255, 0.1);
   --color-path-inactive: #30363d;
+  --color-panel: var(--color-surface);
   --color-info-bg-subtle: rgba(99, 179, 237, 0.1);
   --color-negative-bg-subtle: rgba(248, 113, 119, 0.1);
   --color-negative-bg-hover: rgba(248, 113, 119, 0.2);

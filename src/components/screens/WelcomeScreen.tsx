@@ -6,14 +6,23 @@
 // (see engine/flow.ts `navigate`, which seeds lastTimestamp to `now` on launch).
 interface WelcomeScreenProps {
   onLaunch: () => void;
+  onChartCourse: () => void;
 }
 
-export const WelcomeScreen = ({ onLaunch }: WelcomeScreenProps) => (
+export const WelcomeScreen = ({ onLaunch, onChartCourse }: WelcomeScreenProps) => (
   <section className="flow-screen" data-testid="welcome-screen">
     <h2 data-testid="welcome-title">Welcome to Space Exploration Idle</h2>
     <p className="flow-subtitle">Command your ship and chart the stars.</p>
     <button type="button" className="btn btn--primary" data-testid="launch-btn" onClick={onLaunch}>
       Launch!
+    </button>
+    <button
+      type="button"
+      className="btn btn--secondary"
+      data-testid="welcome-chart-course"
+      onClick={onChartCourse}
+    >
+      Chart Course
     </button>
   </section>
 );

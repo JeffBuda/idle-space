@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { calculateElapsedSeconds } from '../utils/time';
 import { type GameState } from '../engine/time';
-import type { IdleGateStatus, IdleRewardSummary } from '../types/game-state';
+import type { IdleGateStatus, IdleRewardSummary, Screen } from '../types/game-state';
 import { engineReducer, type GameAction } from '../engine/reducer';
 import { withLogging } from '../logging/logger';
 import { getGameState, saveGameState, initGameState, initDB, migrateGameState } from '../db';
@@ -30,6 +30,14 @@ export interface UseGameStateResult {
   isLoading: boolean;
   dispatch: (action: GameAction) => void;
   gate: IdleGateStatus | null;
+
+  // Star Map state (null until first STAR_MAP entry)
+  starMap: GameState['starMap'];
+  routePath: GameState['routePath'];
+  routeTravelTimeSeconds: number;
+
+  // Typed navigation helper (convenience wrapper around dispatch)
+  navigateTo: (to: Screen) => void;
 }
 
 export const useGameState = (): UseGameStateResult => {
@@ -260,5 +268,16 @@ export const useGameState = (): UseGameStateResult => {
     clearIdleReward,
     isLoading,
     dispatch,
+    // Star Map state (null/[]/0 until the player first enters the STAR_MAP screen)
+    starMap: gameState?.starMap ?? null,
+    routePath: gameState?.routePath ?? [],
+    routeTravelTimeSeconds: gameState?.routeTravelTimeSeconds ?? 0,
+    // Convenience wrapper around dispatch for typed screen navigation
+    navigateTo: useCallback(
+      (to: Screen) => {
+        dispatch({ type: 'NAVIGATE', to });
+      },
+      [dispatch],
+    ),
   };
 };
