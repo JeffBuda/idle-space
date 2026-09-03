@@ -67,8 +67,9 @@ export default tseslint.config(
               },
             },
             // Components: presentation layer — must not import engine or db directly
+            // Test files (category: 'test') are exempt from boundary checks
             {
-              from: { element: { type: 'components' } },
+              from: { element: { type: 'components' }, file: { categories: '!test' } },
               disallow: {
                 to: { element: { types: ['engine', 'db'] } },
               },
