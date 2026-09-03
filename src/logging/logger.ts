@@ -76,7 +76,11 @@ export const calculateDiff = (
  * Combines a timestamp with a random suffix to avoid collisions
  * when multiple entries are created within the same millisecond.
  */
-const generateLogEntryId = (): string => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+const generateLogEntryId = (): string => {
+  const bytes = new Uint32Array(1);
+  crypto.getRandomValues(bytes);
+  return `${Date.now()}-${bytes[0].toString(36)}`;
+};
 
 /**
  * Higher-order function that wraps a pure engine reducer with

@@ -14,8 +14,9 @@ vi.mock('../logging/storage', () => ({
   },
 }));
 
+let logIdCounter = 0;
 const makeLogEntry = (overrides: Partial<LogEntry> = {}): LogEntry => ({
-  id: `log-${Math.random().toString(36).slice(2, 9)}`,
+  id: `log-${++logIdCounter}`,
   timestamp: Date.now(),
   actionType: 'IDLE_PROGRESSION',
   category: 'APP_EVENT',

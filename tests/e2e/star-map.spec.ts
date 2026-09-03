@@ -26,15 +26,22 @@ test.describe('Star Map Flow', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
   test.beforeEach(async ({ page }) => {
-    // Deterministic seed: override Math.random so the star map graph is
+    // Deterministic seed: override crypto.getRandomValues so the star map graph is
     // reproducible across test runs. The ring topology is always the same
     // (sys_0 <-> sys_1 <-> ... <-> sys_9 <-> sys_0), but the RNG extra-edges
     // can occasionally create a direct edge between nodes the tests assume
     // are non-adjacent (e.g. sys_5 <-> sys_1, which happens ~15% of the time
-    // with a random seed). Math.random() = 0.1 yields seed "3lllllllllm",
+    // with a random seed). Filling typed arrays with 0 produces seed "0",
     // in which sys_5 is NOT adjacent to sys_0 or sys_1.
     await page.addInitScript(() => {
-      Math.random = () => 0.1;
+      crypto.getRandomValues = ((
+        arr: Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray,
+      ) => {
+        for (let i = 0; i < arr.length; i++) {
+          arr[i] = 0;
+        }
+        return arr;
+      }) as unknown as typeof crypto.getRandomValues;
     });
   });
 
