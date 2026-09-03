@@ -25,6 +25,19 @@ const clickNode = async (page: Page, nodeId: string): Promise<void> => {
 test.describe('Star Map Flow', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
+  test.beforeEach(async ({ page }) => {
+    // Deterministic seed: override Math.random so the star map graph is
+    // reproducible across test runs. The ring topology is always the same
+    // (sys_0 <-> sys_1 <-> ... <-> sys_9 <-> sys_0), but the RNG extra-edges
+    // can occasionally create a direct edge between nodes the tests assume
+    // are non-adjacent (e.g. sys_5 <-> sys_1, which happens ~15% of the time
+    // with a random seed). Math.random() = 0.1 yields seed "3lllllllllm",
+    // in which sys_5 is NOT adjacent to sys_0 or sys_1.
+    await page.addInitScript(() => {
+      Math.random = () => 0.1;
+    });
+  });
+
   const openStarMapViaWelcome = async (page: Page, testInfo?: TestInfo) => {
     await page.goto('/');
     await expect(page.getByTestId('welcome-screen')).toBeVisible();
@@ -79,7 +92,7 @@ test.describe('Star Map Flow', () => {
     page,
   }, testInfo) => {
     await openStarMapViaWelcome(page, testInfo);
-    // sys_5 is NOT adjacent to sys_0 (far in the ring), so it cannot be added
+    // sys_5 is NOT adjacent to sys_0 (deterministic seed yields no shortcut edge)
     await clickNode(page, 'sys_5');
     // Route should remain empty — the tap is silently ignored
     await expect(page.getByTestId('route-empty')).toBeVisible();
@@ -93,8 +106,8 @@ test.describe('Star Map Flow', () => {
     // sys_1 is adjacent to sys_0 → valid first hop
     await clickNode(page, 'sys_1');
     await expect(page.getByTestId('stop-name-sys_1')).toBeVisible();
-    // sys_5 is NOT adjacent to sys_1 (sys_1's ring neighbors are sys_0 and sys_2)
-    // → invalid sequential hop, silently rejected
+    // sys_5 is NOT adjacent to sys_1 (ring neighbors are sys_0 and sys_2;
+    // deterministic seed adds no shortcut to sys_5) → rejected silently
     await clickNode(page, 'sys_5');
     // Itinerary should still only have sys_1
     await expect(page.getByTestId('itinerary-list').getByRole('listitem')).toHaveCount(1);
