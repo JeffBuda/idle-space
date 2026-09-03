@@ -30,3 +30,38 @@ Before beginning complex architectural tasks, read `ARCHITECTURE.md` to understa
 - **MEMORY.md** — Detailed implementation notes, gotchas, and development history. Read for context on prior decisions.
 - **docs/DESIGN_BIBLE.md** — Design system specification (tokens, components, conventions). ALWAYS read before implementing any UI or component change.
 - **tests/e2e/** — Playwright E2E test conventions and user flow documentation.
+
+## Agent Development Guidelines (Learnings from Session History)
+
+### Workflow & Verification
+
+- **Always run the full verification pipeline before declaring work complete:**
+  `npm run format` → `npm run lint` → `npm run test` → `npm run build`. Never skip any step — each catches different classes of errors that the others miss (formatting, static analysis, runtime behavior, production build).
+- **Prettier is the single source of truth for formatting.** Never use text editor tools, custom `.cjs`/`.mjs` scripts, or manual find/replace to fix formatting — always run `npm run format`.
+- **TypeScript Check:** `npx tsc --noEmit` produces pre-existing TS6305/TS6306/TS6310 errors (stale `.d.ts` files). Use `npm run build` (Vite) for the authoritative type check.
+- **Git hygiene:** New work sessions should always start by pulling the latest `main` and creating a new feature branch off of it.
+
+### Tooling Gotchas (Windows + PowerShell)
+
+- **Editor Tool Bug:** Substring matching in `old_text` can double leading whitespace on this Windows + PowerShell setup. When replacing lines with leading whitespace, include the FULL original indentation in both `old_text` and `new_text`. For complex edits, use `node -e` to write files directly.
+- **Shell Commands:** `cd /D` fails in PowerShell. Use absolute paths in `node -e` or `Set-Location`.
+- **Git output parsing in PowerShell:** `git diff` and `git log` output can be truncated or garbled by PowerShell's line-wrapping. Use `--no-pager` flag or pipe through `findstr` for filtering.
+- **GitHub CLI:** Installed at `C:\Program Files\GitHub CLI\gh.exe`. Use the full path or add the directory to PATH.
+- **Terminal hygiene:** Always set `GIT_PAGER=cat` for git commands, use `--yes`/`-y` for package installs, append `-Force -Confirm:$false` to destructive PowerShell cmdlets, and never launch GUI editors.
+
+### Code Quality Principles
+
+- **SOLID & DRY:** Keep functions small, single-purpose, and DRY (Don't Repeat Yourself). Avoid duplicating logic across engine, components, and hooks layers — extract shared logic into the engine as pure functions.
+- **Single Responsibility:** Each file/module should have one clear purpose. Engine files = pure game logic. Component files = presentation only. Hook files = bridge logic. Test files = test logic only. This makes files smaller and easier to edit without the editor tool's whitespace doubling bug on large files.
+- **File size discipline:** Keep files small and focused. Large files are prone to editor tool failures (whitespace doubling, timeout errors). If a file grows beyond ~300 lines, consider extracting sub-components, sub-modules, or grouping related logic into separate files.
+- **State immutability:** Never use `.push()`, `.splice()`, or direct object mutation. Always return a new state object via spread operators. This is enforced by the engine rules and ArchUnit tests.
+
+### Testing Conventions
+
+- **Component tests importing engine functions:** The ESLint `boundaries/dependencies` rule classifies test files by their file path's element type (e.g., `src/components/` → type `components`) AND their file category (`*.test.{ts,tsx}` → category `test`). Test files in `src/components/` that import from `src/engine/` violate the components→engine boundary. The ESLint boundary policies must exempt test files (`from: { file: { categories: '!test' } }`) from boundary restrictions.
+- **E2E test timing:** Never inject state into IndexedDB AFTER the app has loaded — the app's auto-save interval (10s) will overwrite the injected state with the app's in-memory state. Always inject state BEFORE `page.goto('/')`.
+- **Test isolation:** Tests that modify IndexedDB state must run in `test.describe.serial` blocks with `beforeEach` hooks that clear IndexedDB.
+
+### ESLint Boundaries Configuration
+
+- The `eslint-plugin-boundaries` `boundaries/elements` patterns match by file path, while `boundaries/files` sets a file category. These are independent dimensions: a file at `src/components/Foo.test.tsx` has BOTH element type `components` AND file category `test`. Boundary policies that restrict `from: { element: { type: 'components' } }` will match test files too unless they also check `file: { categories: '!test' }`.
