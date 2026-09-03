@@ -56,13 +56,21 @@ export const StarMapScreen = ({
   const pathNodeIds = new Set(routeNodeIds.slice(1, -1).filter((id) => id !== currentLocationId));
 
   // Build a set of route edge pairs for highlighting edges in the selected route.
-  // An edge is a "route edge" if both endpoints are in plannedRoute and adjacent.
+  // Per the UI Interaction Specification: edges are active when source and target
+  // match a sequential pair in the active route, INCLUDING currentLocationId to
+  // the first node (e.g., currentLocation -> index 0; index 0 -> index 1, etc.).
   const routeEdgePairs = new Set<string>();
-  for (let i = 0; i < plannedRoute.length - 1; i++) {
-    const a = plannedRoute[i];
-    const b = plannedRoute[i + 1];
-    routeEdgePairs.add(`${a}->${b}`);
-    routeEdgePairs.add(`${b}->${a}`);
+  if (plannedRoute.length > 0) {
+    // Edge from the player's current location to the first route stop
+    const first = plannedRoute[0]!;
+    routeEdgePairs.add(`${currentLocationId}->${first}`);
+    routeEdgePairs.add(`${first}->${currentLocationId}`);
+    for (let i = 0; i < plannedRoute.length - 1; i++) {
+      const a = plannedRoute[i];
+      const b = plannedRoute[i + 1];
+      routeEdgePairs.add(`${a}->${b}`);
+      routeEdgePairs.add(`${b}->${a}`);
+    }
   }
 
   // Helper: generate SVG polyline points for the active route path
@@ -137,6 +145,9 @@ export const StarMapScreen = ({
                     ? 'star-map-edge star-map-edge--route'
                     : 'star-map-edge'
                 }
+                data-testid={
+                  routeEdgePairs.has(`${edge.from}->${edge.to}`) ? 'route-edge-active' : undefined
+                }
                 stroke={
                   routeEdgePairs.has(`${edge.from}->${edge.to}`)
                     ? 'var(--color-star-route)'
@@ -170,30 +181,43 @@ export const StarMapScreen = ({
                 onClick={() => onNodeToggle(node.id)}
                 style={{ cursor: isCurrent ? 'default' : 'pointer' }}
               >
-                <circle
-                  cx={node.x}
-                  cy={node.y - 3}
-                  r={isCurrent ? 2.2 : isInRoute ? 1.6 : 1.2}
-                  fill={
-                    node.status === 'current'
-                      ? 'var(--color-star-current)'
-                      : node.status === 'visited'
-                        ? 'var(--color-star-visited)'
-                        : pathNodeIds.has(node.id)
-                          ? 'var(--color-star-route)'
-                          : 'var(--color-star-unknown)'
-                  }
-                />
-                <text
-                  x={node.x}
-                  y={node.y + 7}
-                  textAnchor="middle"
-                  className="star-map-label"
-                  fontSize="3.5"
-                  fill="var(--color-text-secondary)"
-                >
-                  {node.name}
-                </text>
+                {isCurrent ? (
+                  <rect
+                    data-testid="current-location-marker"
+                    x={node.x - 2.5}
+                    y={node.y - 2.5}
+                    width="5"
+                    height="5"
+                    fill="var(--color-star-current)"
+                  />
+                ) : (
+                  <circle
+                    cx={node.x}
+                    cy={node.y - 3}
+                    r={isInRoute ? 1.6 : 1.2}
+                    fill={
+                      node.status === 'current'
+                        ? 'var(--color-star-current)'
+                        : node.status === 'visited'
+                          ? 'var(--color-star-visited)'
+                          : pathNodeIds.has(node.id)
+                            ? 'var(--color-star-route)'
+                            : 'var(--color-star-unknown)'
+                    }
+                  />
+                )}
+                {!isCurrent && (
+                  <text
+                    x={node.x}
+                    y={node.y + 7}
+                    textAnchor="middle"
+                    className="star-map-label"
+                    fontSize="3.5"
+                    fill="var(--color-text-secondary)"
+                  >
+                    {node.name}
+                  </text>
+                )}
               </g>
             );
           })}

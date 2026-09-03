@@ -208,12 +208,22 @@ export const nodesConnected = (nodes: StarMapNode[], a: string, b: string): bool
 export const getNodeById = (nodes: StarMapNode[], id: string): StarMapNode | undefined =>
   nodes.find((n) => n.id === id);
 
-/** Check if two nodes share a direct edge. */
+/** Check if two nodes share a direct edge (adjacency, not BFS reachability). */
 export const isEdgeBetween = (nodes: StarMapNode[], a: string, b: string): boolean => {
   const fromNode = getNodeById(nodes, a);
   if (!fromNode) return false;
   return fromNode.edges.includes(b);
 };
+
+/**
+ * Check whether two nodes share a direct edge (adjacency).
+ * Unlike nodesConnected (which uses BFS), this only returns true for
+ * directly-connected neighbors — the contiguous-hop validation used by
+ * the star map route builder.
+ * Pure: does not mutate state, has no side effects.
+ */
+export const isAdjacent = (state: StarMapState, from: string, to: string): boolean =>
+  isEdgeBetween(state.nodes, from, to);
 
 // ---------------------------------------------------------------------------
 // Route operations
@@ -221,24 +231,41 @@ export const isEdgeBetween = (nodes: StarMapNode[], a: string, b: string): boole
 
 /**
  * Toggle a node in the planned route.
- * Rejects: current location, already-in-route nodes (removes instead),
- * unreachable nodes.
+ *
+ * Behavior:
+ * - If the node is already in the route: truncate the route at that node's
+ *   index (sever the tail). This implements the "click to deselect and break
+ *   the chain" pattern — any stops after the clicked one are removed.
+ * - If the node is NOT in the route: validate direct-edge adjacency to the
+ *   tail (or to currentLocation if the route is empty). Only directly
+ *   connected neighbors may be added — no multi-hop teleportation.
+ *
+ * Rejects silently (returns state unchanged):
+ * - current location nodes, non-existent nodes
+ * - nodes not directly adjacent to the route tail / current location
+ *
  * Pure: returns new StarMapState, never mutates input.
  */
 export const toggleRouteNode = (state: StarMapState, nodeId: string): StarMapState => {
   const node = getNodeById(state.nodes, nodeId);
   if (!node || node.status === 'current') return state;
 
-  const exists = state.plannedRoute.includes(nodeId);
-  if (exists) return removeRouteNode(state, nodeId);
+  // If already in the route, truncate at this node (sever the tail)
+  const existingIndex = state.plannedRoute.indexOf(nodeId);
+  if (existingIndex >= 0) {
+    return { ...state, plannedRoute: state.plannedRoute.slice(0, existingIndex) };
+  }
 
-  // Validate reachability: BFS from last route stop (or current location)
-  const start =
+  // Validate direct-edge adjacency: must share an edge with the last stop
+  // (or with currentLocation when the route is empty)
+  const referenceId =
     state.plannedRoute.length > 0
       ? state.plannedRoute[state.plannedRoute.length - 1]
       : state.currentLocationId;
-  const path = findPath(state.nodes, start, nodeId);
-  if (!path) return state; // unreachable — reject silently
+
+  if (!isAdjacent(state, referenceId, nodeId)) {
+    return state; // not directly connected — reject silently
+  }
 
   return {
     ...state,
@@ -247,25 +274,16 @@ export const toggleRouteNode = (state: StarMapState, nodeId: string): StarMapSta
 };
 
 /**
- * Remove a node from the planned route and re-bridge the gap.
- * If bridging fails, truncate the route at the removal point.
+ * Remove a node from the planned route by truncating at that node's index.
+ * Any stops after the removed node are also removed (sever the tail).
+ * This is the same truncation behavior used by toggleRouteNode when
+ * re-tapping an existing route node on the map.
  * Pure: returns new StarMapState, never mutates input.
  */
 export const removeRouteNode = (state: StarMapState, nodeId: string): StarMapState => {
   const idx = state.plannedRoute.indexOf(nodeId);
   if (idx === -1) return state;
-
-  const before = state.plannedRoute.slice(0, idx);
-  const after = state.plannedRoute.slice(idx + 1);
-
-  // Try to bridge: BFS from last of before (or currentLocation) to 1st of after
-  const bridgeStart = before.length > 0 ? before[before.length - 1] : state.currentLocationId;
-  if (after.length > 0) {
-    const bridgeEnd = after[0];
-    const bridge = findPath(state.nodes, bridgeStart, bridgeEnd);
-    if (!bridge) return { ...state, plannedRoute: before }; // truncate
-  }
-  return { ...state, plannedRoute: [...before, ...after] };
+  return { ...state, plannedRoute: state.plannedRoute.slice(0, idx) };
 };
 
 // ---------------------------------------------------------------------------

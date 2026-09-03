@@ -69,6 +69,7 @@ describe('migrateGameState', () => {
       selectedOre: null,
       constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
       lastError: null,
+      currentLocation: 'sys_0',
     };
 
     const migrated = migrateGameState(modern);

@@ -139,6 +139,13 @@ export interface GameState {
   routePath: StarMapRouteSegment[];
   /** Total gate time in seconds for the current route (set by STAR_MAP_GO). */
   routeTravelTimeSeconds: number;
+  /**
+   * The player's current star system ID. Updated to the route's final
+   * destination when a route is confirmed (STAR_MAP_GO). Survives navigation
+   * away from the star map so enterStarMap can generate the graph centered
+   * on the player's latest position.
+   */
+  currentLocation: string;
 }
 
 /** Discriminated union of all engine actions, shared by engine + hooks + tests. */

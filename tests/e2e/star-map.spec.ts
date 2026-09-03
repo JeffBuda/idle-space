@@ -66,25 +66,81 @@ test.describe('Star Map Flow', () => {
 
   test('clicking a planned node again removes it (toggle)', async ({ page }, testInfo) => {
     await openStarMapViaWelcome(page, testInfo);
-    await clickNode(page, 'sys_2');
-    await expect(page.getByTestId('stop-name-sys_2')).toBeVisible();
-    await clickNode(page, 'sys_2');
+    // sys_1 is directly adjacent to sys_0 (ring neighbor), so it can be added
+    await clickNode(page, 'sys_1');
+    await expect(page.getByTestId('stop-name-sys_1')).toBeVisible();
+    // Re-clicking sys_1 truncates the route (sever the tail) → empty
+    await clickNode(page, 'sys_1');
     await expect(page.getByTestId('route-empty')).toBeVisible();
     await captureScreenshot(page, testInfo, 'route-cleared-by-toggle', 3);
   });
 
+  test('clicking a non-adjacent node is rejected (Action 2: Invalid Initial Hop)', async ({
+    page,
+  }, testInfo) => {
+    await openStarMapViaWelcome(page, testInfo);
+    // sys_5 is NOT adjacent to sys_0 (far in the ring), so it cannot be added
+    await clickNode(page, 'sys_5');
+    // Route should remain empty — the tap is silently ignored
+    await expect(page.getByTestId('route-empty')).toBeVisible();
+    await captureScreenshot(page, testInfo, 'invalid-hop-rejected', 3);
+  });
+
+  test('clicking a non-adjacent node after first hop is rejected (Action 5)', async ({
+    page,
+  }, testInfo) => {
+    await openStarMapViaWelcome(page, testInfo);
+    // sys_1 is adjacent to sys_0 → valid first hop
+    await clickNode(page, 'sys_1');
+    await expect(page.getByTestId('stop-name-sys_1')).toBeVisible();
+    // sys_5 is NOT adjacent to sys_1 (sys_1's ring neighbors are sys_0 and sys_2)
+    // → invalid sequential hop, silently rejected
+    await clickNode(page, 'sys_5');
+    // Itinerary should still only have sys_1
+    await expect(page.getByTestId('itinerary-list').getByRole('listitem')).toHaveCount(1);
+    await captureScreenshot(page, testInfo, 'invalid-sequential-hop-rejected', 3);
+  });
+
+  test('tapping a middle node in the route severs the tail (Action 8)', async ({
+    page,
+  }, testInfo) => {
+    await openStarMapViaWelcome(page, testInfo);
+    // Build a 3-stop route: sys_1 → sys_2 → sys_3
+    await clickNode(page, 'sys_1');
+    await clickNode(page, 'sys_2');
+    await clickNode(page, 'sys_3');
+    await expect(page.getByTestId('itinerary-list').getByRole('listitem')).toHaveCount(3);
+    // Tap sys_1 (middle node) on the map → truncates to empty (severs entire tail)
+    await clickNode(page, 'sys_1');
+    await expect(page.getByTestId('route-empty')).toBeVisible();
+    await captureScreenshot(page, testInfo, 'middle-node-tap-severs-tail', 4);
+  });
+
+  test('tapping the last node in the route pops it (Action 7)', async ({ page }, testInfo) => {
+    await openStarMapViaWelcome(page, testInfo);
+    await clickNode(page, 'sys_1');
+    await clickNode(page, 'sys_2');
+    await expect(page.getByTestId('itinerary-list').getByRole('listitem')).toHaveCount(2);
+    // Tap sys_2 (last node) → pops it, route shrinks to [sys_1]
+    await clickNode(page, 'sys_2');
+    await expect(page.getByTestId('itinerary-list').getByRole('listitem')).toHaveCount(1);
+    await expect(page.getByTestId('stop-name-sys_1')).toBeVisible();
+    await captureScreenshot(page, testInfo, 'last-node-tap-pops', 3);
+  });
+
   test('remove-stop button removes a specific itinerary stop', async ({ page }, testInfo) => {
     await openStarMapViaWelcome(page, testInfo);
-    await clickNode(page, 'sys_3');
-    await clickNode(page, 'sys_4');
+    // Build a contiguous route: sys_1 (adjacent to sys_0) → sys_2 (adjacent to sys_1)
+    await clickNode(page, 'sys_1');
+    await clickNode(page, 'sys_2');
     await expect(page.getByTestId('itinerary-list').getByRole('listitem')).toHaveCount(2);
     await captureScreenshot(page, testInfo, 'two-stop-itinerary', 3);
-    await page.getByTestId('remove-stop-sys_3').click();
+    await page.getByTestId('remove-stop-sys_2').click();
     await expect(page.getByTestId('itinerary-list').getByRole('listitem')).toHaveCount(1);
     await captureScreenshot(page, testInfo, 'one-stop-after-remove', 4);
   });
 
-  test('clear route button empties the itinerary', async ({ page }, testInfo) => {
+  test('clear route button empties the itinerary (Action 3)', async ({ page }, testInfo) => {
     await openStarMapViaWelcome(page, testInfo);
     await clickNode(page, 'sys_1');
     await clickNode(page, 'sys_2');
@@ -219,8 +275,9 @@ test.describe.serial('Star Map IndexedDB Persistence', () => {
     if (await page.getByTestId('ios-install-dismiss').isVisible()) {
       await page.getByTestId('ios-install-dismiss').click();
     }
+    // Build a contiguous route: sys_1 (adjacent to sys_0) → sys_2 (adjacent to sys_1)
+    await clickNode(page, 'sys_1');
     await clickNode(page, 'sys_2');
-    await clickNode(page, 'sys_5');
     await expect(page.getByTestId('itinerary-list').getByRole('listitem')).toHaveCount(2);
     await captureScreenshot(page, testInfo, 'multi-stop-before-restart', 1);
     await page.reload();

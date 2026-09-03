@@ -6,12 +6,20 @@ import { type GameState } from './time';
 const baseState: GameState = {
   lastTimestamp: 1_000_000,
   elapsedSeconds: 500,
+  totalElapsedGameTime: 500,
   rngSeed: 'test-seed',
   totalDistanceKm: 5_000,
   version: '0.1.0',
+  screen: 'PLANET',
+  idleTimer: null,
+  oreCounts: { commonOre: 0, rareOre: 0 },
+  selectedOre: null,
+  constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
+  lastError: null,
   starMap: null,
   routePath: [],
   routeTravelTimeSeconds: 0,
+  currentLocation: 'sys_0',
 };
 
 describe('engineReducer', () => {
@@ -116,6 +124,201 @@ describe('SPEED_KM_PER_SEC', () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// Star Map Actions — UI Interaction Specification compliance at the reducer level
+// ---------------------------------------------------------------------------
+
+describe('star map actions', () => {
+  const TIME = 2_000_000;
+
+  const makeStarMapState = (): GameState => ({
+    lastTimestamp: TIME,
+    elapsedSeconds: 0,
+    totalElapsedGameTime: 0,
+    rngSeed: 'test-seed',
+    totalDistanceKm: 0,
+    version: '0.1.0',
+    screen: 'PLANET',
+    idleTimer: null,
+    oreCounts: { commonOre: 0, rareOre: 0 },
+    selectedOre: null,
+    constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
+    lastError: null,
+    starMap: null,
+    routePath: [],
+    routeTravelTimeSeconds: 0,
+    currentLocation: 'sys_0',
+  });
+
+  // -- Helper: 3-node chain for adjacency tests --
+  const chainStarMap = {
+    nodes: [
+      { id: 'sys_0', name: 'A', x: 10, y: 10, status: 'current' as const, edges: ['sys_1'] },
+      {
+        id: 'sys_1',
+        name: 'B',
+        x: 50,
+        y: 10,
+        status: 'unknown' as const,
+        edges: ['sys_0', 'sys_2'],
+      },
+      { id: 'sys_2', name: 'C', x: 90, y: 10, status: 'unknown' as const, edges: ['sys_1'] },
+    ],
+    edges: [],
+    plannedRoute: [],
+    currentLocationId: 'sys_0',
+    zoomLevel: 1.0,
+  };
+
+  it('STAR_MAP_NODE_TOGGLE does nothing when starMap is null', () => {
+    const state = makeStarMapState();
+    const result = engineReducer(
+      state,
+      { type: 'STAR_MAP_NODE_TOGGLE', nodeId: 'sys_1' },
+      TIME,
+      'seed',
+    );
+    expect(result).toBe(state);
+  });
+
+  it('STAR_MAP_NODE_TOGGLE adds an adjacent node (Origin Rule)', () => {
+    const state: GameState = { ...makeStarMapState(), starMap: { ...chainStarMap } };
+    const result = engineReducer(
+      state,
+      { type: 'STAR_MAP_NODE_TOGGLE', nodeId: 'sys_1' },
+      TIME,
+      'seed',
+    );
+    expect(result.starMap!.plannedRoute).toEqual(['sys_1']);
+  });
+
+  it('STAR_MAP_NODE_TOGGLE rejects non-adjacent node (Action 2)', () => {
+    const state: GameState = { ...makeStarMapState(), starMap: { ...chainStarMap } };
+    const result = engineReducer(
+      state,
+      { type: 'STAR_MAP_NODE_TOGGLE', nodeId: 'sys_2' },
+      TIME,
+      'seed',
+    );
+    expect(result.starMap!.plannedRoute).toEqual([]);
+  });
+
+  it('STAR_MAP_NODE_TOGGLE rejects current location node', () => {
+    const state: GameState = { ...makeStarMapState(), starMap: { ...chainStarMap } };
+    const result = engineReducer(
+      state,
+      { type: 'STAR_MAP_NODE_TOGGLE', nodeId: 'sys_0' },
+      TIME,
+      'seed',
+    );
+    expect(result.starMap!.plannedRoute).toEqual([]);
+  });
+
+  it('STAR_MAP_NODE_TOGGLE builds multi-hop contiguous route (Action 4)', () => {
+    let state: GameState = { ...makeStarMapState(), starMap: { ...chainStarMap } };
+    state = engineReducer(state, { type: 'STAR_MAP_NODE_TOGGLE', nodeId: 'sys_1' }, TIME, 'seed');
+    state = engineReducer(state, { type: 'STAR_MAP_NODE_TOGGLE', nodeId: 'sys_2' }, TIME, 'seed');
+    expect(state.starMap!.plannedRoute).toEqual(['sys_1', 'sys_2']);
+  });
+
+  it('STAR_MAP_NODE_TOGGLE rejects non-adjacent tail hop (Action 5)', () => {
+    const state: GameState = {
+      ...makeStarMapState(),
+      starMap: { ...chainStarMap, plannedRoute: ['sys_1'] },
+    };
+    const result = engineReducer(
+      state,
+      { type: 'STAR_MAP_NODE_TOGGLE', nodeId: 'sys_0' },
+      TIME,
+      'seed',
+    );
+    expect(result.starMap!.plannedRoute).toEqual(['sys_1']);
+  });
+
+  it('STAR_MAP_NODE_TOGGLE sever-tails when re-tapping middle node (Action 8)', () => {
+    const state: GameState = {
+      ...makeStarMapState(),
+      starMap: { ...chainStarMap, plannedRoute: ['sys_1', 'sys_2'] },
+    };
+    const result = engineReducer(
+      state,
+      { type: 'STAR_MAP_NODE_TOGGLE', nodeId: 'sys_1' },
+      TIME,
+      'seed',
+    );
+    expect(result.starMap!.plannedRoute).toEqual([]);
+  });
+
+  it('STAR_MAP_REMOVE_STOP truncates at the removed node', () => {
+    const state: GameState = {
+      ...makeStarMapState(),
+      starMap: { ...chainStarMap, plannedRoute: ['sys_1', 'sys_2'] },
+    };
+    const result = engineReducer(
+      state,
+      { type: 'STAR_MAP_REMOVE_STOP', nodeId: 'sys_1' },
+      TIME,
+      'seed',
+    );
+    expect(result.starMap!.plannedRoute).toEqual([]);
+  });
+
+  it('STAR_MAP_CLEAR_ROUTE clears route, routePath, and travel time', () => {
+    const state: GameState = {
+      ...makeStarMapState(),
+      starMap: { ...chainStarMap, plannedRoute: ['sys_1', 'sys_2'] },
+      routePath: [{ from: 'sys_0', to: 'sys_2', path: ['sys_0', 'sys_1', 'sys_2'], hops: 2 }],
+      routeTravelTimeSeconds: 10,
+    };
+    const result = engineReducer(state, { type: 'STAR_MAP_CLEAR_ROUTE' }, TIME, 'seed');
+    expect(result.starMap!.plannedRoute).toEqual([]);
+    expect(result.routePath).toEqual([]);
+    expect(result.routeTravelTimeSeconds).toBe(0);
+  });
+
+  it('STAR_MAP_GO with valid route navigates to SPACE_TRAVEL', () => {
+    const state: GameState = {
+      ...makeStarMapState(),
+      starMap: { ...chainStarMap, plannedRoute: ['sys_1'] },
+    };
+    const result = engineReducer(state, { type: 'STAR_MAP_GO' }, TIME, 'seed');
+    expect(result.screen).toBe('SPACE_TRAVEL');
+    expect(result.currentLocation).toBe('sys_1');
+    expect(result.lastError).toBeNull();
+  });
+
+  it('STAR_MAP_GO with invalid route stays on STAR_MAP and sets lastError', () => {
+    const disconnectedMap = {
+      ...chainStarMap,
+      nodes: [
+        { id: 'sys_0', name: 'A', x: 10, y: 10, status: 'current' as const, edges: [] },
+        { id: 'sys_1', name: 'B', x: 50, y: 10, status: 'unknown' as const, edges: [] },
+        { id: 'sys_2', name: 'C', x: 90, y: 10, status: 'unknown' as const, edges: [] },
+      ],
+    };
+    const state: GameState = {
+      ...makeStarMapState(),
+      screen: 'STAR_MAP',
+      starMap: { ...disconnectedMap, plannedRoute: ['sys_1'] },
+    };
+    const result = engineReducer(state, { type: 'STAR_MAP_GO' }, TIME, 'seed');
+    expect(result.lastError).not.toBeNull();
+    expect(result.screen).toBe('STAR_MAP');
+  });
+
+  it('STAR_MAP_ZOOM_IN increases zoom level', () => {
+    const state: GameState = { ...makeStarMapState(), starMap: { ...chainStarMap } };
+    const result = engineReducer(state, { type: 'STAR_MAP_ZOOM_IN' }, TIME, 'seed');
+    expect(result.starMap!.zoomLevel).toBeCloseTo(1.3);
+  });
+
+  it('STAR_MAP_ZOOM_OUT decreases zoom level', () => {
+    const state: GameState = { ...makeStarMapState(), starMap: { ...chainStarMap } };
+    const result = engineReducer(state, { type: 'STAR_MAP_ZOOM_OUT' }, TIME, 'seed');
+    expect(result.starMap!.zoomLevel).toBeCloseTo(0.7);
+  });
+});
+
 describe('onboarding flow dispatch', () => {
   const TIME = 2_000_000;
   const gate = (remaining: number, startedAt: number) => ({
@@ -124,6 +327,7 @@ describe('onboarding flow dispatch', () => {
     remainingSeconds: remaining,
     startedAt,
   });
+
   const flowState: GameState = {
     lastTimestamp: 1_000_000,
     elapsedSeconds: 0,
@@ -137,6 +341,10 @@ describe('onboarding flow dispatch', () => {
     selectedOre: null,
     constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
     lastError: null,
+    starMap: null,
+    routePath: [],
+    routeTravelTimeSeconds: 0,
+    currentLocation: 'sys_0',
   };
 
   it('NAVIGATE WELCOME -> SPACE_TRAVEL starts a 30s gate and seeds lastTimestamp', () => {

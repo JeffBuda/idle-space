@@ -57,7 +57,7 @@ const startGate = (state: GameState, screen: Screen, currentTime: number): GameS
  */
 const enterStarMap = (state: GameState): GameState => {
   if (state.starMap === null) {
-    const starMap = generateStarMap(state.rngSeed, 'sys_0');
+    const starMap = generateStarMap(state.rngSeed, state.currentLocation);
     return { ...state, screen: 'STAR_MAP', starMap, lastError: null };
   }
   return { ...state, screen: 'STAR_MAP', lastError: null };

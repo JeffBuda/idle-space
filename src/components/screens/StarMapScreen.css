@@ -75,8 +75,10 @@
   cursor: pointer;
 }
 
-.star-map-node--current circle {
+.star-map-node rect {
+  /* Green filled-in square for current location (Endless Sky style) */
   fill: var(--color-star-current);
+  cursor: default;
 }
 
 .star-map-node--visited circle {

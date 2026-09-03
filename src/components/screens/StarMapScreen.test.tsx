@@ -190,11 +190,13 @@ describe('StarMapScreen', () => {
       expect(screen.getByTestId('node-sys_1').style.cursor).toBe('pointer');
     });
 
-    it('renders a larger circle for the current node', () => {
+    it('renders a rect (green square, Endless Sky style) for the current node', () => {
       renderScreen(generateStarMap('test-seed', 'sys_0'));
       const currentNode = screen.getByTestId('node-sys_0');
-      const circle = currentNode.querySelector('circle');
-      expect(circle?.getAttribute('r')).toBe('2.2');
+      const rect = currentNode.querySelector('rect');
+      expect(rect).not.toBeNull();
+      expect(rect?.getAttribute('width')).toBe('5');
+      expect(rect?.getAttribute('height')).toBe('5');
     });
 
     it('renders a smaller circle for non-current nodes', () => {

@@ -32,6 +32,7 @@ const mockGameStateData = {
   starMap: null,
   routePath: [],
   routeTravelTimeSeconds: 0,
+  currentLocation: 'sys_0',
 };
 
 // Stable dispatch mock so App tests can assert on dispatched flow actions.

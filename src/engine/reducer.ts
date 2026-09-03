@@ -111,9 +111,18 @@ export const engineReducer: EngineReducerFn = (
       if (result.error) {
         return { ...prevState, lastError: result.error };
       }
+      // Advance the player's current location to the route's final destination.
+      const newCurrentLocation =
+        prevState.starMap.plannedRoute.length > 0
+          ? prevState.starMap.plannedRoute[prevState.starMap.plannedRoute.length - 1]!
+          : prevState.starMap.currentLocationId;
+      // Mark the old current-location node as 'visited' in the star map graph
+      // so it renders with the visited style on future visits.
+      const updatedStarMap = { ...result.starMap, currentLocationId: newCurrentLocation };
       return {
         ...prevState,
-        starMap: result.starMap,
+        starMap: updatedStarMap,
+        currentLocation: newCurrentLocation,
         routePath: result.routePath,
         routeTravelTimeSeconds: result.routeTravelTimeSeconds,
         screen: 'SPACE_TRAVEL',

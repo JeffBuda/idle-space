@@ -12,6 +12,8 @@ import {
   confirmRoute,
   nodesConnected,
   getNodeById,
+  isAdjacent,
+  isEdgeBetween,
 } from './starmap';
 import type { StarMapNode, StarMapState, StarMapRouteSegment } from '../types/game-state';
 
@@ -152,8 +154,43 @@ describe('getNodeById', () => {
   });
 });
 
+describe('isAdjacent', () => {
+  it('returns true for directly connected nodes', () => {
+    expect(isAdjacent(makeChainMap(), 'sys_0', 'sys_1')).toBe(true);
+  });
+
+  it('returns false for non-adjacent nodes (only BFS-reachable)', () => {
+    // sys_0 and sys_2 are BFS-connected via sys_1 in the 3-node chain,
+    // but do NOT share a direct edge.
+    expect(isAdjacent(makeChainMap(), 'sys_0', 'sys_2')).toBe(false);
+  });
+
+  it('returns false for disconnected components', () => {
+    expect(isAdjacent(makeDisconnMap(), 'sys_0', 'sys_3')).toBe(false);
+  });
+
+  it('returns false for non-existent nodes', () => {
+    expect(isAdjacent(makeChainMap(), 'sys_0', 'sys_99')).toBe(false);
+  });
+});
+
+describe('isEdgeBetween', () => {
+  it('returns true for nodes that share a direct edge', () => {
+    expect(isEdgeBetween(chainNodes, 'sys_0', 'sys_1')).toBe(true);
+  });
+
+  it('returns false for nodes without a direct edge', () => {
+    expect(isEdgeBetween(chainNodes, 'sys_0', 'sys_2')).toBe(false);
+  });
+
+  it('returns false when either node does not exist', () => {
+    expect(isEdgeBetween(chainNodes, 'sys_0', 'sys_99')).toBe(false);
+    expect(isEdgeBetween(chainNodes, 'sys_99', 'sys_0')).toBe(false);
+  });
+});
+
 describe('toggleRouteNode', () => {
-  it('adds a reachable node to the empty route', () => {
+  it('adds a directly-adjacent node to the empty route', () => {
     const result = toggleRouteNode(makeChainMap(), 'sys_1');
     expect(result.plannedRoute).toEqual(['sys_1']);
   });
@@ -163,30 +200,78 @@ describe('toggleRouteNode', () => {
     expect(result.plannedRoute).toEqual([]);
   });
 
-  it('rejects unreachable nodes (no change)', () => {
+  it('rejects non-adjacent nodes (direct edge required, not BFS)', () => {
+    // sys_0 -> sys_2 requires BFS through sys_1, but they share no direct edge
+    const result = toggleRouteNode(makeChainMap(), 'sys_2');
+    expect(result.plannedRoute).toEqual([]);
+  });
+
+  it('rejects nodes in disconnected components', () => {
     const result = toggleRouteNode(makeDisconnMap(), 'sys_3');
     expect(result.plannedRoute).toEqual([]);
   });
 
-  it('removes a node when toggled off', () => {
-    const withNode = toggleRouteNode(makeChainMap(), 'sys_1');
-    expect(withNode.plannedRoute).toEqual(['sys_1']);
-    const removed = toggleRouteNode(withNode, 'sys_1');
-    expect(removed.plannedRoute).toEqual([]);
+  it('builds a contiguous multi-hop route through adjacent nodes', () => {
+    // sys_0 -> sys_1 -> sys_2 (all directly adjacent in the chain)
+    let result = toggleRouteNode(makeChain4Map(), 'sys_1');
+    expect(result.plannedRoute).toEqual(['sys_1']);
+    result = toggleRouteNode(result, 'sys_2');
+    expect(result.plannedRoute).toEqual(['sys_1', 'sys_2']);
+  });
+
+  it('truncates the route when re-selecting an existing node (sever the tail)', () => {
+    // Route: [sys_1, sys_2, sys_3]
+    const map: StarMapState = { ...makeChain4Map(), plannedRoute: ['sys_1', 'sys_2', 'sys_3'] };
+    // Re-click sys_2 (at index 1) → truncate to [sys_1]
+    const result = toggleRouteNode(map, 'sys_2');
+    expect(result.plannedRoute).toEqual(['sys_1']);
+  });
+
+  it('clears the route when re-selecting the only node', () => {
+    const map: StarMapState = { ...makeChainMap(), plannedRoute: ['sys_1'] };
+    const result = toggleRouteNode(map, 'sys_1');
+    expect(result.plannedRoute).toEqual([]);
+  });
+
+  it('does not allow adding a node adjacent to sys_0 when route is non-empty', () => {
+    // Route: [sys_1]. sys_0 is adjacent to sys_1, but sys_0 is the current location (rejected).
+    const map: StarMapState = { ...makeChain4Map(), plannedRoute: ['sys_1'] };
+    const result = toggleRouteNode(map, 'sys_0');
+    expect(result.plannedRoute).toEqual(['sys_1']); // unchanged
+  });
+
+  it('rejects a node not adjacent to the route tail', () => {
+    // Route: [sys_1]. sys_3 is NOT adjacent to sys_1 (in chain4Nodes: sys_1 edges = [sys_0, sys_2])
+    const map: StarMapState = { ...makeChain4Map(), plannedRoute: ['sys_1'] };
+    const result = toggleRouteNode(map, 'sys_3');
+    expect(result.plannedRoute).toEqual(['sys_1']); // unchanged — rejected
   });
 });
 
 describe('removeRouteNode', () => {
-  it('removes a middle node and bridges the gap', () => {
+  it('truncates the route at a middle node (sever the tail)', () => {
     const map: StarMapState = { ...makeChain4Map(), plannedRoute: ['sys_1', 'sys_2', 'sys_3'] };
     const result = removeRouteNode(map, 'sys_2');
-    expect(result.plannedRoute).toEqual(['sys_1', 'sys_3']);
+    expect(result.plannedRoute).toEqual(['sys_1']);
   });
 
-  it('truncates to before-only when bridge is impossible', () => {
+  it('truncates to before-only for middle removal (no bridging)', () => {
+    // In disconnected graph, removal still truncates — no bridge attempt
     const map: StarMapState = { ...makeDisconnMap(), plannedRoute: ['sys_1', 'sys_3', 'sys_2'] };
     const result = removeRouteNode(map, 'sys_3');
     expect(result.plannedRoute).toEqual(['sys_1']);
+  });
+
+  it('pops the last node from the route', () => {
+    const map: StarMapState = { ...makeChain4Map(), plannedRoute: ['sys_1', 'sys_2', 'sys_3'] };
+    const result = removeRouteNode(map, 'sys_3');
+    expect(result.plannedRoute).toEqual(['sys_1', 'sys_2']);
+  });
+
+  it('returns unchanged for a node not in the route', () => {
+    const map: StarMapState = { ...makeChain4Map(), plannedRoute: ['sys_1', 'sys_2'] };
+    const result = removeRouteNode(map, 'sys_3');
+    expect(result.plannedRoute).toEqual(['sys_1', 'sys_2']);
   });
 });
 
@@ -312,5 +397,130 @@ describe('immutability', () => {
     expect(withNode).not.toBe(map);
     expect(cleared).not.toBe(withNode);
     expect(zoomed).not.toBe(map);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// UI Interaction Specification — State Machine Compliance
+// ---------------------------------------------------------------------------
+
+describe('UI Interaction Specification: route state machine', () => {
+  describe('Origin Rule — first hop from currentLocation', () => {
+    it('Action 1: Plot Initial Hop — adds an adjacent unselected node', () => {
+      const result = toggleRouteNode(makeChain4Map(), 'sys_1');
+      expect(result.plannedRoute).toEqual(['sys_1']);
+    });
+
+    it('Action 2: Invalid Initial Hop — rejects a non-adjacent node', () => {
+      const result = toggleRouteNode(makeChain4Map(), 'sys_2');
+      expect(result.plannedRoute).toEqual([]);
+    });
+
+    it('Action 2: Invalid Initial Hop — rejects disconnected component node', () => {
+      const result = toggleRouteNode(makeDisconnMap(), 'sys_3');
+      expect(result.plannedRoute).toEqual([]);
+    });
+
+    it('Action 2: Invalid Initial Hop — rejects the current location node itself', () => {
+      const result = toggleRouteNode(makeChain4Map(), 'sys_0');
+      expect(result.plannedRoute).toEqual([]);
+    });
+  });
+
+  describe('Contiguous Rule — each hop chains from the route tail', () => {
+    it('Action 4: Plot Sequential Hop — appends node adjacent to the tail', () => {
+      let result = toggleRouteNode(makeChain4Map(), 'sys_1');
+      expect(result.plannedRoute).toEqual(['sys_1']);
+      result = toggleRouteNode(result, 'sys_2');
+      expect(result.plannedRoute).toEqual(['sys_1', 'sys_2']);
+    });
+
+    it('Action 4: Plot Sequential Hop — extends to a third contiguous node', () => {
+      let result = toggleRouteNode(makeChain4Map(), 'sys_1');
+      result = toggleRouteNode(result, 'sys_2');
+      result = toggleRouteNode(result, 'sys_3');
+      expect(result.plannedRoute).toEqual(['sys_1', 'sys_2', 'sys_3']);
+    });
+
+    it('Action 5: Invalid Sequential Hop — rejects node not adjacent to tail', () => {
+      const map: StarMapState = { ...makeChain4Map(), plannedRoute: ['sys_1'] };
+      const result = toggleRouteNode(map, 'sys_3');
+      expect(result.plannedRoute).toEqual(['sys_1']);
+    });
+  });
+
+  describe('Deselect nodes — truncate / pop', () => {
+    it('Action 7: Pop final node — re-tapping the last node truncates', () => {
+      const map: StarMapState = { ...makeChain4Map(), plannedRoute: ['sys_1', 'sys_2'] };
+      const result = toggleRouteNode(map, 'sys_2');
+      expect(result.plannedRoute).toEqual(['sys_1']);
+    });
+
+    it('Action 7: Pop final node — removeRouteNode pops the last stop', () => {
+      const map: StarMapState = { ...makeChain4Map(), plannedRoute: ['sys_1', 'sys_2', 'sys_3'] };
+      const result = removeRouteNode(map, 'sys_3');
+      expect(result.plannedRoute).toEqual(['sys_1', 'sys_2']);
+    });
+
+    it('Action 8: Sever tail — re-tapping middle node truncates at index', () => {
+      const map: StarMapState = { ...makeChain4Map(), plannedRoute: ['sys_1', 'sys_2', 'sys_3'] };
+      const result = toggleRouteNode(map, 'sys_1');
+      expect(result.plannedRoute).toEqual([]);
+    });
+
+    it('Action 8: Sever tail — removeRouteNode truncates at a middle index', () => {
+      const map: StarMapState = { ...makeChain4Map(), plannedRoute: ['sys_1', 'sys_2', 'sys_3'] };
+      const result = removeRouteNode(map, 'sys_2');
+      expect(result.plannedRoute).toEqual(['sys_1']);
+    });
+
+    it('Action 3: Clear Route — resets plannedRoute to empty array', () => {
+      const map: StarMapState = { ...makeChain4Map(), plannedRoute: ['sys_1', 'sys_2', 'sys_3'] };
+      const result = clearRoute(map);
+      expect(result.plannedRoute).toEqual([]);
+    });
+
+    it('Action 8: Slice rule — node at index i removes it and all after', () => {
+      const map: StarMapState = { ...makeChain4Map(), plannedRoute: ['sys_1', 'sys_2', 'sys_3'] };
+      const result = toggleRouteNode(map, 'sys_2');
+      expect(result.plannedRoute).toEqual(['sys_1']);
+    });
+  });
+
+  describe('immutability — never mutates input state', () => {
+    it('toggleRouteNode returns new object, leaves input untouched', () => {
+      const map = makeChain4Map();
+      const result = toggleRouteNode(map, 'sys_1');
+      expect(result).not.toBe(map);
+      expect(map.plannedRoute).toEqual([]);
+    });
+
+    it('removeRouteNode returns new object, leaves input untouched', () => {
+      const map: StarMapState = { ...makeChain4Map(), plannedRoute: ['sys_1', 'sys_2'] };
+      const result = removeRouteNode(map, 'sys_1');
+      expect(result).not.toBe(map);
+      expect(map.plannedRoute).toEqual(['sys_1', 'sys_2']);
+    });
+
+    it('clearRoute returns new object, leaves input untouched', () => {
+      const map: StarMapState = { ...makeChain4Map(), plannedRoute: ['sys_1', 'sys_2'] };
+      const result = clearRoute(map);
+      expect(result).not.toBe(map);
+      expect(map.plannedRoute).toEqual(['sys_1', 'sys_2']);
+    });
+  });
+
+  describe('duplicate prevention', () => {
+    it('toggling existing route node truncates rather than duplicating', () => {
+      const map: StarMapState = { ...makeChain4Map(), plannedRoute: ['sys_1'] };
+      const result = toggleRouteNode(map, 'sys_1');
+      expect(result.plannedRoute).toEqual([]);
+    });
+
+    it('adding duplicate non-adjacent node truncates path (no double-add)', () => {
+      const map: StarMapState = { ...makeChain4Map(), plannedRoute: ['sys_1', 'sys_3'] };
+      const result = toggleRouteNode(map, 'sys_3');
+      expect(result.plannedRoute).toEqual(['sys_1']);
+    });
   });
 });

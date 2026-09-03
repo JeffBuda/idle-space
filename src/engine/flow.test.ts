@@ -25,6 +25,7 @@ const base = (over: Partial<GameState> = {}): GameState => ({
   starMap: null,
   routePath: [],
   routeTravelTimeSeconds: 0,
+  currentLocation: 'sys_0',
   ...over,
 });
 

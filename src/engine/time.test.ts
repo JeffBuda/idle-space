@@ -77,6 +77,10 @@ describe('processIdleProgression', () => {
     selectedOre: null,
     constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
     lastError: null,
+    starMap: null,
+    routePath: [],
+    routeTravelTimeSeconds: 0,
+    currentLocation: 'sys_0',
   };
 
   it('should calculate idle progression deterministically based on time deltas', () => {
@@ -151,6 +155,10 @@ describe('advanceIdleGate', () => {
     selectedOre: null,
     constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
     lastError: null,
+    starMap: null,
+    routePath: [],
+    routeTravelTimeSeconds: 0,
+    currentLocation: 'sys_0',
     ...over,
   });
   const gate = (remaining: number, startedAt: number) => ({
