@@ -18,7 +18,11 @@ import { LogStorageService } from './storage';
 import { LogCategory } from './types';
 
 /** Pseudo-unique ID for log entries, matching the generator in logger.ts. */
-const generateLogEntryId = (): string => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+const generateLogEntryId = (): string => {
+  const bytes = new Uint32Array(1);
+  crypto.getRandomValues(bytes);
+  return `${Date.now()}-${bytes[0].toString(36)}`;
+};
 
 /**
  * Appends a single SW_UPDATE log entry to IndexedDB.

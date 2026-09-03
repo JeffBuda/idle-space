@@ -10,6 +10,7 @@
 // explicitly where needed. Every function returns a NEW state object; the
 // input state is never mutated (except for freshly-created local node arrays
 // during graph construction, which are not shared with any caller).
+import { createSeededRNG } from '../utils/rng';
 import {
   type StarMapNode,
   type StarMapEdge,
@@ -23,27 +24,6 @@ import {
   STAR_MAP_ZOOM_MAX,
   STAR_MAP_ZOOM_STEP,
 } from '../types/game-state';
-
-// ---------------------------------------------------------------------------
-// Seeded PRNG
-// ---------------------------------------------------------------------------
-
-/** Deterministic djb2 hash - LCG for repeatability. Pure: same seed = same seq. */
-const djb2Hash = (str: string): number => {
-  let hash = 5381;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) + hash + str.charCodeAt(i)) & 0x7fffffff;
-  }
-  return hash || 1;
-};
-
-const createSeededRNG = (seed: string) => {
-  let state = djb2Hash(seed);
-  return () => {
-    state = (state * 1103515245 + 12345) & 0x7fffffff;
-    return state / 0x7fffffff;
-  };
-};
 
 // ---------------------------------------------------------------------------
 // Graph generation

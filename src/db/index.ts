@@ -61,11 +61,22 @@ const APP_STATUS_DEFAULT: AppStatus = {
   version: '0.1.0',
 };
 
+/**
+ * Generate a non-deterministic seed string via the Web Crypto API.
+ * Replaces Math.random() which is banned project-wide per the ESLint
+ * no-restricted-properties rule.
+ */
+const generateRngSeed = (): string => {
+  const bytes = new Uint32Array(1);
+  crypto.getRandomValues(bytes);
+  return bytes[0].toString(36);
+};
+
 const GAME_STATE_DEFAULT: GameState = {
   lastTimestamp: Date.now(),
   elapsedSeconds: 0,
   totalElapsedGameTime: 0,
-  rngSeed: Math.random().toString(36).substring(2, 15),
+  rngSeed: generateRngSeed(),
   totalDistanceKm: 0,
   version: '0.1.0',
   // Brand-new save -> the engine renders the WELCOME screen (render gate is

@@ -40,6 +40,17 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      // ---- Ban Math.random() — use crypto.getRandomValues() for entropy, ----
+      // ---- or createSeededRNG() from src/utils/rng.ts for deterministic RNG ----
+      'no-restricted-properties': [
+        'error',
+        {
+          object: 'Math',
+          property: 'random',
+          message:
+            'Math.random() is banned project-wide. Use crypto.getRandomValues() for entropy, or createSeededRNG() from src/utils/rng.ts for deterministic randomness.',
+        },
+      ],
       // ---- Architectural boundary enforcement ----
       'boundaries/dependencies': [
         2,
