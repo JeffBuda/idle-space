@@ -282,10 +282,10 @@ describe('App', () => {
     expect(screen.getByTestId('nav-star-map')).toBeInTheDocument();
   });
 
-  it('renders Chart Course button on WelcomeScreen', () => {
+  it('does NOT render Chart Course button on WelcomeScreen (R9)', () => {
     mockGameStateData.screen = 'WELCOME';
     render(<App />);
-    expect(screen.getByTestId('welcome-chart-course')).toHaveTextContent('Chart Course');
+    expect(screen.queryByTestId('welcome-chart-course')).not.toBeInTheDocument();
   });
 
   it('renders the Star Map screen when gameState.starMap is populated', async () => {
@@ -294,12 +294,56 @@ describe('App', () => {
       nodes: [{ id: 'sys_0', name: 'Test', x: 50, y: 50, status: 'current', edges: [] }],
       edges: [],
       plannedRoute: [],
-      currentLocationId: 'sys_0',
       zoomLevel: 1.0,
     };
     render(<App />);
     expect(screen.getByTestId('star-map-screen')).toBeInTheDocument();
     expect(screen.getByTestId('star-map-title')).toBeInTheDocument();
+  });
+
+  // ---------------------------------------------------------------------------
+  // R7 & R8: planet-name display and Depart/Follow Route branching
+  // ---------------------------------------------------------------------------
+  it('PlanetHubScreen displays planet name derived from currentLocation (R7)', () => {
+    mockGameStateData.screen = 'PLANET';
+    mockGameStateData.currentLocation = 'sys_0';
+    mockGameStateData.starMap = {
+      nodes: [{ id: 'sys_0', name: 'Sol', x: 50, y: 50, status: 'visited', edges: [] }],
+      edges: [],
+      plannedRoute: [],
+      zoomLevel: 1.0,
+    };
+    render(<App />);
+    expect(screen.getByTestId('planet-hub-title')).toHaveTextContent('Orbiting Sol');
+  });
+
+  it('PlanetHubScreen Depart button reads "Follow Route" when routePath is non-empty (R8)', () => {
+    mockGameStateData.screen = 'PLANET';
+    mockGameStateData.routePath = [
+      { from: 'sys_0', to: 'sys_1', path: ['sys_0', 'sys_1'], hops: 1 },
+    ];
+    render(<App />);
+    expect(screen.getByTestId('nav-space-travel')).toHaveTextContent('Follow Route');
+  });
+
+  it('PlanetHubScreen Depart button reads "Depart" when routePath is empty (R8)', () => {
+    mockGameStateData.screen = 'PLANET';
+    mockGameStateData.routePath = [];
+    render(<App />);
+    expect(screen.getByTestId('nav-space-travel')).toHaveTextContent('Depart');
+  });
+
+  it('SpaceTravelScreen displays approaching planet name (R7)', () => {
+    mockGameStateData.screen = 'SPACE_TRAVEL';
+    mockGameStateData.currentLocation = 'sys_0';
+    mockGameStateData.starMap = {
+      nodes: [{ id: 'sys_0', name: 'Sol', x: 50, y: 50, status: 'current', edges: [] }],
+      edges: [],
+      plannedRoute: [],
+      zoomLevel: 1.0,
+    };
+    render(<App />);
+    expect(screen.getByTestId('space-travel-title')).toHaveTextContent('Approaching Sol');
   });
 
   // ---------------------------------------------------------------------------

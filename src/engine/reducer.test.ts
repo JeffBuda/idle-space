@@ -2,6 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { engineReducer, SPEED_KM_PER_SEC, type GameAction } from './reducer';
 import { type GameState } from './time';
+import { generateStarMap, seedInitialRoute } from './starmap';
 
 const baseState: GameState = {
   lastTimestamp: 1_000_000,
@@ -341,31 +342,33 @@ describe('onboarding flow dispatch', () => {
     selectedOre: null,
     constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
     lastError: null,
-    starMap: null,
+    starMap: seedInitialRoute(generateStarMap('test-seed', null), 'test-seed', null),
     routePath: [],
     routeTravelTimeSeconds: 0,
-    currentLocation: 'sys_0',
+    currentLocation: null,
   };
 
-  it('NAVIGATE WELCOME -> SPACE_TRAVEL starts a 30s gate and seeds lastTimestamp', () => {
+  it('NAVIGATE WELCOME -> SPACE_TRAVEL starts a gate to the first waypoint', () => {
     const r = engineReducer(flowState, { type: 'NAVIGATE', to: 'SPACE_TRAVEL' }, TIME, 'test-seed');
     expect(r.screen).toBe('SPACE_TRAVEL');
-    expect(r.idleTimer?.remainingSeconds).toBe(30);
+    // R9/R4b: first launch from "deep space" (origin=null) -> 0 hops -> 10s floor
+    expect(r.idleTimer?.remainingSeconds).toBe(10);
     expect(r.lastTimestamp).toBe(TIME);
     expect(r.lastError).toBeNull();
+    expect(r.currentLocation).toBe(r.starMap?.plannedRoute[0]);
   });
 
   it('IDLE_PROGRESSION advances the gate; COMPLETE_ACTION fires when it expires', () => {
     let s = engineReducer(flowState, { type: 'NAVIGATE', to: 'SPACE_TRAVEL' }, TIME, 'test-seed');
-    expect(s.idleTimer?.remainingSeconds).toBe(30);
-    // tick 25s -> 5s left
-    s = engineReducer(s, { type: 'IDLE_PROGRESSION' }, TIME + 25_000, 'test-seed');
-    expect(s.idleTimer?.remainingSeconds).toBe(5);
-    expect(s.idleTimer?.startedAt).toBe(TIME + 25_000);
-    // tick 5s more -> expired
-    s = engineReducer(s, { type: 'IDLE_PROGRESSION' }, TIME + 30_000, 'test-seed');
+    expect(s.idleTimer?.remainingSeconds).toBe(10);
+    // tick 8s -> 2s left
+    s = engineReducer(s, { type: 'IDLE_PROGRESSION' }, TIME + 8_000, 'test-seed');
+    expect(s.idleTimer?.remainingSeconds).toBe(2);
+    expect(s.idleTimer?.startedAt).toBe(TIME + 8_000);
+    // tick 2s more -> expired
+    s = engineReducer(s, { type: 'IDLE_PROGRESSION' }, TIME + 10_000, 'test-seed');
     expect(s.idleTimer?.remainingSeconds).toBe(0);
-    s = engineReducer(s, { type: 'COMPLETE_ACTION' }, TIME + 30_000, 'test-seed');
+    s = engineReducer(s, { type: 'COMPLETE_ACTION' }, TIME + 10_000, 'test-seed');
     expect(s.screen).toBe('PLANET');
     expect(s.idleTimer).toBeNull();
   });

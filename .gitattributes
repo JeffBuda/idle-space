@@ -1,0 +1,26 @@
+# Lock line-ending policy across platforms. The index stores LF; enforce it on all
+# checkouts so Windows clones don't drift to CRLF. Text files are normalized to LF
+# on commit; binary files are left untouched. This is policy/config only (not a
+# formatting pass — Prettier remains the single source of truth for formatting,
+# run on touched files via `npm run format`).
+* text=auto eol=lf
+
+# Explicitly exclude known binary assets from any text normalization.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.svg  text eol=lf
+*.ico  binary
+*.woff binary
+*.woff2 binary
+*.ttf  binary
+*.otf  binary
+*.mp3  binary
+*.wav  binary
+*.ogg  binary
+*.mp4  binary
+*.webm binary
+*.pdf  binary
+*.zip  binary
+*.gz   binary

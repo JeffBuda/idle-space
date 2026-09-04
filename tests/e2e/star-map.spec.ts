@@ -22,6 +22,42 @@ const clickNode = async (page: Page, nodeId: string): Promise<void> => {
   });
 };
 
+/**
+ * Write a partial game-state override into IndexedDB's `game_state` store.
+ * Used to skip the 30s Launch! gate in star-map tests by injecting a state
+ * that starts on the PLANET screen (the star map is already seeded at init).
+ */
+const writeGameState = async (page: Page, overrides: Record<string, unknown>): Promise<void> => {
+  await page.evaluate(async (overrides) => {
+    if (!('indexedDB' in window)) return;
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const req = indexedDB.open('space_idle_db');
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    const tx = db.transaction(['game_state'], 'readwrite');
+    const store = tx.objectStore('game_state');
+    const existing = await new Promise<Record<string, unknown>>((resolve, reject) => {
+      const getReq = store.get('game_state');
+      getReq.onsuccess = () => resolve(getReq.result as Record<string, unknown>);
+      getReq.onerror = () => reject(getReq.error);
+    });
+    if (existing) {
+      const merged = { ...existing, ...overrides };
+      // Deep-merge starMap so tests can override nested fields like
+      // `plannedRoute` without clobbering the generated nodes/edges graph.
+      if (overrides.starMap && existing.starMap) {
+        merged.starMap = {
+          ...(existing.starMap as Record<string, unknown>),
+          ...(overrides.starMap as Record<string, unknown>),
+        };
+      }
+      await store.put(merged, 'game_state');
+    }
+    db.close();
+  }, overrides);
+};
+
 test.describe('Star Map Flow', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
@@ -45,11 +81,17 @@ test.describe('Star Map Flow', () => {
     });
   });
 
-  const openStarMapViaWelcome = async (page: Page, testInfo?: TestInfo) => {
+  const openStarMap = async (page: Page, testInfo?: TestInfo) => {
     await page.goto('/');
+    // R9: WelcomeScreen no longer has a Chart Course button. Wait for the app to
+    // initialize and seed the star map, then inject screen=PLANET so we can open
+    // the star map via the PlanetHub "Chart Course" button.
     await expect(page.getByTestId('welcome-screen')).toBeVisible();
-    if (testInfo) await captureScreenshot(page, testInfo, 'welcome-screen', 1);
-    await page.getByTestId('welcome-chart-course').click();
+    await page.waitForTimeout(1500);
+    await writeGameState(page, { screen: 'PLANET', starMap: { plannedRoute: [] } });
+    await page.reload();
+    await expect(page.getByTestId('planet-hub-screen')).toBeVisible();
+    await page.getByTestId('nav-star-map').click();
     await expect(page.getByTestId('star-map-screen')).toBeVisible();
     // Dismiss iOS install banner if present (it covers bottom UI on small viewports)
     if (await page.getByTestId('ios-install-dismiss').isVisible()) {
@@ -58,14 +100,14 @@ test.describe('Star Map Flow', () => {
     if (testInfo) await captureScreenshot(page, testInfo, 'star-map-empty', 2);
   };
 
-  test('Welcome screen Chart Course navigates to star map', async ({ page }, testInfo) => {
-    await openStarMapViaWelcome(page, testInfo);
+  test('Planet hub Chart Course navigates to star map', async ({ page }, testInfo) => {
+    await openStarMap(page, testInfo);
     await expect(page.getByTestId('star-map-title')).toHaveText('Stellar Cartography');
-    await captureScreenshot(page, testInfo, 'star-map-title-visible', 3);
+    if (testInfo) await captureScreenshot(page, testInfo, 'star-map-title-visible', 3);
   });
 
   test('star map renders 10 nodes and zoom controls', async ({ page }, testInfo) => {
-    await openStarMapViaWelcome(page, testInfo);
+    await openStarMap(page, testInfo);
     for (let i = 0; i < 10; i++) {
       await expect(page.getByTestId(`node-sys_${i}`)).toBeVisible();
     }
@@ -76,7 +118,7 @@ test.describe('Star Map Flow', () => {
   });
 
   test('clicking a non-current node adds it to the itinerary', async ({ page }, testInfo) => {
-    await openStarMapViaWelcome(page, testInfo);
+    await openStarMap(page, testInfo);
     await clickNode(page, 'sys_1');
     await expect(page.getByTestId('itinerary-list')).toBeVisible();
     await expect(page.getByTestId('stop-name-sys_1')).toBeVisible();
@@ -85,7 +127,7 @@ test.describe('Star Map Flow', () => {
   });
 
   test('clicking a planned node again removes it (toggle)', async ({ page }, testInfo) => {
-    await openStarMapViaWelcome(page, testInfo);
+    await openStarMap(page, testInfo);
     // sys_1 is directly adjacent to sys_0 (ring neighbor), so it can be added
     await clickNode(page, 'sys_1');
     await expect(page.getByTestId('stop-name-sys_1')).toBeVisible();
@@ -98,7 +140,7 @@ test.describe('Star Map Flow', () => {
   test('clicking a non-adjacent node is rejected (Action 2: Invalid Initial Hop)', async ({
     page,
   }, testInfo) => {
-    await openStarMapViaWelcome(page, testInfo);
+    await openStarMap(page, testInfo);
     // sys_5 is NOT adjacent to sys_0 (deterministic seed yields no shortcut edge)
     await clickNode(page, 'sys_5');
     // Route should remain empty — the tap is silently ignored
@@ -109,7 +151,7 @@ test.describe('Star Map Flow', () => {
   test('clicking a non-adjacent node after first hop is rejected (Action 5)', async ({
     page,
   }, testInfo) => {
-    await openStarMapViaWelcome(page, testInfo);
+    await openStarMap(page, testInfo);
     // sys_1 is adjacent to sys_0 → valid first hop
     await clickNode(page, 'sys_1');
     await expect(page.getByTestId('stop-name-sys_1')).toBeVisible();
@@ -124,7 +166,7 @@ test.describe('Star Map Flow', () => {
   test('tapping a middle node in the route severs the tail (Action 8)', async ({
     page,
   }, testInfo) => {
-    await openStarMapViaWelcome(page, testInfo);
+    await openStarMap(page, testInfo);
     // Build a 3-stop route: sys_1 → sys_2 → sys_3
     await clickNode(page, 'sys_1');
     await clickNode(page, 'sys_2');
@@ -137,7 +179,7 @@ test.describe('Star Map Flow', () => {
   });
 
   test('tapping the last node in the route pops it (Action 7)', async ({ page }, testInfo) => {
-    await openStarMapViaWelcome(page, testInfo);
+    await openStarMap(page, testInfo);
     await clickNode(page, 'sys_1');
     await clickNode(page, 'sys_2');
     await expect(page.getByTestId('itinerary-list').getByRole('listitem')).toHaveCount(2);
@@ -149,7 +191,7 @@ test.describe('Star Map Flow', () => {
   });
 
   test('remove-stop button removes a specific itinerary stop', async ({ page }, testInfo) => {
-    await openStarMapViaWelcome(page, testInfo);
+    await openStarMap(page, testInfo);
     // Build a contiguous route: sys_1 (adjacent to sys_0) → sys_2 (adjacent to sys_1)
     await clickNode(page, 'sys_1');
     await clickNode(page, 'sys_2');
@@ -161,7 +203,7 @@ test.describe('Star Map Flow', () => {
   });
 
   test('clear route button empties the itinerary (Action 3)', async ({ page }, testInfo) => {
-    await openStarMapViaWelcome(page, testInfo);
+    await openStarMap(page, testInfo);
     await clickNode(page, 'sys_1');
     await clickNode(page, 'sys_2');
     await captureScreenshot(page, testInfo, 'multi-stop-before-clear', 3);
@@ -171,7 +213,7 @@ test.describe('Star Map Flow', () => {
   });
 
   test('Go button with valid route navigates to space travel', async ({ page }, testInfo) => {
-    await openStarMapViaWelcome(page, testInfo);
+    await openStarMap(page, testInfo);
     await clickNode(page, 'sys_1');
     await captureScreenshot(page, testInfo, 'route-ready-to-go', 2);
     await page.getByTestId('go-btn').click();
@@ -180,7 +222,7 @@ test.describe('Star Map Flow', () => {
   });
 
   test('zoom in/out changes zoom level display', async ({ page }, testInfo) => {
-    await openStarMapViaWelcome(page, testInfo);
+    await openStarMap(page, testInfo);
     await page.getByTestId('zoom-in').click();
     const zoomText = await page.getByTestId('zoom-level').textContent();
     expect(parseInt(zoomText || '0')).toBeGreaterThan(100);
@@ -190,7 +232,7 @@ test.describe('Star Map Flow', () => {
   test('zoom buttons are exactly 44x44px per iOS HIG (DESIGN BIBLE §4.1)', async ({
     page,
   }, testInfo) => {
-    await openStarMapViaWelcome(page, testInfo);
+    await openStarMap(page, testInfo);
     const zoomInBtn = page.getByTestId('zoom-in');
     const zoomOutBtn = page.getByTestId('zoom-out');
     await expect(zoomInBtn).toBeVisible();
@@ -208,7 +250,7 @@ test.describe('Star Map Flow', () => {
   });
 
   test('remove-stop buttons are exactly 44x44px per iOS HIG', async ({ page }, testInfo) => {
-    await openStarMapViaWelcome(page, testInfo);
+    await openStarMap(page, testInfo);
     await clickNode(page, 'sys_1');
     await expect(page.getByTestId('stop-name-sys_1')).toBeVisible();
     const removeStopBtn = page.getByTestId('remove-stop-sys_1');
@@ -221,7 +263,7 @@ test.describe('Star Map Flow', () => {
   });
 
   test('edges connecting route nodes are highlighted green', async ({ page }, testInfo) => {
-    await openStarMapViaWelcome(page, testInfo);
+    await openStarMap(page, testInfo);
     // Add two stops to create a route with an edge between them
     await clickNode(page, 'sys_1');
     await clickNode(page, 'sys_2');
@@ -245,7 +287,7 @@ test.describe('Star Map Flow', () => {
   });
 
   test('Back button returns to PLANET from star map', async ({ page }, testInfo) => {
-    await openStarMapViaWelcome(page, testInfo);
+    await openStarMap(page, testInfo);
     await page.getByTestId('back-btn').click();
     await expect(page.getByTestId('planet-hub-screen')).toBeVisible();
     await captureScreenshot(page, testInfo, 'back-to-planet', 3);
@@ -254,6 +296,21 @@ test.describe('Star Map Flow', () => {
 
 test.describe.serial('Star Map IndexedDB Persistence', () => {
   test.use({ viewport: { width: 390, height: 844 } });
+
+  test.beforeEach(async ({ page }) => {
+    // Deterministic seed: same override as the main describe block so the
+    // star map topology is reproducible (sys_5 NOT adjacent to sys_0/sys_1).
+    await page.addInitScript(() => {
+      crypto.getRandomValues = ((
+        arr: Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray,
+      ) => {
+        for (let i = 0; i < arr.length; i++) {
+          arr[i] = 0;
+        }
+        return arr;
+      }) as unknown as typeof crypto.getRandomValues;
+    });
+  });
 
   test.afterEach(async ({ page }) => {
     await page.evaluate(async () => {
@@ -275,7 +332,11 @@ test.describe.serial('Star Map IndexedDB Persistence', () => {
 
   test('star map state persists across page reloads', async ({ page }, testInfo) => {
     await page.goto('/');
-    await page.getByTestId('welcome-chart-course').click();
+    await expect(page.getByTestId('welcome-screen')).toBeVisible();
+    await page.waitForTimeout(1500);
+    await writeGameState(page, { screen: 'PLANET', starMap: { plannedRoute: [] } });
+    await page.reload();
+    await page.getByTestId('nav-star-map').click();
     await expect(page.getByTestId('star-map-screen')).toBeVisible();
     if (await page.getByTestId('ios-install-dismiss').isVisible()) {
       await page.getByTestId('ios-install-dismiss').click();
@@ -291,7 +352,12 @@ test.describe.serial('Star Map IndexedDB Persistence', () => {
 
   test('plotted route survives browser restart', async ({ page }, testInfo) => {
     await page.goto('/');
-    await page.getByTestId('welcome-chart-course').click();
+    await expect(page.getByTestId('welcome-screen')).toBeVisible();
+    await page.waitForTimeout(1500);
+    await writeGameState(page, { screen: 'PLANET', starMap: { plannedRoute: [] } });
+    await page.reload();
+    await page.getByTestId('nav-star-map').click();
+    await expect(page.getByTestId('star-map-screen')).toBeVisible();
     if (await page.getByTestId('ios-install-dismiss').isVisible()) {
       await page.getByTestId('ios-install-dismiss').click();
     }

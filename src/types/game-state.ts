@@ -88,8 +88,10 @@ export interface StarMapState {
   nodes: StarMapNode[];
   edges: StarMapEdge[];
   plannedRoute: string[]; /* ordered destination node IDs */
-  currentLocationId: string;
   zoomLevel: number;
+  // NOTE: `currentLocationId` was removed — the canonical player location now lives
+  // solely on `GameState.currentLocation` (see R2). The star-map component derives
+  // the "current" node marker from that field at render time.
 }
 
 /**
@@ -131,8 +133,10 @@ export interface GameState {
    */
   lastError: string | null;
   /**
-   * Star map graph + planned route state. `null` until the player first
-   * enters the STAR_MAP screen (lazy generation by rngSeed).
+   * Star map graph + planned route state. Seeded at new-game initialization
+   * (see R3) so it is non-null from the start; preserved across navigation
+   * (the star-map X-close is a non-state screen change, R11). The null branch
+   * in `enterStarMap` is retained only as an old-save migration path (R10).
    */
   starMap: StarMapState | null;
   /** Computed BFS route segments (from->to with hop-by-hop path). */
@@ -140,12 +144,14 @@ export interface GameState {
   /** Total gate time in seconds for the current route (set by STAR_MAP_GO). */
   routeTravelTimeSeconds: number;
   /**
-   * The player's current star system ID. Updated to the route's final
-   * destination when a route is confirmed (STAR_MAP_GO). Survives navigation
-   * away from the star map so enterStarMap can generate the graph centered
-   * on the player's latest position.
+   * The player's canonical current star system ID. `null` at new-game init
+   * ("deep space" / pre-launch); set to the first waypoint (plannedRoute[0])
+   * when the first route is confirmed (STAR_MAP_GO) or on first Launch! (R9).
+   * This is the SINGLE source of truth for location — `StarMapState` no
+   * longer holds its own copy. Planet-name lookups derive the title from this
+   * field via starMap.nodes (see R7). Survives navigation away from star map.
    */
-  currentLocation: string;
+  currentLocation: string | null;
 }
 
 /** Discriminated union of all engine actions, shared by engine + hooks + tests. */

@@ -111,7 +111,7 @@ async function setupFastGates(page: Page): Promise<void> {
 async function navigateToMining(page: Page): Promise<void> {
   await page.getByTestId('launch-btn').click();
   await expect(page.getByTestId('space-travel-screen')).toBeVisible();
-  await expect(page.getByTestId('complete-action-btn')).toBeVisible({ timeout: 10000 });
+  await expect(page.getByTestId('complete-action-btn')).toBeVisible({ timeout: 15000 });
   await page.getByTestId('complete-action-btn').click();
   await expect(page.getByTestId('planet-hub-screen')).toBeVisible({ timeout: 10000 });
   await page.getByTestId('nav-landing').click();

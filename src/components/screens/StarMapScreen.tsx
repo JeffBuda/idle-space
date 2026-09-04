@@ -27,6 +27,7 @@ export interface StarMapScreenProps {
 }
 
 export const StarMapScreen = ({
+  gameState,
   starMap,
   routePath,
   routeTravelTimeSeconds,
@@ -40,7 +41,11 @@ export const StarMapScreen = ({
 }: StarMapScreenProps) => {
   if (!starMap) return null;
 
-  const { nodes, plannedRoute, zoomLevel, currentLocationId } = starMap;
+  const { nodes, plannedRoute, zoomLevel } = starMap;
+  // R2/R8: the canonical player location now lives on GameState.currentLocation,
+  // not on StarMapState.currentLocationId (removed). Derive here for rendering —
+  // this is a read-only lookup, not a mirrored/owned field.
+  const currentLocation = gameState?.currentLocation ?? null;
 
   // Flatten route segments into an ordered, deduplicated list of node IDs.
   // Each StarMapRouteSegment.path is an ordered array of node IDs for one leg;
@@ -53,7 +58,7 @@ export const StarMapScreen = ({
   }, []);
 
   // Determine the node IDs that are part of the computed route path visual.
-  const pathNodeIds = new Set(routeNodeIds.slice(1, -1).filter((id) => id !== currentLocationId));
+  const pathNodeIds = new Set(routeNodeIds.slice(1, -1).filter((id) => id !== currentLocation));
 
   // Build a set of route edge pairs for highlighting edges in the selected route.
   // Per the UI Interaction Specification: edges are active when source and target
@@ -63,8 +68,8 @@ export const StarMapScreen = ({
   if (plannedRoute.length > 0) {
     // Edge from the player's current location to the first route stop
     const first = plannedRoute[0]!;
-    routeEdgePairs.add(`${currentLocationId}->${first}`);
-    routeEdgePairs.add(`${first}->${currentLocationId}`);
+    routeEdgePairs.add(`${currentLocation}->${first}`);
+    routeEdgePairs.add(`${first}->${currentLocation}`);
     for (let i = 0; i < plannedRoute.length - 1; i++) {
       const a = plannedRoute[i];
       const b = plannedRoute[i + 1];
@@ -113,11 +118,12 @@ export const StarMapScreen = ({
         </div>
         <button
           type="button"
-          className="btn btn--secondary"
+          className="btn btn--icon btn--small"
           data-testid="back-btn"
           onClick={onBack}
+          aria-label="Close star map"
         >
-          Back
+          ✕
         </button>
       </header>
 
@@ -170,7 +176,7 @@ export const StarMapScreen = ({
 
           {/* Render nodes */}
           {nodes.map((node) => {
-            const isCurrent = node.id === currentLocationId;
+            const isCurrent = node.id === currentLocation;
             const isInRoute = plannedRoute.includes(node.id);
             const nodeClass = `star-map-node star-map-node--${node.status}`;
             return (

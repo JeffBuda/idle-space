@@ -47,7 +47,6 @@ const makeChainMap = (): StarMapState => ({
   nodes: chainNodes,
   edges: [],
   plannedRoute: [],
-  currentLocationId: 'sys_0',
   zoomLevel: 1.0,
 });
 
@@ -55,7 +54,6 @@ const makeChain4Map = (): StarMapState => ({
   nodes: chain4Nodes,
   edges: [],
   plannedRoute: [],
-  currentLocationId: 'sys_0',
   zoomLevel: 1.0,
 });
 
@@ -63,7 +61,6 @@ const makeDisconnMap = (): StarMapState => ({
   nodes: disconnectedNodes,
   edges: [],
   plannedRoute: [],
-  currentLocationId: 'sys_0',
   zoomLevel: 1.0,
 });
 
@@ -83,9 +80,8 @@ describe('generateStarMap', () => {
     expect(makeMap().nodes).toHaveLength(10);
   });
 
-  it('sets currentLocationId to sys_0 and marks it current', () => {
+  it('marks sys_0 as the current node', () => {
     const map = makeMap();
-    expect(map.currentLocationId).toBe('sys_0');
     expect(map.nodes[0].status).toBe('current');
   });
 
@@ -278,33 +274,33 @@ describe('removeRouteNode', () => {
 describe('validateRoute', () => {
   it('returns true for a valid route', () => {
     const map: StarMapState = { ...makeChain4Map(), plannedRoute: ['sys_1', 'sys_2', 'sys_3'] };
-    expect(validateRoute(map)).toBe(true);
+    expect(validateRoute(map, 'sys_0')).toBe(true);
   });
 
   it('returns false for an empty route', () => {
-    expect(validateRoute(makeChainMap())).toBe(false);
+    expect(validateRoute(makeChainMap(), 'sys_0')).toBe(false);
   });
 
   it('returns false for duplicate stops', () => {
     const map: StarMapState = { ...makeChainMap(), plannedRoute: ['sys_1', 'sys_1'] };
-    expect(validateRoute(map)).toBe(false);
+    expect(validateRoute(map, 'sys_0')).toBe(false);
   });
 
   it('returns false for a nonexistent node', () => {
     const map: StarMapState = { ...makeChainMap(), plannedRoute: ['sys_99'] };
-    expect(validateRoute(map)).toBe(false);
+    expect(validateRoute(map, 'sys_0')).toBe(false);
   });
 
   it('returns false for an unreachable stop', () => {
     const map: StarMapState = { ...makeDisconnMap(), plannedRoute: ['sys_3'] };
-    expect(validateRoute(map)).toBe(false);
+    expect(validateRoute(map, 'sys_0')).toBe(false);
   });
 });
 
 describe('computeRoutePath', () => {
   it('returns one segment per leg for a valid route', () => {
     const map: StarMapState = { ...makeChain4Map(), plannedRoute: ['sys_1', 'sys_2', 'sys_3'] };
-    const segments = computeRoutePath(map);
+    const segments = computeRoutePath(map, 'sys_0');
     expect(segments).not.toBeNull();
     expect(segments).toHaveLength(3);
     expect(segments![0].from).toBe('sys_0');
@@ -314,7 +310,7 @@ describe('computeRoutePath', () => {
 
   it('returns null when a leg is unreachable', () => {
     const map: StarMapState = { ...makeDisconnMap(), plannedRoute: ['sys_3'] };
-    expect(computeRoutePath(map)).toBeNull();
+    expect(computeRoutePath(map, 'sys_0')).toBeNull();
   });
 });
 
@@ -368,7 +364,7 @@ describe('clearRoute', () => {
 describe('confirmRoute', () => {
   it('validates and computes a valid route', () => {
     const map: StarMapState = { ...makeChain4Map(), plannedRoute: ['sys_1', 'sys_2'] };
-    const result = confirmRoute(map, 'seed');
+    const result = confirmRoute(map, 'sys_0');
     expect(result.error).toBeNull();
     expect(result.routePath).toHaveLength(2);
     expect(result.routeTravelTimeSeconds).toBe(10);
@@ -377,7 +373,7 @@ describe('confirmRoute', () => {
 
   it('rejects an invalid route with an error message', () => {
     const map: StarMapState = { ...makeDisconnMap(), plannedRoute: ['sys_3'] };
-    const result = confirmRoute(map, 'seed');
+    const result = confirmRoute(map, 'sys_0');
     expect(result.error).not.toBeNull();
     expect(result.routePath).toEqual([]);
     expect(result.routeTravelTimeSeconds).toBe(0);

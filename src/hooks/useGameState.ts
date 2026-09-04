@@ -4,6 +4,7 @@ import { calculateElapsedSeconds } from '../utils/time';
 import { type GameState } from '../engine/time';
 import type { IdleGateStatus, IdleRewardSummary, Screen } from '../types/game-state';
 import { engineReducer, type GameAction } from '../engine/reducer';
+import { createInitialGameState } from '../engine/flow';
 import { withLogging } from '../logging/logger';
 import { getGameState, saveGameState, initGameState, initDB, migrateGameState } from '../db';
 
@@ -64,16 +65,27 @@ export const useGameState = (): UseGameStateResult => {
 
       let savedState = await getGameState();
 
+      const now = Date.now();
+
       if (!savedState) {
-        savedState = await initGameState();
+        // Fresh save (R3 + R12): seed the star map + initial route via the pure
+        // engine function. initGameState() persists the db record and supplies a
+        // crypto-random rngSeed; createInitialGameState re-derives the canonical
+        // new-game state (starMap non-null, plannedRoute: [P], currentLocation: null).
+        const seeded = await initGameState();
+        savedState = createInitialGameState(
+          seeded.rngSeed,
+          now,
+          seeded.constants.defaultActionTimeSeconds,
+          seeded.constants.rareOreTimeMultiplier,
+        );
       } else {
         // Migrate legacy saves (persisted before the onboarding flow) that lack
-        // `screen`, `oreCounts`, `constants`, etc. — otherwise screen is
-        // undefined and App.tsx renders nothing inside <main>.
+        // `screen`, `oreCounts`, `constants`, etc. - otherwise screen is undefined
+        // and App.tsx renders nothing inside <main>.
         savedState = migrateGameState(savedState);
       }
 
-      const now = Date.now();
       const elapsed = calculateElapsedSeconds(savedState.lastTimestamp, now);
 
       // Capture ore counts BEFORE wake processing — processMiningGate in the

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { navigate, hurry, selectOre, completeAction, processFlowAction } from './flow';
 import { type GameState, type Screen } from '../types/game-state';
+import { generateStarMap, seedInitialRoute } from '../engine/starmap';
 
 const TIME = 2_000_000;
 const newGate = (screen: Screen, remaining: number) => ({
@@ -22,29 +23,32 @@ const base = (over: Partial<GameState> = {}): GameState => ({
   selectedOre: null,
   constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
   lastError: null,
-  starMap: null,
+  starMap: seedInitialRoute(generateStarMap('s', null), 's', null),
   routePath: [],
   routeTravelTimeSeconds: 0,
-  currentLocation: 'sys_0',
+  currentLocation: null,
   ...over,
 });
 
 describe('onboarding flow state machine', () => {
   describe('legal navigation', () => {
-    it('WELCOME -> SPACE_TRAVEL starts a 30s gate and seeds lastTimestamp', () => {
+    it('WELCOME -> SPACE_TRAVEL starts a gate to the first waypoint', () => {
       const n = navigate(
         base({ screen: 'WELCOME' }),
         { type: 'NAVIGATE', to: 'SPACE_TRAVEL' },
         TIME,
       );
       expect(n.screen).toBe('SPACE_TRAVEL');
+      // R9/R4b: first launch from "deep space" (origin=null) to the seeded
+      // first waypoint. Null-origin degenerate leg has 0 hops -> 10s floor.
       expect(n.idleTimer).toEqual({
         screen: 'SPACE_TRAVEL',
-        targetSeconds: 30,
-        remainingSeconds: 30,
+        targetSeconds: 10,
+        remainingSeconds: 10,
         startedAt: TIME,
       });
       expect(n.lastTimestamp).toBe(TIME);
+      expect(n.currentLocation).toBe(n.starMap?.plannedRoute[0]);
     });
     it('PLANET -> LANDING starts a 30s gate', () => {
       const n = navigate(base(), { type: 'NAVIGATE', to: 'LANDING' }, TIME);
