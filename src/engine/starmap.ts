@@ -190,6 +190,24 @@ export const nodesConnected = (nodes: StarMapNode[], a: string, b: string): bool
 export const getNodeById = (nodes: StarMapNode[], id: string): StarMapNode | undefined =>
   nodes.find((n) => n.id === id);
 
+/**
+ * Resolve a star-system ID (e.g. `GameState.currentLocation`) to its display
+ * name by looking it up in the node list. Returns a safe fallback when the
+ * star map is null or the node can't be found, so UI components never crash
+ * on pre-launch (`null`) or migration states.
+ *
+ * Pure: no Date/window/DOM — safe to call from both engine tests and React.
+ */
+export const getNodeName = (
+  nodes: StarMapNode[] | null,
+  id: string | null,
+  fallback = 'Planet X',
+): string => {
+  if (!nodes || !id) return fallback;
+  const node = getNodeById(nodes, id);
+  return node?.name ?? fallback;
+};
+
 /** Check if two nodes share a direct edge (adjacency, not BFS reachability). */
 export const isEdgeBetween = (nodes: StarMapNode[], a: string, b: string): boolean => {
   const fromNode = getNodeById(nodes, a);

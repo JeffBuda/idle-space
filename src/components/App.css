@@ -121,6 +121,11 @@ main {
   border-radius: var(--radius-card);
   padding: var(--space-xl);
   text-align: left;
+  height: calc(100vh - var(--safe-area-top) - var(--safe-area-bottom) - var(--space-xl));
+  padding-bottom: max(var(--space-xl), var(--safe-area-bottom));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 .flow-screen h2 {
   font-size: var(--font-size-125);

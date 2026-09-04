@@ -118,11 +118,12 @@ export const StarMapScreen = ({
         </div>
         <button
           type="button"
-          className="btn btn--secondary"
+          className="btn btn--icon btn--small"
           data-testid="back-btn"
           onClick={onBack}
+          aria-label="Close star map"
         >
-          Back
+          ✕
         </button>
       </header>
 

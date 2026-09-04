@@ -131,13 +131,11 @@ const App = () => {
         {gameState && (
           <>
             {screen === 'WELCOME' && (
-              <WelcomeScreen
-                onLaunch={() => dispatch({ type: 'NAVIGATE', to: 'SPACE_TRAVEL' })}
-                onChartCourse={handleChartCourse}
-              />
+              <WelcomeScreen onLaunch={() => dispatch({ type: 'NAVIGATE', to: 'SPACE_TRAVEL' })} />
             )}
             {screen === 'SPACE_TRAVEL' && (
               <SpaceTravelScreen
+                gameState={gameState}
                 gate={gate}
                 onHurry={() => dispatch({ type: 'HURRY' })}
                 onComplete={() => dispatch({ type: 'COMPLETE_ACTION' })}

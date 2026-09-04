@@ -346,9 +346,9 @@ describe('StarMapScreen', () => {
       expect(screen.getByLabelText('Zoom out')).toBeInTheDocument();
     });
 
-    it('back button has accessible name from text content', () => {
+    it('back button has accessible name from aria-label', () => {
       renderScreen(generateStarMap('test-seed', 'sys_0'));
-      expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Close star map' })).toBeInTheDocument();
     });
   });
 
