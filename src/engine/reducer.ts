@@ -8,9 +8,9 @@
 // All time/seed values are passed in as explicit parameters for
 // deterministic testability.
 import { advanceIdleGate, processIdleProgression } from './time';
-import { processFlowAction, makeTimerWithTarget } from './flow';
+import { processFlowAction, setupNextTravelLeg } from './flow';
 import { processMiningGate } from './mining';
-import { toggleRouteNode, removeRouteNode, clearRoute, handleZoom, confirmRoute } from './starmap';
+import { toggleRouteNode, removeRouteNode, clearRoute, handleZoom } from './starmap';
 import type { GameState, GameAction } from '../types/game-state';
 
 /**
@@ -77,7 +77,7 @@ export const engineReducer: EngineReducerFn = (
       return processFlowAction(prevState, action, currentTime);
     case 'STAR_MAP_NODE_TOGGLE': {
       if (!prevState.starMap) return prevState;
-      const starMap = toggleRouteNode(prevState.starMap, action.nodeId);
+            const starMap = toggleRouteNode(prevState.starMap, action.nodeId, prevState.currentLocation);
       return { ...prevState, starMap };
     }
 
@@ -106,34 +106,9 @@ export const engineReducer: EngineReducerFn = (
     }
 
     case 'STAR_MAP_GO': {
-      if (!prevState.starMap) return prevState;
-      const result = confirmRoute(prevState.starMap, prevState.rngSeed);
-      if (result.error) {
-        return { ...prevState, lastError: result.error };
-      }
-      // Advance the player's current location to the route's final destination.
-      const newCurrentLocation =
-        prevState.starMap.plannedRoute.length > 0
-          ? prevState.starMap.plannedRoute[prevState.starMap.plannedRoute.length - 1]!
-          : prevState.starMap.currentLocationId;
-      // Mark the old current-location node as 'visited' in the star map graph
-      // so it renders with the visited style on future visits.
-      const updatedStarMap = { ...result.starMap, currentLocationId: newCurrentLocation };
-      return {
-        ...prevState,
-        starMap: updatedStarMap,
-        currentLocation: newCurrentLocation,
-        routePath: result.routePath,
-        routeTravelTimeSeconds: result.routeTravelTimeSeconds,
-        screen: 'SPACE_TRAVEL',
-        idleTimer: makeTimerWithTarget(
-          prevState,
-          'SPACE_TRAVEL',
-          result.routeTravelTimeSeconds,
-          currentTime,
-        ),
-        lastError: null,
-      };
+      // R5/R8: single-leg gate to plannedRoute[0]. Shared via setupNextTravelLeg
+      // (defined in flow.ts) so the Depart branch reuses identical logic (DRY).
+      return setupNextTravelLeg(prevState, currentTime);
     }
 
     default:

@@ -65,7 +65,10 @@ const addToAdjacency = (nodes: StarMapNode[], a: string, b: string): void => {
 };
 
 /** Generate a connected graph (STAR_MAP_NODE_COUNT nodes) by seed. Ring + extras. */
-export const generateStarMap = (seed: string, currentNodeId: string = 'sys_0'): StarMapState => {
+export const generateStarMap = (
+  seed: string,
+  currentNodeId: string | null = null,
+): StarMapState => {
   const rng = createSeededRNG(seed);
   const nodes: StarMapNode[] = [];
   const edges: StarMapEdge[] = [];
@@ -226,7 +229,11 @@ export const isAdjacent = (state: StarMapState, from: string, to: string): boole
  *
  * Pure: returns new StarMapState, never mutates input.
  */
-export const toggleRouteNode = (state: StarMapState, nodeId: string): StarMapState => {
+export const toggleRouteNode = (
+  state: StarMapState,
+  nodeId: string,
+  origin: string | null = null,
+): StarMapState => {
   const node = getNodeById(state.nodes, nodeId);
   if (!node || node.status === 'current') return state;
 
@@ -237,14 +244,21 @@ export const toggleRouteNode = (state: StarMapState, nodeId: string): StarMapSta
   }
 
   // Validate direct-edge adjacency: must share an edge with the last stop
-  // (or with currentLocation when the route is empty)
+  // (or with `origin` — passed from GameState.currentLocation — when the route
+  // is empty). R2: GameState.currentLocation is the sole source of truth; the
+  // call here is an optimization (the reducer passes it explicitly). When
+  // `origin` is omitted (e.g. tests), fall back to deriving it from the node
+  // marked `status === 'current'` in the star map — this is read-only and does
+  // NOT reintroduce a mirrored location field.
   const referenceId =
     state.plannedRoute.length > 0
       ? state.plannedRoute[state.plannedRoute.length - 1]
-      : state.currentLocationId;
+      : origin ??
+        state.nodes.find((n) => n.status === 'current')?.id ??
+        null;
 
-  if (!isAdjacent(state, referenceId, nodeId)) {
-    return state; // not directly connected — reject silently
+  if (referenceId === null || !isAdjacent(state, referenceId, nodeId)) {
+    return state; // no origin yet (pre-launch) or not directly connected — reject
   }
 
   return {
@@ -273,11 +287,19 @@ export const removeRouteNode = (state: StarMapState, nodeId: string): StarMapSta
 /**
  * Compute the full route path across all waypoints via BFS pathfinding.
  * Returns array of route segments (one per leg) or null if any leg is unreachable.
+ *
+ * Origin is now taken from `GameState.currentLocation` (R2 — the single source of
+ * truth) rather than `StarMapState.currentLocationId` (removed). The caller passes
+ * the origin node ID explicitly so this function stays pure and engine-only.
  */
-export const computeRoutePath = (state: StarMapState): StarMapRouteSegment[] | null => {
+export const computeRoutePath = (
+  state: StarMapState,
+  origin: string | null,
+): StarMapRouteSegment[] | null => {
   if (state.plannedRoute.length === 0) return [];
-
-  const waypoints = [state.currentLocationId, ...state.plannedRoute];
+  // If origin is null (fresh, unlaunched game), BFS has no start node -> route
+  // is not yet active; return [] rather than failing.
+  const waypoints = origin === null ? [...state.plannedRoute] : [origin, ...state.plannedRoute];
   const segments: StarMapRouteSegment[] = [];
 
   for (let i = 0; i < waypoints.length - 1; i++) {
@@ -292,9 +314,10 @@ export const computeRoutePath = (state: StarMapState): StarMapRouteSegment[] | n
 
 /**
  * Validate the planned route: non-empty, no duplicates, all nodes exist,
- * and every leg is pathable via BFS.
+ * and every leg is pathable via BFS from the given origin.
+ * Origin is `GameState.currentLocation` (R2 — single source of truth).
  */
-export const validateRoute = (state: StarMapState): boolean => {
+export const validateRoute = (state: StarMapState, origin: string | null): boolean => {
   if (state.plannedRoute.length === 0) return false;
   const seen = new Set<string>();
   for (const id of state.plannedRoute) {
@@ -304,7 +327,7 @@ export const validateRoute = (state: StarMapState): boolean => {
   for (const id of state.plannedRoute) {
     if (!getNodeById(state.nodes, id)) return false;
   }
-  if (computeRoutePath(state) === null) return false;
+  if (computeRoutePath(state, origin) === null) return false;
   return true;
 };
 
@@ -320,12 +343,19 @@ export const estimateTravelTime = (segments: StarMapRouteSegment[]): number => {
 };
 
 /**
- * Confirm route: validate, compute path + time, mark start node as visited.
+ * Confirm route: validate the full planned route is reachable from `origin`,
+ * compute the full BFS route path + whole-route travel time, and mark the
+ * origin node as 'visited' so it renders with the visited style.
+ *
+ * Note (R5): the reducer's STAR_MAP_GO extracts only the FIRST segment
+ * (routePath[0]) to set a single-leg gate and currentLocation=plannedRoute[0].
+ * This still validates the entire route so an unreachable later waypoint
+ * rejects the whole plan up-front.
+ *
  * `error` is null on success, non-null message on failure.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const confirmRoute = (state: StarMapState, _seed: string): StarMapConfirmResult => {
-  if (!validateRoute(state)) {
+export const confirmRoute = (state: StarMapState, origin: string | null): StarMapConfirmResult => {
+  if (!validateRoute(state, origin)) {
     return {
       starMap: state,
       routePath: [],
@@ -333,11 +363,12 @@ export const confirmRoute = (state: StarMapState, _seed: string): StarMapConfirm
       error: 'Invalid route: cannot reach all destinations',
     };
   }
-  const routePath = computeRoutePath(state)!;
+  const routePath = computeRoutePath(state, origin)!;
   const travelTime = estimateTravelTime(routePath);
-  const nodes = state.nodes.map((n) =>
-    n.id === state.currentLocationId ? { ...n, status: 'visited' } : n,
-  );
+  const nodes =
+    origin === null
+      ? state.nodes
+      : state.nodes.map((n) => (n.id === origin ? { ...n, status: 'visited' } : n));
   return {
     starMap: { ...state, nodes },
     routePath,
@@ -359,6 +390,34 @@ export const handleZoom = (state: StarMapState, direction: 'in' | 'out'): StarMa
 
 /** Clear the planned route. Pure. */
 export const clearRoute = (state: StarMapState): StarMapState => ({ ...state, plannedRoute: [] });
+
+// ---------------------------------------------------------------------------
+// New-game seeding
+// ---------------------------------------------------------------------------
+
+/**
+ * Seed an initial one-waypoint route for a brand-new game (R3). Picks a random
+ * planet from the (already-generated) star map as the player's first destination.
+ *
+ * Deterministic: uses the same seeded RNG that `generateStarMap` used, so the
+ * chosen node is reproducible for a given `rngSeed`. Skips `currentLocation`
+ * (if non-null) so the route never points back at where the player stands; if
+ * `currentLocation` is null (fresh launch), any node is eligible.
+ *
+ * Pure: returns a NEW StarMapState with `plannedRoute: [P]`; never mutates input.
+ */
+export const seedInitialRoute = (
+  state: StarMapState,
+  rngSeed: string,
+  currentLocation: string | null,
+): StarMapState => {
+  const rng = createSeededRNG(rngSeed);
+  const candidates = state.nodes.filter((n) => n.id !== currentLocation);
+  // Guard: a freshly generated star map always has >=1 node, so candidates is non-empty.
+  const idx = Math.floor(rng() * candidates.length);
+  const waypoint = candidates[idx]!.id;
+  return { ...state, plannedRoute: [waypoint] };
+};
 
 // Re-export constants for convenience in tests and components
 export {
