@@ -117,7 +117,6 @@ export const generateStarMap = (
     nodes,
     edges,
     plannedRoute: [],
-    currentLocationId: currentNodeId,
     zoomLevel: 1.0,
   };
 };
@@ -253,9 +252,7 @@ export const toggleRouteNode = (
   const referenceId =
     state.plannedRoute.length > 0
       ? state.plannedRoute[state.plannedRoute.length - 1]
-      : origin ??
-        state.nodes.find((n) => n.status === 'current')?.id ??
-        null;
+      : (origin ?? state.nodes.find((n) => n.status === 'current')?.id ?? null);
 
   if (referenceId === null || !isAdjacent(state, referenceId, nodeId)) {
     return state; // no origin yet (pre-launch) or not directly connected — reject
@@ -297,12 +294,29 @@ export const computeRoutePath = (
   origin: string | null,
 ): StarMapRouteSegment[] | null => {
   if (state.plannedRoute.length === 0) return [];
-  // If origin is null (fresh, unlaunched game), BFS has no start node -> route
-  // is not yet active; return [] rather than failing.
-  const waypoints = origin === null ? [...state.plannedRoute] : [origin, ...state.plannedRoute];
   const segments: StarMapRouteSegment[] = [];
 
-  for (let i = 0; i < waypoints.length - 1; i++) {
+  // R18/R4b: first-launch case. When origin is null ("deep space" / pre-launch),
+  // there is no graph start node, so BFS cannot compute a leg FROM null. We
+  // synthesize a degenerate first segment representing "deep space -> first
+  // waypoint" with 0 hops (path is just the destination itself). estimateTravelTime
+  // then floors this to 10s. Subsequent legs use normal BFS between real nodes.
+  let waypoints: string[];
+  if (origin === null) {
+    waypoints = [...state.plannedRoute];
+    if (waypoints.length > 0) {
+      segments.push({
+        from: null as unknown as string, // deep-space placeholder (not a real node)
+        to: waypoints[0]!,
+        path: [waypoints[0]!],
+        hops: 0,
+      });
+    }
+  } else {
+    waypoints = [origin, ...state.plannedRoute];
+  }
+
+  for (let i = origin === null ? 1 : 0; i < waypoints.length - 1; i++) {
     const from = waypoints[i]!;
     const to = waypoints[i + 1]!;
     const path = findPath(state.nodes, from, to);

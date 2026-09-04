@@ -80,9 +80,8 @@ describe('generateStarMap', () => {
     expect(makeMap().nodes).toHaveLength(10);
   });
 
-  it('sets currentLocationId to sys_0 and marks it current', () => {
+  it('marks sys_0 as the current node', () => {
     const map = makeMap();
-    expect(map.currentLocationId).toBe('sys_0');
     expect(map.nodes[0].status).toBe('current');
   });
 

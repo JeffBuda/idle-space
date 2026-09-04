@@ -32,7 +32,14 @@ const renderScreen = (
 ) => {
   render(
     <StarMapScreen
-      gameState={null}
+      gameState={{
+        currentLocation: 'sys_0',
+        screen: 'STAR_MAP',
+        starMap,
+        routePath: [],
+        routeTravelTimeSeconds: 0,
+        lastError: null,
+      }}
       starMap={starMap}
       routePath={[]}
       routeTravelTimeSeconds={0}
@@ -347,7 +354,9 @@ describe('StarMapScreen', () => {
 
   describe('gameState prop', () => {
     it('accepts null gameState without errors', () => {
-      expect(() => renderScreen(generateStarMap('test-seed', 'sys_0'))).not.toThrow();
+      expect(() =>
+        renderScreen(generateStarMap('test-seed', 'sys_0'), { gameState: null }),
+      ).not.toThrow();
     });
 
     it('accepts a populated GameState without errors', () => {
@@ -361,12 +370,13 @@ describe('StarMapScreen', () => {
         screen: 'STAR_MAP',
         idleTimer: null,
         oreCounts: { commonOre: 0, rareOre: 0 },
-        selectedOre: null,
+        selectedOre: null as null,
         constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
         lastError: null,
         starMap: null,
         routePath: [],
         routeTravelTimeSeconds: 0,
+        currentLocation: 'sys_0',
       };
       renderScreen(generateStarMap('test-seed', 'sys_0'), { gameState });
       expect(screen.getByTestId('star-map-screen')).toBeInTheDocument();

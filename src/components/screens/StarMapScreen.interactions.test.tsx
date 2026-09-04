@@ -18,7 +18,14 @@ describe('StarMapScreen — Action 1 & 2: Initial Hop', () => {
   const renderWithTrackedCallbacks = (starMap: StarMapState) => {
     const { rerender } = render(
       <StarMapScreen
-        gameState={null}
+        gameState={{
+          currentLocation: 'sys_0',
+          screen: 'STAR_MAP',
+          starMap,
+          routePath: [],
+          routeTravelTimeSeconds: 0,
+          lastError: null,
+        }}
         starMap={starMap}
         routePath={[]}
         routeTravelTimeSeconds={0}
@@ -42,7 +49,14 @@ describe('StarMapScreen — Action 1 & 2: Initial Hop', () => {
   ) => {
     rerender(
       <StarMapScreen
-        gameState={null}
+        gameState={{
+          currentLocation: 'sys_0',
+          screen: 'STAR_MAP',
+          starMap: { ...starMap, plannedRoute },
+          routePath: [],
+          routeTravelTimeSeconds: travelTime,
+          lastError: null,
+        }}
         starMap={{ ...starMap, plannedRoute }}
         routePath={[]}
         routeTravelTimeSeconds={travelTime}

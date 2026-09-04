@@ -77,13 +77,31 @@ export const navigate = (
   switch (state.screen) {
     case 'WELCOME':
       if (to === 'SPACE_TRAVEL') {
-        // Launch!: seed the idle baseline to "now" so the first tick measures
-        // from real start-of-play, not the stale fresh-save timestamp.
+        // R9 - Launch!: the star map + initial one-stop route were seeded at
+        // new-game init (createInitialGameState -> seedInitialRoute). Set the
+        // canonical location to the first waypoint and start the single-leg
+        // Approaching gate (hops × 5s, floored at 10s; null origin -> 10s per
+        // R4b). Inlined rather than calling setupNextTravelLeg because first
+        // launch is guaranteed to have a non-empty plannedRoute.
+        const starMap = state.starMap;
+        if (!starMap || starMap.plannedRoute.length === 0) {
+          return { ...state, lastError: 'No route seeded for launch', screen: 'STAR_MAP' };
+        }
+        const origin = state.currentLocation; // null at first launch (R3)
+        const confirm = confirmRoute(starMap, origin);
+        if (confirm.error) return { ...state, lastError: confirm.error, screen: 'STAR_MAP' };
+        const leg = confirm.routePath[0]!;
+        const legTravelSeconds = estimateTravelTime([leg]); // R4/R4b
+        const nextWaypoint = starMap.plannedRoute[0]!;
         return {
           ...state,
           screen: 'SPACE_TRAVEL',
+          starMap: confirm.starMap,
+          currentLocation: nextWaypoint, // R5: target = plannedRoute[0]
+          routePath: confirm.routePath,
+          routeTravelTimeSeconds: legTravelSeconds,
           lastTimestamp: currentTime,
-          idleTimer: makeTimer(state, 'SPACE_TRAVEL', currentTime),
+          idleTimer: makeTimerWithTarget(state, 'SPACE_TRAVEL', legTravelSeconds, currentTime),
           lastError: null,
         };
       }

@@ -77,7 +77,7 @@ export const engineReducer: EngineReducerFn = (
       return processFlowAction(prevState, action, currentTime);
     case 'STAR_MAP_NODE_TOGGLE': {
       if (!prevState.starMap) return prevState;
-            const starMap = toggleRouteNode(prevState.starMap, action.nodeId, prevState.currentLocation);
+      const starMap = toggleRouteNode(prevState.starMap, action.nodeId, prevState.currentLocation);
       return { ...prevState, starMap };
     }
 
