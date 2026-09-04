@@ -114,10 +114,10 @@ test.describe.serial('Onboarding flow', () => {
     // Step 1 - Welcome: player must tap Launch! to begin.
     await page.getByTestId('launch-btn').click();
 
-    // Step 2 - Space Travel gate (1s), then complete -> Planet hub.
+    // Step 2 - Space Travel gate (min 10s per leg, floored by estimateTravelTime).
     await expect(page.getByTestId('space-travel-screen')).toBeVisible();
     await captureScreenshot(page, testInfo, 'space-travel-gate', 2);
-    await expect(page.getByTestId('complete-action-btn')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId('complete-action-btn')).toBeVisible({ timeout: 15000 });
     console.log('Space Travel gate complete');
     await page.getByTestId('complete-action-btn').click();
 
@@ -166,7 +166,7 @@ test.describe.serial('Onboarding flow', () => {
     await captureScreenshot(page, testInfo, 'welcome-screen', 1);
 
     await page.getByTestId('launch-btn').click();
-    await expect(page.getByTestId('complete-action-btn')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId('complete-action-btn')).toBeVisible({ timeout: 15000 });
     await captureScreenshot(page, testInfo, 'space-travel-gate', 2);
     await page.getByTestId('complete-action-btn').click();
 

@@ -43,7 +43,16 @@ const writeGameState = async (page: Page, overrides: Record<string, unknown>): P
       getReq.onerror = () => reject(getReq.error);
     });
     if (existing) {
-      await store.put({ ...existing, ...overrides }, 'game_state');
+      const merged = { ...existing, ...overrides };
+      // Deep-merge starMap so tests can override nested fields like
+      // `plannedRoute` without clobbering the generated nodes/edges graph.
+      if (overrides.starMap && existing.starMap) {
+        merged.starMap = {
+          ...(existing.starMap as Record<string, unknown>),
+          ...(overrides.starMap as Record<string, unknown>),
+        };
+      }
+      await store.put(merged, 'game_state');
     }
     db.close();
   }, overrides);
@@ -79,7 +88,7 @@ test.describe('Star Map Flow', () => {
     // the star map via the PlanetHub "Chart Course" button.
     await expect(page.getByTestId('welcome-screen')).toBeVisible();
     await page.waitForTimeout(1500);
-    await writeGameState(page, { screen: 'PLANET' });
+    await writeGameState(page, { screen: 'PLANET', starMap: { plannedRoute: [] } });
     await page.reload();
     await expect(page.getByTestId('planet-hub-screen')).toBeVisible();
     await page.getByTestId('nav-star-map').click();
@@ -325,7 +334,7 @@ test.describe.serial('Star Map IndexedDB Persistence', () => {
     await page.goto('/');
     await expect(page.getByTestId('welcome-screen')).toBeVisible();
     await page.waitForTimeout(1500);
-    await writeGameState(page, { screen: 'PLANET' });
+    await writeGameState(page, { screen: 'PLANET', starMap: { plannedRoute: [] } });
     await page.reload();
     await page.getByTestId('nav-star-map').click();
     await expect(page.getByTestId('star-map-screen')).toBeVisible();
@@ -345,7 +354,7 @@ test.describe.serial('Star Map IndexedDB Persistence', () => {
     await page.goto('/');
     await expect(page.getByTestId('welcome-screen')).toBeVisible();
     await page.waitForTimeout(1500);
-    await writeGameState(page, { screen: 'PLANET' });
+    await writeGameState(page, { screen: 'PLANET', starMap: { plannedRoute: [] } });
     await page.reload();
     await page.getByTestId('nav-star-map').click();
     await expect(page.getByTestId('star-map-screen')).toBeVisible();
