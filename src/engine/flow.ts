@@ -77,28 +77,21 @@ export const navigate = (
   switch (state.screen) {
     case 'WELCOME':
       if (to === 'SPACE_TRAVEL') {
-        // R9 - Launch!: the star map + initial one-stop route were seeded at
-        // new-game init (createInitialGameState -> seedInitialRoute). Set the
-        // canonical location to the first waypoint and start the single-leg
-        // Approaching gate (hops × 5s, floored at 10s; null origin -> 10s per
-        // R4b). Inlined rather than calling setupNextTravelLeg because first
-        // launch is guaranteed to have a non-empty plannedRoute.
-        const starMap = state.starMap;
-        if (!starMap || starMap.plannedRoute.length === 0) {
+        // R9 - Launch!: the star map + initial one-leg route were seeded at
+        // new-game init (createInitialGameState -> seedInitialRoute + confirmRoute).
+        // routePath is already confirmed and stored on GameState; start the
+        // single-leg Approaching gate sized by hops × 5s, floored 10s (R4/R4b).
+        // Inlined rather than calling setupNextTravelLeg because first launch
+        // is guaranteed to have a non-empty routePath.
+        const leg = state.routePath[0];
+        if (!leg) {
           return { ...state, lastError: 'No route seeded for launch', screen: 'STAR_MAP' };
         }
-        const origin = state.currentLocation; // null at first launch (R3)
-        const confirm = confirmRoute(starMap, origin);
-        if (confirm.error) return { ...state, lastError: confirm.error, screen: 'STAR_MAP' };
-        const leg = confirm.routePath[0]!;
-        const legTravelSeconds = estimateTravelTime([leg]); // R4/R4b
-        const nextWaypoint = starMap.plannedRoute[0]!;
+        const legTravelSeconds = estimateTravelTime([leg]);
         return {
           ...state,
           screen: 'SPACE_TRAVEL',
-          starMap: confirm.starMap,
-          currentLocation: nextWaypoint, // R5: target = plannedRoute[0]
-          routePath: confirm.routePath,
+          currentLocation: leg.to,
           routeTravelTimeSeconds: legTravelSeconds,
           lastTimestamp: currentTime,
           idleTimer: makeTimerWithTarget(state, 'SPACE_TRAVEL', legTravelSeconds, currentTime),
@@ -112,10 +105,10 @@ export const navigate = (
     case 'PLANET':
       if (to === 'LANDING') return startGate(state, 'LANDING', currentTime);
       if (to === 'SPACE_TRAVEL') {
-        // R8 - Depart branching: if the route is exhausted/empty, open the star map
-        // to (re)chart a course; otherwise continue along the in-progress route via
-        // the shared single-leg logic (setupNextTravelLeg, see STAR_MAP_GO).
-        const hasRoute = state.starMap?.plannedRoute?.length > 0;
+        // R8 - Depart branching: if the route is exhausted/empty, open the star
+        // map to (re)chart a course; otherwise continue along the in-progress
+        // route via the shared single-leg logic (setupNextTravelLeg).
+        const hasRoute = state.routePath.length > 0;
         if (!hasRoute) {
           return { ...state, screen: 'STAR_MAP', lastError: null };
         }
@@ -175,8 +168,12 @@ export const createInitialGameState = (
   defaultActionTimeSeconds: number = 30,
   rareOreTimeMultiplier: number = 2,
 ): GameState => {
-  // `currentLocation` is null at init — "deep space", pre-launch (R3).
-  const starMap = seedInitialRoute(generateStarMap(seed, null), seed, null);
+  // R3: generate star map, pick a random first-destination, confirm the
+  // one-leg route (origin=null → "deep space"), and store the finalized
+  // routePath + travel time. seedInitialRoute now returns just the node ID.
+  const starMap = generateStarMap(seed, null);
+  const destinationId = seedInitialRoute(starMap, seed, null);
+  const confirm = confirmRoute(starMap, [destinationId], null);
   return {
     lastTimestamp: baseTimestamp,
     elapsedSeconds: 0,
@@ -191,9 +188,9 @@ export const createInitialGameState = (
     selectedOre: null,
     constants: { defaultActionTimeSeconds, rareOreTimeMultiplier },
     lastError: null,
-    starMap,
-    routePath: [],
-    routeTravelTimeSeconds: 0,
+    starMap: confirm.starMap,
+    routePath: confirm.routePath,
+    routeTravelTimeSeconds: confirm.routeTravelTimeSeconds,
     currentLocation: null,
   };
 };
@@ -212,23 +209,18 @@ export const createInitialGameState = (
 export const setupNextTravelLeg = (state: GameState, currentTime: number): GameState => {
   if (!state.starMap)
     return { ...state, lastError: 'Star map not initialized', screen: 'STAR_MAP' };
-  if (state.starMap.plannedRoute.length === 0) {
+  if (state.routePath.length === 0) {
     return { ...state, lastError: 'No route planned', screen: 'STAR_MAP' };
   }
-  const origin = state.currentLocation; // R2 canonical location
-  const result = confirmRoute(state.starMap, origin);
-  if (result.error) return { ...state, lastError: result.error, screen: 'STAR_MAP' };
-  if (!result.routePath || result.routePath.length === 0) {
-    return { ...state, lastError: 'Route has no pathable segments', screen: 'STAR_MAP' };
-  }
-  const leg = result.routePath[0]!; // R5: next waypoint only
+  // The routePath is already confirmed by the caller (STAR_MAP_GO or init).
+  // We only need the first leg for this departure.
+  const leg = state.routePath[0]!; // R5: first segment
   const legTravelSeconds = estimateTravelTime([leg]); // R4/R4b
-  const nextWaypoint = state.starMap.plannedRoute[0]!; // target = plannedRoute[0]
+  const nextWaypoint = leg.to; // destination of first segment
   return {
     ...state,
-    starMap: result.starMap,
     currentLocation: nextWaypoint,
-    routePath: result.routePath,
+    routePath: state.routePath, // keep remaining segments for subsequent legs
     routeTravelTimeSeconds: legTravelSeconds,
     screen: 'SPACE_TRAVEL',
     idleTimer: makeTimerWithTarget(state, 'SPACE_TRAVEL', legTravelSeconds, currentTime),
@@ -268,16 +260,14 @@ export const completeAction = (state: GameState): GameState => {
   }
   switch (state.screen) {
     case 'SPACE_TRAVEL': {
-      // R6: arriving at the planet. Pop the visited waypoint from plannedRoute
+      // R6: arriving at the planet. Pop the consumed segment from routePath
       // (immutably via slice(1)). currentLocation is already the destination
-      // (set to plannedRoute[0] by STAR_MAP_GO); keep it here defensively.
-      const starMap = state.starMap;
-      const poppedRoute = starMap?.plannedRoute?.length ? starMap.plannedRoute.slice(1) : [];
-      const updatedStarMap = starMap ? { ...starMap, plannedRoute: poppedRoute } : starMap;
+      // (set to leg.to by setupNextTravelLeg); keep it here defensively.
+      const poppedRoute = state.routePath.length > 0 ? state.routePath.slice(1) : [];
       return {
         ...state,
         screen: 'PLANET',
-        starMap: updatedStarMap,
+        routePath: poppedRoute,
         currentLocation: state.currentLocation,
         idleTimer: null,
         lastError: null,

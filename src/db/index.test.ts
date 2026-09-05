@@ -192,9 +192,6 @@ describe('migrateGameState', () => {
         },
       ],
       edges: [{ from: 'sys_0', to: 'sys_1' }],
-      plannedRoute: ['sys_1'],
-      currentLocationId: 'sys_0',
-      zoomLevel: 1.5,
     };
     const routePath = [{ from: 'sys_0', to: 'sys_1', path: ['sys_0', 'sys_1'], hops: 1 }];
     const active = {
@@ -216,8 +213,8 @@ describe('migrateGameState', () => {
 
     const migrated = migrateGameState(active);
 
-    expect(migrated.starMap).toBe(starMap);
-    expect(migrated.routePath).toBe(routePath);
+    expect(migrated.starMap).toEqual(starMap);
+    expect(migrated.routePath).toEqual(routePath);
     expect(migrated.routeTravelTimeSeconds).toBe(10);
   });
 

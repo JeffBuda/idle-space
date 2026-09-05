@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { navigate, hurry, selectOre, completeAction, processFlowAction } from './flow';
 import { type GameState, type Screen } from '../types/game-state';
-import { generateStarMap, seedInitialRoute } from '../engine/starmap';
+import { generateStarMap, seedInitialRoute, confirmRoute } from '../engine/starmap';
 
 const TIME = 2_000_000;
 const newGate = (screen: Screen, remaining: number) => ({
@@ -10,6 +10,12 @@ const newGate = (screen: Screen, remaining: number) => ({
   remainingSeconds: remaining,
   startedAt: TIME,
 });
+// Pre-seed a star map + confirmed one-leg route so tests that navigate
+// from WELCOME can use the routePath that the engine expects at launch.
+const initStarMap = generateStarMap('s', null);
+const initDest = seedInitialRoute(initStarMap, 's', null);
+const initConfirm = confirmRoute(initStarMap, [initDest], null);
+
 const base = (over: Partial<GameState> = {}): GameState => ({
   lastTimestamp: 1_000_000,
   elapsedSeconds: 500,
@@ -23,9 +29,9 @@ const base = (over: Partial<GameState> = {}): GameState => ({
   selectedOre: null,
   constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
   lastError: null,
-  starMap: seedInitialRoute(generateStarMap('s', null), 's', null),
-  routePath: [],
-  routeTravelTimeSeconds: 0,
+  starMap: initConfirm.starMap,
+  routePath: initConfirm.routePath,
+  routeTravelTimeSeconds: initConfirm.routeTravelTimeSeconds,
   currentLocation: null,
   ...over,
 });
@@ -48,7 +54,7 @@ describe('onboarding flow state machine', () => {
         startedAt: TIME,
       });
       expect(n.lastTimestamp).toBe(TIME);
-      expect(n.currentLocation).toBe(n.starMap?.plannedRoute[0]);
+      expect(n.currentLocation).toBe(n.routePath[0]?.to);
     });
     it('PLANET -> LANDING starts a 30s gate', () => {
       const n = navigate(base(), { type: 'NAVIGATE', to: 'LANDING' }, TIME);

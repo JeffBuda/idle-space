@@ -6,7 +6,7 @@
 // a "Complete" action when the gate has expired.
 import type { GameState } from '../../types/game-state';
 import type { IdleGateStatus } from '../../types/game-state';
-import { getNodeName } from '../../engine/starmap';
+import { getNodeName } from '../../utils/star-map';
 
 interface SpaceTravelScreenProps {
   gameState: GameState | null;

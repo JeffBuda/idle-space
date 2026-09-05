@@ -48,7 +48,7 @@ export interface SpaceIdleDB extends DBSchema {
 }
 
 export const DB_NAME = 'space_idle_db';
-export const DB_VERSION = 5; // Bumped to 5: adds currentLocation to GameState
+export const DB_VERSION = 6; // Bumped to 6: star map plannedRoute/zoomLevel moved to component state
 export const APP_STATUS_KEY = 'app_status';
 export const GAME_STATE_KEY = 'game_state';
 export const LOGS_STORE_NAME = 'space_idle_logs';
@@ -106,23 +106,31 @@ const GAME_STATE_DEFAULT: GameState = {
  *
  * This function is pure (no I/O) so it can be unit-tested directly.
  */
-export const migrateGameState = (savedState: GameState): GameState => ({
-  ...GAME_STATE_DEFAULT,
-  ...savedState,
-  // Nullish coalescing guards against fields that are present-but-undefined
-  // (possible if a save was partially written), not just missing keys.
-  screen: savedState.screen ?? 'WELCOME',
-  totalElapsedGameTime: savedState.totalElapsedGameTime ?? 0,
-  idleTimer: savedState.idleTimer ?? null,
-  oreCounts: savedState.oreCounts ?? { commonOre: 0, rareOre: 0 },
-  selectedOre: savedState.selectedOre ?? null,
-  constants: savedState.constants ?? GAME_STATE_DEFAULT.constants,
-  lastError: savedState.lastError ?? null,
-  starMap: savedState.starMap ?? null,
-  routePath: savedState.routePath ?? [],
-  routeTravelTimeSeconds: savedState.routeTravelTimeSeconds ?? 0,
-  currentLocation: savedState.currentLocation ?? 'sys_0',
-});
+export const migrateGameState = (savedState: GameState): GameState => {
+  // R17: strip legacy starMap.plannedRoute / zoomLevel fields that were moved
+  // to component-local state. Old saves (pre-v6) carry these on starMap; if not
+  // stripped, they would linger as untyped extras on the persisted object.
+  const cleanStarMap = savedState.starMap
+    ? { nodes: savedState.starMap.nodes, edges: savedState.starMap.edges }
+    : null;
+  return {
+    ...GAME_STATE_DEFAULT,
+    ...savedState,
+    // Nullish coalescing guards against fields that are present-but-undefined
+    // (possible if a save was partially written), not just missing keys.
+    screen: savedState.screen ?? 'WELCOME',
+    totalElapsedGameTime: savedState.totalElapsedGameTime ?? 0,
+    idleTimer: savedState.idleTimer ?? null,
+    oreCounts: savedState.oreCounts ?? { commonOre: 0, rareOre: 0 },
+    selectedOre: savedState.selectedOre ?? null,
+    constants: savedState.constants ?? GAME_STATE_DEFAULT.constants,
+    lastError: savedState.lastError ?? null,
+    starMap: cleanStarMap,
+    routePath: savedState.routePath ?? [],
+    routeTravelTimeSeconds: savedState.routeTravelTimeSeconds ?? 0,
+    currentLocation: savedState.currentLocation ?? 'sys_0',
+  };
+};
 
 /**
  * Opens (or creates) the IndexedDB database `space_idle_db` with a

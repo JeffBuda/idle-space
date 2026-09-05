@@ -4,7 +4,7 @@
 // The always-visible AppStatusViewer still renders the travel stats; this panel
 // just offers the next nav choice (Land / Depart).
 import type { GameState, Screen } from '../../types/game-state';
-import { getNodeName } from '../../engine/starmap';
+import { getNodeName } from '../../utils/star-map';
 
 interface PlanetHubScreenProps {
   gameState: GameState;

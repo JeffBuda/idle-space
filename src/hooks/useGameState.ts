@@ -37,6 +37,9 @@ export interface UseGameStateResult {
   routePath: GameState['routePath'];
   routeTravelTimeSeconds: number;
 
+  // Star Map Go: dispatch the finalized route to the engine (R17)
+  dispatchStarMapGo: (plannedRoute: string[]) => void;
+
   // Typed navigation helper (convenience wrapper around dispatch)
   navigateTo: (to: Screen) => void;
 }
@@ -284,6 +287,13 @@ export const useGameState = (): UseGameStateResult => {
     starMap: gameState?.starMap ?? null,
     routePath: gameState?.routePath ?? [],
     routeTravelTimeSeconds: gameState?.routeTravelTimeSeconds ?? 0,
+    // Star Map Go: dispatch the finalized route to the engine (R17)
+    dispatchStarMapGo: useCallback(
+      (plannedRoute: string[]) => {
+        dispatch({ type: 'STAR_MAP_GO', plannedRoute });
+      },
+      [dispatch],
+    ),
     // Convenience wrapper around dispatch for typed screen navigation
     navigateTo: useCallback(
       (to: Screen) => {
