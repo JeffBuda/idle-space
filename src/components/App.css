@@ -114,6 +114,11 @@ main {
   }
 }
 
+/* Hidden signal element for E2E tests — visually hidden but queryable via data-testid */
+.app-ready-signal {
+  display: none;
+}
+
 /* ---- Onboarding flow screens (overlay below the always-visible status grid) ---- */
 .flow-screen {
   background-color: var(--color-border-subtle);
