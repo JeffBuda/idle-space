@@ -64,6 +64,11 @@ IndexedDB (game_state) → useGameState hook → App.tsx → OfflineGreeting / S
 | E2E (Basic)       | Playwright                      | `tests/e2e/pwa-launch.spec.ts`             | PWA shell, SW registration, IndexedDB persistence |
 | E2E (Interactive) | Playwright (serial)             | `tests/e2e/game-state-interaction.spec.ts` | Offline greeting, dismissal, real-time increments |
 
+> **Testing strategy:** New features must include tests at all three pyramid
+> layers. See [docs/testing-strategy.md](./docs/testing-strategy.md) for the
+> full strategy and [docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md)
+> for E2E-specific patterns and pitfalls.
+
 ## 5. Key Design Decisions
 
 - **DB Version 2**: IndexedDB schema version 2 adds the `game_state` object store for progress data.
