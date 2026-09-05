@@ -69,15 +69,15 @@ export const generateStarMap = (
   const nodes: StarMapNode[] = [];
   const edges: StarMapEdge[] = [];
 
-  // 1. Generate STAR_MAP_NODE_COUNT nodes with random positions (10-90%)
+  // 1. Generate STAR_MAP_NODE_COUNT nodes with random positions (5-95%)
   for (let i = 0; i < STAR_MAP_NODE_COUNT; i++) {
     const id = `sys_${i}`;
     const name = STAR_MAP_NAMES[Math.floor(rng() * STAR_MAP_NAMES.length)];
     nodes.push({
       id,
       name,
-      x: rng() * 80 + 10,
-      y: rng() * 80 + 10,
+      x: rng() * 90 + 5,
+      y: rng() * 90 + 5,
       status: id === currentNodeId ? 'current' : 'unknown',
       edges: [],
     });

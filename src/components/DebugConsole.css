@@ -85,6 +85,20 @@
   outline-offset: 1px;
 }
 
+/* Fix: <option> elements use OS-level defaults that can render white
+   text on a white background in the dropdown on dark-themed pages.
+   Force explicit colors so the dropdown is always readable. */
+.debug-filter option {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}
+
+.debug-filter option:checked {
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+  font-weight: 600;
+}
+
 .debug-btn {
   padding: var(--space-3xs) var(--space-sm-plus);
   border-radius: var(--radius-input);

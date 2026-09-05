@@ -1,7 +1,7 @@
 // src/components/screens/star-map/StarMapScreen.tsx
 //
 // Production star map screen: renders the generated graph as an interactive
-// SVG, a bottom-sheet-style route panel, and zoom controls.
+// SVG and a bottom-drawer-style route panel.
 //
 // Architecture (R17/R18):
 //   - All game logic (graph generation, pathfinding, route validation,
@@ -15,7 +15,7 @@
 //     co-located reducer + utils — NO engine/ imports (enforced by ESLint
 //     boundaries and tests/architecture.test.ts).
 
-import { useReducer, useMemo } from 'react';
+import { useReducer, useMemo, useState } from 'react';
 import type { GameState, StarMapNode, StarMapEdge } from '../../../types/game-state';
 import { getNodeById } from '../../../utils/star-map';
 import { createStarMapReducer, initStarMapUIState } from './StarMapScreen.reducer';
@@ -37,7 +37,7 @@ export const StarMapScreen = ({ gameState, onGo, onBack }: StarMapScreenProps) =
   const routeTravelTimeSeconds = gameState.routeTravelTimeSeconds;
 
   // Initialize component-local state: derive plannedRoute from saved routePath
-  // (R18 — so the player can modify a previously confirmed route), zoom = 1.0.
+  // (R18 — so the player can modify a previously confirmed route).
   const initialStops = useMemo(() => derivePlannedRouteFromRoutePath(routePath), [routePath]);
   const reducer = useMemo(
     () => createStarMapReducer(nodes, currentLocation),
@@ -45,9 +45,12 @@ export const StarMapScreen = ({ gameState, onGo, onBack }: StarMapScreenProps) =
   );
   const [state, dispatch] = useReducer(reducer, initialStops, initStarMapUIState);
 
+  // Bottom drawer toggle state (Issue 7)
+  const [drawerOpen, setDrawerOpen] = useState(true);
+
   if (!starMap) return null;
 
-  const { plannedRoute, zoomLevel } = state;
+  const { plannedRoute } = state;
 
   // ---- Derived display values (pure transforms, no game math) ----
 
@@ -90,47 +93,24 @@ export const StarMapScreen = ({ gameState, onGo, onBack }: StarMapScreenProps) =
 
   return (
     <section className="star-map-screen" data-testid="star-map-screen">
-      {/* Header: title + zoom controls + Back */}
+      {/* Header: title + close (zoom removed per Issue 4) */}
       <header className="star-map-header">
         <h2 data-testid="star-map-title">Stellar Cartography</h2>
-        <div className="zoom-controls">
+        <div className="star-map-header-actions">
           <button
             type="button"
             className="btn btn--icon"
-            data-testid="zoom-out"
-            onClick={() => dispatch({ type: 'ZOOM_OUT' })}
-            aria-label="Zoom out"
+            data-testid="back-btn"
+            aria-label="Close star map"
+            onClick={onBack}
           >
-            −
-          </button>
-          <span data-testid="zoom-level">{Math.round(zoomLevel * 100)}%</span>
-          <button
-            type="button"
-            className="btn btn--icon"
-            data-testid="zoom-in"
-            onClick={() => dispatch({ type: 'ZOOM_IN' })}
-            aria-label="Zoom in"
-          >
-            +
+            ✕
           </button>
         </div>
-        <button
-          type="button"
-          className="btn btn--icon btn--small"
-          data-testid="back-btn"
-          onClick={onBack}
-          aria-label="Close star map"
-        >
-          ✕
-        </button>
       </header>
 
       {/* SVG graph canvas */}
-      <div
-        className="star-map-canvas"
-        data-testid="star-map-canvas"
-        style={{ transform: `scale(${zoomLevel})` }}
-      >
+      <div className="star-map-canvas" data-testid="star-map-canvas">
         <svg viewBox="0 0 100 100" className="star-map-svg" data-testid="star-map-svg">
           {/* Render edges as lines */}
           {edges.map((edge: StarMapEdge, i: number) => {
@@ -167,7 +147,9 @@ export const StarMapScreen = ({ gameState, onGo, onBack }: StarMapScreenProps) =
           {nodes.map((node: StarMapNode) => {
             const isCurrent = node.id === currentLocation;
             const isInRoute = plannedRoute.includes(node.id);
-            const nodeClass = `star-map-node star-map-node--${node.status}`;
+            const nodeClass = isCurrent
+              ? 'star-map-node star-map-node--current'
+              : `star-map-node star-map-node--${node.status}`;
             return (
               <g
                 key={node.id}
@@ -179,33 +161,38 @@ export const StarMapScreen = ({ gameState, onGo, onBack }: StarMapScreenProps) =
                 {isCurrent ? (
                   <rect
                     data-testid="current-location-marker"
-                    x={node.x - 2.5}
-                    y={node.y - 2.5}
-                    width="5"
-                    height="5"
+                    x={node.x - 4}
+                    y={node.y - 4}
+                    width="8"
+                    height="8"
                     fill="var(--color-star-current)"
                   />
                 ) : (
-                  <circle
-                    cx={node.x}
-                    cy={node.y - 3}
-                    r={isInRoute ? 1.6 : 1.2}
-                    fill={
-                      node.status === 'visited'
-                        ? 'var(--color-star-visited)'
-                        : isInRoute
-                          ? 'var(--color-star-route)'
-                          : 'var(--color-star-unknown)'
-                    }
-                  />
+                  <>
+                    {/* Transparent hit-area: 20px diameter (~78px) for 44px
+                        touch-target compliance (Issue 3, DESIGN_BIBLE §4.1) */}
+                    <circle cx={node.x} cy={node.y} r={10} fill="transparent" />
+                    <circle
+                      cx={node.x}
+                      cy={node.y - 3}
+                      r={isInRoute ? 4 : 3.5}
+                      fill={
+                        node.status === 'visited'
+                          ? 'var(--color-star-visited)'
+                          : isInRoute
+                            ? 'var(--color-star-route)'
+                            : 'var(--color-star-unknown)'
+                      }
+                    />
+                  </>
                 )}
                 {!isCurrent && (
                   <text
                     x={node.x}
-                    y={node.y + 7}
+                    y={node.y + 9}
                     textAnchor="middle"
                     className="star-map-label"
-                    fontSize="3.5"
+                    fontSize="5"
                     fill="var(--color-text-secondary)"
                   >
                     {node.name}
@@ -217,56 +204,70 @@ export const StarMapScreen = ({ gameState, onGo, onBack }: StarMapScreenProps) =
         </svg>
       </div>
 
-      {/* Route panel (bottom sheet) */}
-      <div className="route-panel" data-testid="route-panel">
-        {plannedRoute.length === 0 ? (
-          <p data-testid="route-empty">Click stars on the map to plot a course.</p>
-        ) : (
-          <>
-            <ul data-testid="itinerary-list">
-              {plannedRoute.map((nodeId: string, index: number) => {
-                const node = getNodeById(nodes, nodeId);
-                return (
-                  <li key={nodeId} className="itinerary-stop">
-                    <span data-testid={`stop-index-${nodeId}`}>{index + 1}.</span>
-                    <span data-testid={`stop-name-${nodeId}`}>{node ? node.name : nodeId}</span>
-                    <button
-                      type="button"
-                      className="btn btn--icon btn--small"
-                      data-testid={`remove-stop-${nodeId}`}
-                      aria-label={`Remove ${node ? node.name : nodeId} from route`}
-                      onClick={() => dispatch({ type: 'REMOVE_STOP', nodeId })}
-                    >
-                      ✕
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-            <div className="route-summary">
-              <span data-testid="total-travel-time">
-                Travel time: {Math.round(routeTravelTimeSeconds)}s
-              </span>
-            </div>
-            <button
-              type="button"
-              className="btn btn--secondary"
-              data-testid="clear-route"
-              onClick={() => dispatch({ type: 'CLEAR_ROUTE' })}
-            >
-              Clear Route
-            </button>
-            <button
-              type="button"
-              className="btn btn--primary"
-              data-testid="go-btn"
-              onClick={() => onGo(plannedRoute)}
-              disabled={plannedRoute.length === 0}
-            >
-              Go!
-            </button>
-          </>
-        )}
+      {/* Bottom drawer: route panel (Issue 7) */}
+      <div
+        className={`route-drawer ${drawerOpen ? 'route-drawer--open' : 'route-drawer--closed'}`}
+        data-testid="route-panel"
+      >
+        <div
+          className="route-drawer-handle"
+          data-testid="route-drawer-handle"
+          onClick={() => setDrawerOpen(!drawerOpen)}
+          role="button"
+          aria-label={drawerOpen ? 'Collapse route panel' : 'Expand route panel'}
+        >
+          <div className="route-drawer-thumb"></div>
+        </div>
+        <div className="route-drawer-content">
+          {plannedRoute.length === 0 ? (
+            <p data-testid="route-empty">Click stars on the map to plot a course.</p>
+          ) : (
+            <>
+              <ul data-testid="itinerary-list">
+                {plannedRoute.map((nodeId: string, index: number) => {
+                  const node = getNodeById(nodes, nodeId);
+                  return (
+                    <li key={nodeId} className="itinerary-stop">
+                      <span data-testid={`stop-index-${nodeId}`}>{index + 1}.</span>
+                      <span data-testid={`stop-name-${nodeId}`}>{node ? node.name : nodeId}</span>
+                      <button
+                        type="button"
+                        className="btn btn--icon btn--small"
+                        data-testid={`remove-stop-${nodeId}`}
+                        aria-label={`Remove ${node ? node.name : nodeId} from route`}
+                        onClick={() => dispatch({ type: 'REMOVE_STOP', nodeId })}
+                      >
+                        ✕
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              <div className="route-summary">
+                <span data-testid="total-travel-time">
+                  Travel time: {Math.round(routeTravelTimeSeconds)}s
+                </span>
+              </div>
+              <button
+                type="button"
+                className="btn btn--secondary"
+                data-testid="clear-route"
+                onClick={() => dispatch({ type: 'CLEAR_ROUTE' })}
+              >
+                Clear Route
+              </button>
+              <button
+                type="button"
+                className="btn btn--primary"
+                data-testid="go-btn"
+                onClick={() => onGo(plannedRoute)}
+                disabled={plannedRoute.length === 0}
+              >
+                Go!
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </section>
   );

@@ -28,7 +28,7 @@ describe('GameStateViewer', () => {
     expect(screen.getByTestId('game-state-viewer')).toBeInTheDocument();
   });
 
-  it('should display game state as JSON when gameState is provided', () => {
+  it('should display game state as tree when gameState is provided', () => {
     render(<GameStateViewer visible={true} gameState={mockGameState} onClose={vi.fn()} />);
     const json = screen.getByTestId('game-state-json');
     expect(json).toBeInTheDocument();
@@ -55,5 +55,73 @@ describe('GameStateViewer', () => {
     render(<GameStateViewer visible={true} gameState={mockGameState} onClose={onClose} />);
     fireEvent.click(screen.getByTestId('game-state-backdrop'));
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('should show nested object children when top-level key is expanded by default', () => {
+    const stateWithNested = {
+      ...mockGameState,
+      oreCounts: { commonOre: 100, rareOre: 50 },
+    };
+    render(<GameStateViewer visible={true} gameState={stateWithNested} onClose={vi.fn()} />);
+    const json = screen.getByTestId('game-state-json');
+    expect(json.textContent).toContain('commonOre');
+    expect(json.textContent).toContain('rareOre');
+    expect(json.textContent).toContain('100');
+  });
+
+  it('should keep nested objects collapsed by default', () => {
+    const stateWithNested = {
+      ...mockGameState,
+      oreCounts: { commonOre: 100, nested: { deepKey: 'deepValue' } },
+    };
+    render(<GameStateViewer visible={true} gameState={stateWithNested} onClose={vi.fn()} />);
+    const json = screen.getByTestId('game-state-json');
+    // oreCounts (top-level) is expanded — children visible
+    expect(json.textContent).toContain('commonOre');
+    // nested (nested object) is collapsed — children NOT visible
+    expect(json.textContent).not.toContain('deepKey');
+    expect(json.textContent).not.toContain('deepValue');
+  });
+
+  it('should collapse an expanded object when its toggle is clicked', () => {
+    const stateWithNested = {
+      ...mockGameState,
+      oreCounts: { commonOre: 100, rareOre: 50 },
+    };
+    render(<GameStateViewer visible={true} gameState={stateWithNested} onClose={vi.fn()} />);
+    const json = screen.getByTestId('game-state-json');
+    const collapseToggle = json.querySelector('.gs-tree-toggle[aria-label="Collapse"]');
+    expect(collapseToggle).not.toBeNull();
+    fireEvent.click(collapseToggle!);
+    expect(json.textContent).not.toContain('commonOre');
+    expect(json.textContent).not.toContain('100');
+  });
+
+  it('should expand a collapsed object when its toggle is clicked', () => {
+    const stateWithNested = {
+      ...mockGameState,
+      oreCounts: { commonOre: 100, nested: { deepKey: 'deepValue' } },
+    };
+    render(<GameStateViewer visible={true} gameState={stateWithNested} onClose={vi.fn()} />);
+    const json = screen.getByTestId('game-state-json');
+    const expandToggles = json.querySelectorAll('.gs-tree-toggle[aria-label="Expand"]');
+    expect(expandToggles.length).toBeGreaterThan(0);
+    fireEvent.click(expandToggles[0]);
+    expect(json.textContent).toContain('deepKey');
+    expect(json.textContent).toContain('deepValue');
+  });
+
+  it('should toggle the aria-label between Collapse and Expand', () => {
+    const stateWithNested = {
+      ...mockGameState,
+      oreCounts: { commonOre: 100 },
+    };
+    render(<GameStateViewer visible={true} gameState={stateWithNested} onClose={vi.fn()} />);
+    const json = screen.getByTestId('game-state-json');
+    const collapseToggle = json.querySelector('.gs-tree-toggle[aria-label="Collapse"]');
+    expect(collapseToggle).not.toBeNull();
+    fireEvent.click(collapseToggle!);
+    const expandToggle = json.querySelector('.gs-tree-toggle[aria-label="Expand"]');
+    expect(expandToggle).not.toBeNull();
   });
 });
