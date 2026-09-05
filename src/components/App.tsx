@@ -11,6 +11,7 @@ import { useDbStatus } from '../hooks/useDbStatus';
 import OfflineGreeting from './OfflineGreeting';
 import { MiningRewardModal } from './MiningRewardModal';
 import { SettingsMenu } from './SettingsMenu';
+import { NewGameConfirmModal } from './NewGameConfirmModal';
 import { StarMapScreen } from './screens/star-map/StarMapScreen';
 import { clearCacheAndUpdate } from '../utils/cache';
 import { DebugConsole } from './DebugConsole';
@@ -24,6 +25,9 @@ const App = () => {
   const [debugConsoleVisible, setDebugConsoleVisible] = useState(false);
   const [gameStateVisible, setGameStateVisible] = useState(false);
   const [appStatusVisible, setAppStatusVisible] = useState(false);
+  // "New Game" confirmation modal — local UI state only; the actual hard reset
+  // is delegated to the useGameState hook so the engine/db layers stay isolated.
+  const [confirmNewGameVisible, setConfirmNewGameVisible] = useState(false);
   const toggleDebugConsole = () => setDebugConsoleVisible(!debugConsoleVisible);
   const toggleGameState = () => setGameStateVisible(!gameStateVisible);
   const toggleAppStatus = () => setAppStatusVisible(!appStatusVisible);
@@ -67,6 +71,7 @@ const App = () => {
     isLoading,
     dispatch,
     dispatchStarMapGo,
+    startNewGame,
   } = useGameState();
 
   const handleCollectRewards = () => {
@@ -75,6 +80,13 @@ const App = () => {
 
   const handleChartCourse = () => {
     dispatch({ type: 'NAVIGATE', to: 'STAR_MAP' });
+  };
+
+  // Confirms the "New Game" modal: the hook hard-resets all persisted progress
+  // (game state + logs) and reseeds a fresh game; the modal closes immediately.
+  const handleNewGameConfirm = () => {
+    void startNewGame();
+    setConfirmNewGameVisible(false);
   };
 
   if (isLoading) {
@@ -90,6 +102,7 @@ const App = () => {
             appStatusVisible={appStatusVisible}
             onToggleAppStatus={toggleAppStatus}
             onForceUpdate={handleForceUpdate}
+            onNewGame={() => setConfirmNewGameVisible(true)}
           />
         </header>
         <main>
@@ -111,6 +124,7 @@ const App = () => {
           appStatusVisible={appStatusVisible}
           onToggleAppStatus={toggleAppStatus}
           onForceUpdate={handleForceUpdate}
+          onNewGame={() => setConfirmNewGameVisible(true)}
         />
       </header>
 
@@ -214,6 +228,13 @@ const App = () => {
         visible={gameStateVisible}
         gameState={gameState}
         onClose={() => setGameStateVisible(false)}
+      />
+
+      {/* "New Game" confirmation — destructive reset is delegated to the hook. */}
+      <NewGameConfirmModal
+        visible={confirmNewGameVisible}
+        onCancel={() => setConfirmNewGameVisible(false)}
+        onConfirm={handleNewGameConfirm}
       />
     </div>
   );

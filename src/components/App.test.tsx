@@ -37,6 +37,7 @@ const mockGameStateData = {
 
 // Stable dispatch mock so App tests can assert on dispatched flow actions.
 const mockDispatch = vi.fn();
+const mockStartNewGame = vi.fn();
 
 vi.mock('../hooks/useGameState', () => ({
   useGameState: () => ({
@@ -54,6 +55,7 @@ vi.mock('../hooks/useGameState', () => ({
     routePath: [],
     routeTravelTimeSeconds: 0,
     navigateTo: vi.fn(),
+    startNewGame: mockStartNewGame,
   }),
 }));
 
@@ -171,6 +173,37 @@ describe('App', () => {
     render(<App />);
     fireEvent.click(screen.getByTestId('settings-gear'));
     expect(screen.getByTestId('settings-card')).toBeInTheDocument();
+  });
+
+  it('renders the New Game button in the settings gear menu', () => {
+    render(<App />);
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    expect(screen.getByTestId('new-game')).toBeInTheDocument();
+  });
+
+  it('opens the New Game confirmation modal from the settings menu', () => {
+    render(<App />);
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    fireEvent.click(screen.getByTestId('new-game'));
+    expect(screen.getByTestId('new-game-confirm-modal')).toBeInTheDocument();
+  });
+
+  it('confirms New Game and invokes the hook reset', () => {
+    render(<App />);
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    fireEvent.click(screen.getByTestId('new-game'));
+    fireEvent.click(screen.getByTestId('new-game-confirm'));
+    expect(mockStartNewGame).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('new-game-confirm-modal')).not.toBeInTheDocument();
+  });
+
+  it('dismisses the New Game modal via Cancel without resetting', () => {
+    render(<App />);
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    fireEvent.click(screen.getByTestId('new-game'));
+    fireEvent.click(screen.getByTestId('new-game-cancel'));
+    expect(mockStartNewGame).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('new-game-confirm-modal')).not.toBeInTheDocument();
   });
 
   it('does not render AppStatusViewer until "View App Status" is toggled', async () => {

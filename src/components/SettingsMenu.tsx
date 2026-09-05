@@ -11,6 +11,8 @@ interface SettingsMenuProps {
   onToggleAppStatus: () => void;
   /** Handler for the 'Force UI Update' button — clears SW cache while preserving IndexedDB. */
   onForceUpdate: () => void;
+  /** Handler for the 'New Game' button — opens a confirm-and-reset modal via App. */
+  onNewGame: () => void;
 }
 
 /**
@@ -31,6 +33,7 @@ export const SettingsMenu = ({
   appStatusVisible,
   onToggleAppStatus,
   onForceUpdate,
+  onNewGame,
 }: SettingsMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -107,6 +110,19 @@ export const SettingsMenu = ({
             }}
           >
             Force UI Update (Preserve Save)
+          </button>
+          <div className="settings-divider" data-testid="settings-divider" />
+          <button
+            type="button"
+            className="settings-toggle settings-toggle--warning"
+            data-testid="new-game"
+            aria-label="Start a new game (current progress will be lost)"
+            onClick={() => {
+              onNewGame();
+              setIsOpen(false);
+            }}
+          >
+            New Game
           </button>
         </div>
       )}
