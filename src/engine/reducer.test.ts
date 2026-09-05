@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { engineReducer, SPEED_KM_PER_SEC, type GameAction } from './reducer';
 import { type GameState } from './time';
-import { generateStarMap, seedInitialRoute } from './starmap';
+import { generateStarMap, seedInitialRoute, confirmRoute } from './starmap';
 
 const baseState: GameState = {
   lastTimestamp: 1_000_000,
@@ -166,123 +166,19 @@ describe('star map actions', () => {
       { id: 'sys_2', name: 'C', x: 90, y: 10, status: 'unknown' as const, edges: ['sys_1'] },
     ],
     edges: [],
-    plannedRoute: [],
-    currentLocationId: 'sys_0',
-    zoomLevel: 1.0,
   };
-
-  it('STAR_MAP_NODE_TOGGLE does nothing when starMap is null', () => {
-    const state = makeStarMapState();
-    const result = engineReducer(
-      state,
-      { type: 'STAR_MAP_NODE_TOGGLE', nodeId: 'sys_1' },
-      TIME,
-      'seed',
-    );
-    expect(result).toBe(state);
-  });
-
-  it('STAR_MAP_NODE_TOGGLE adds an adjacent node (Origin Rule)', () => {
-    const state: GameState = { ...makeStarMapState(), starMap: { ...chainStarMap } };
-    const result = engineReducer(
-      state,
-      { type: 'STAR_MAP_NODE_TOGGLE', nodeId: 'sys_1' },
-      TIME,
-      'seed',
-    );
-    expect(result.starMap!.plannedRoute).toEqual(['sys_1']);
-  });
-
-  it('STAR_MAP_NODE_TOGGLE rejects non-adjacent node (Action 2)', () => {
-    const state: GameState = { ...makeStarMapState(), starMap: { ...chainStarMap } };
-    const result = engineReducer(
-      state,
-      { type: 'STAR_MAP_NODE_TOGGLE', nodeId: 'sys_2' },
-      TIME,
-      'seed',
-    );
-    expect(result.starMap!.plannedRoute).toEqual([]);
-  });
-
-  it('STAR_MAP_NODE_TOGGLE rejects current location node', () => {
-    const state: GameState = { ...makeStarMapState(), starMap: { ...chainStarMap } };
-    const result = engineReducer(
-      state,
-      { type: 'STAR_MAP_NODE_TOGGLE', nodeId: 'sys_0' },
-      TIME,
-      'seed',
-    );
-    expect(result.starMap!.plannedRoute).toEqual([]);
-  });
-
-  it('STAR_MAP_NODE_TOGGLE builds multi-hop contiguous route (Action 4)', () => {
-    let state: GameState = { ...makeStarMapState(), starMap: { ...chainStarMap } };
-    state = engineReducer(state, { type: 'STAR_MAP_NODE_TOGGLE', nodeId: 'sys_1' }, TIME, 'seed');
-    state = engineReducer(state, { type: 'STAR_MAP_NODE_TOGGLE', nodeId: 'sys_2' }, TIME, 'seed');
-    expect(state.starMap!.plannedRoute).toEqual(['sys_1', 'sys_2']);
-  });
-
-  it('STAR_MAP_NODE_TOGGLE rejects non-adjacent tail hop (Action 5)', () => {
-    const state: GameState = {
-      ...makeStarMapState(),
-      starMap: { ...chainStarMap, plannedRoute: ['sys_1'] },
-    };
-    const result = engineReducer(
-      state,
-      { type: 'STAR_MAP_NODE_TOGGLE', nodeId: 'sys_0' },
-      TIME,
-      'seed',
-    );
-    expect(result.starMap!.plannedRoute).toEqual(['sys_1']);
-  });
-
-  it('STAR_MAP_NODE_TOGGLE sever-tails when re-tapping middle node (Action 8)', () => {
-    const state: GameState = {
-      ...makeStarMapState(),
-      starMap: { ...chainStarMap, plannedRoute: ['sys_1', 'sys_2'] },
-    };
-    const result = engineReducer(
-      state,
-      { type: 'STAR_MAP_NODE_TOGGLE', nodeId: 'sys_1' },
-      TIME,
-      'seed',
-    );
-    expect(result.starMap!.plannedRoute).toEqual([]);
-  });
-
-  it('STAR_MAP_REMOVE_STOP truncates at the removed node', () => {
-    const state: GameState = {
-      ...makeStarMapState(),
-      starMap: { ...chainStarMap, plannedRoute: ['sys_1', 'sys_2'] },
-    };
-    const result = engineReducer(
-      state,
-      { type: 'STAR_MAP_REMOVE_STOP', nodeId: 'sys_1' },
-      TIME,
-      'seed',
-    );
-    expect(result.starMap!.plannedRoute).toEqual([]);
-  });
-
-  it('STAR_MAP_CLEAR_ROUTE clears route, routePath, and travel time', () => {
-    const state: GameState = {
-      ...makeStarMapState(),
-      starMap: { ...chainStarMap, plannedRoute: ['sys_1', 'sys_2'] },
-      routePath: [{ from: 'sys_0', to: 'sys_2', path: ['sys_0', 'sys_1', 'sys_2'], hops: 2 }],
-      routeTravelTimeSeconds: 10,
-    };
-    const result = engineReducer(state, { type: 'STAR_MAP_CLEAR_ROUTE' }, TIME, 'seed');
-    expect(result.starMap!.plannedRoute).toEqual([]);
-    expect(result.routePath).toEqual([]);
-    expect(result.routeTravelTimeSeconds).toBe(0);
-  });
 
   it('STAR_MAP_GO with valid route navigates to SPACE_TRAVEL', () => {
     const state: GameState = {
       ...makeStarMapState(),
-      starMap: { ...chainStarMap, plannedRoute: ['sys_1'] },
+      starMap: { ...chainStarMap },
     };
-    const result = engineReducer(state, { type: 'STAR_MAP_GO' }, TIME, 'seed');
+    const result = engineReducer(
+      state,
+      { type: 'STAR_MAP_GO', plannedRoute: ['sys_1'] },
+      TIME,
+      'seed',
+    );
     expect(result.screen).toBe('SPACE_TRAVEL');
     expect(result.currentLocation).toBe('sys_1');
     expect(result.lastError).toBeNull();
@@ -300,23 +196,16 @@ describe('star map actions', () => {
     const state: GameState = {
       ...makeStarMapState(),
       screen: 'STAR_MAP',
-      starMap: { ...disconnectedMap, plannedRoute: ['sys_1'] },
+      starMap: { ...disconnectedMap },
     };
-    const result = engineReducer(state, { type: 'STAR_MAP_GO' }, TIME, 'seed');
+    const result = engineReducer(
+      state,
+      { type: 'STAR_MAP_GO', plannedRoute: ['sys_1'] },
+      TIME,
+      'seed',
+    );
     expect(result.lastError).not.toBeNull();
     expect(result.screen).toBe('STAR_MAP');
-  });
-
-  it('STAR_MAP_ZOOM_IN increases zoom level', () => {
-    const state: GameState = { ...makeStarMapState(), starMap: { ...chainStarMap } };
-    const result = engineReducer(state, { type: 'STAR_MAP_ZOOM_IN' }, TIME, 'seed');
-    expect(result.starMap!.zoomLevel).toBeCloseTo(1.3);
-  });
-
-  it('STAR_MAP_ZOOM_OUT decreases zoom level', () => {
-    const state: GameState = { ...makeStarMapState(), starMap: { ...chainStarMap } };
-    const result = engineReducer(state, { type: 'STAR_MAP_ZOOM_OUT' }, TIME, 'seed');
-    expect(result.starMap!.zoomLevel).toBeCloseTo(0.7);
   });
 });
 
@@ -329,6 +218,9 @@ describe('onboarding flow dispatch', () => {
     startedAt,
   });
 
+  const initStarMap = generateStarMap('test-seed', null);
+  const initDest = seedInitialRoute(initStarMap, 'test-seed', null);
+  const initConfirm = confirmRoute(initStarMap, [initDest], null);
   const flowState: GameState = {
     lastTimestamp: 1_000_000,
     elapsedSeconds: 0,
@@ -342,9 +234,10 @@ describe('onboarding flow dispatch', () => {
     selectedOre: null,
     constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
     lastError: null,
-    starMap: seedInitialRoute(generateStarMap('test-seed', null), 'test-seed', null),
-    routePath: [],
-    routeTravelTimeSeconds: 0,
+
+    starMap: initConfirm.starMap,
+    routePath: initConfirm.routePath,
+    routeTravelTimeSeconds: initConfirm.routeTravelTimeSeconds,
     currentLocation: null,
   };
 
@@ -355,7 +248,7 @@ describe('onboarding flow dispatch', () => {
     expect(r.idleTimer?.remainingSeconds).toBe(10);
     expect(r.lastTimestamp).toBe(TIME);
     expect(r.lastError).toBeNull();
-    expect(r.currentLocation).toBe(r.starMap?.plannedRoute[0]);
+    expect(r.currentLocation).toBe(r.routePath[0]?.to);
   });
 
   it('IDLE_PROGRESSION advances the gate; COMPLETE_ACTION fires when it expires', () => {

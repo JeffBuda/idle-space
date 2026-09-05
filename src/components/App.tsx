@@ -11,7 +11,7 @@ import { useDbStatus } from '../hooks/useDbStatus';
 import OfflineGreeting from './OfflineGreeting';
 import { MiningRewardModal } from './MiningRewardModal';
 import { SettingsMenu } from './SettingsMenu';
-import { StarMapScreen } from './screens/StarMapScreen';
+import { StarMapScreen } from './screens/star-map/StarMapScreen';
 import { clearCacheAndUpdate } from '../utils/cache';
 import { DebugConsole } from './DebugConsole';
 import { GameStateViewer } from './GameStateViewer';
@@ -66,6 +66,7 @@ const App = () => {
     clearIdleReward,
     isLoading,
     dispatch,
+    dispatchStarMapGo,
   } = useGameState();
 
   const handleCollectRewards = () => {
@@ -169,15 +170,7 @@ const App = () => {
             {screen === 'STAR_MAP' && gameState?.starMap && (
               <StarMapScreen
                 gameState={gameState}
-                starMap={gameState.starMap}
-                routePath={gameState.routePath}
-                routeTravelTimeSeconds={gameState.routeTravelTimeSeconds}
-                onNodeToggle={(id) => dispatch({ type: 'STAR_MAP_NODE_TOGGLE', nodeId: id })}
-                onRemoveStop={(id) => dispatch({ type: 'STAR_MAP_REMOVE_STOP', nodeId: id })}
-                onClearRoute={() => dispatch({ type: 'STAR_MAP_CLEAR_ROUTE' })}
-                onZoomIn={() => dispatch({ type: 'STAR_MAP_ZOOM_IN' })}
-                onZoomOut={() => dispatch({ type: 'STAR_MAP_ZOOM_OUT' })}
-                onGo={() => dispatch({ type: 'STAR_MAP_GO' })}
+                onGo={(plannedRoute) => dispatchStarMapGo(plannedRoute)}
                 onBack={() => dispatch({ type: 'NAVIGATE', to: 'PLANET' })}
               />
             )}

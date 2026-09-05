@@ -27,9 +27,6 @@
 export const STAR_MAP_NODE_COUNT = 10;
 export const STAR_MAP_MIN_EDGES = 1; /* minimum edges per node */
 export const STAR_MAP_MAX_EDGES = 3; /* per requirement: 1-3 edges */
-export const STAR_MAP_ZOOM_MIN = 0.4;
-export const STAR_MAP_ZOOM_MAX = 3.0;
-export const STAR_MAP_ZOOM_STEP = 0.3;
 
 export type Screen = 'WELCOME' | 'STAR_MAP' | 'SPACE_TRAVEL' | 'PLANET' | 'LANDING' | 'MINING';
 
@@ -87,8 +84,10 @@ export interface StarMapRouteSegment {
 export interface StarMapState {
   nodes: StarMapNode[];
   edges: StarMapEdge[];
-  plannedRoute: string[]; /* ordered destination node IDs */
-  zoomLevel: number;
+  // NOTE: `plannedRoute` and `zoomLevel` were removed — they are now
+  // component-local intermediate state managed by StarMapScreen's useReducer.
+  // The engine only holds the FINALIZED route (routePath) on GameState, set
+  // atomically when the player presses "Go". (R17, R18)
   // NOTE: `currentLocationId` was removed — the canonical player location now lives
   // solely on `GameState.currentLocation` (see R2). The star-map component derives
   // the "current" node marker from that field at render time.
@@ -163,12 +162,7 @@ export type GameAction =
   | { type: 'HURRY'; bySeconds?: number }
   | { type: 'COMPLETE_ACTION' }
   | { type: 'ORE_SELECTED'; ore: OreType }
-  | { type: 'STAR_MAP_NODE_TOGGLE'; nodeId: string }
-  | { type: 'STAR_MAP_REMOVE_STOP'; nodeId: string }
-  | { type: 'STAR_MAP_CLEAR_ROUTE' }
-  | { type: 'STAR_MAP_ZOOM_IN' }
-  | { type: 'STAR_MAP_ZOOM_OUT' }
-  | { type: 'STAR_MAP_GO' };
+  | { type: 'STAR_MAP_GO'; plannedRoute: string[] };
 
 /**
  * Presentation-derived view of the active idle gate, computed by `useGameState`

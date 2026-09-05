@@ -10,7 +10,7 @@
 import { advanceIdleGate, processIdleProgression } from './time';
 import { processFlowAction, setupNextTravelLeg } from './flow';
 import { processMiningGate } from './mining';
-import { toggleRouteNode, removeRouteNode, clearRoute, handleZoom } from './starmap';
+import { confirmRoute } from './starmap';
 import type { GameState, GameAction } from '../types/game-state';
 
 /**
@@ -75,40 +75,23 @@ export const engineReducer: EngineReducerFn = (
     case 'COMPLETE_ACTION':
     case 'ORE_SELECTED':
       return processFlowAction(prevState, action, currentTime);
-    case 'STAR_MAP_NODE_TOGGLE': {
-      if (!prevState.starMap) return prevState;
-      const starMap = toggleRouteNode(prevState.starMap, action.nodeId, prevState.currentLocation);
-      return { ...prevState, starMap };
-    }
-
-    case 'STAR_MAP_REMOVE_STOP': {
-      if (!prevState.starMap) return prevState;
-      const starMap = removeRouteNode(prevState.starMap, action.nodeId);
-      return { ...prevState, starMap };
-    }
-
-    case 'STAR_MAP_CLEAR_ROUTE': {
-      if (!prevState.starMap) return prevState;
-      const starMap = clearRoute(prevState.starMap);
-      return { ...prevState, starMap, routePath: [], routeTravelTimeSeconds: 0 };
-    }
-
-    case 'STAR_MAP_ZOOM_IN': {
-      if (!prevState.starMap) return prevState;
-      const starMap = handleZoom(prevState.starMap, 'in');
-      return { ...prevState, starMap };
-    }
-
-    case 'STAR_MAP_ZOOM_OUT': {
-      if (!prevState.starMap) return prevState;
-      const starMap = handleZoom(prevState.starMap, 'out');
-      return { ...prevState, starMap };
-    }
-
     case 'STAR_MAP_GO': {
-      // R5/R8: single-leg gate to plannedRoute[0]. Shared via setupNextTravelLeg
-      // (defined in flow.ts) so the Depart branch reuses identical logic (DRY).
-      return setupNextTravelLeg(prevState, currentTime);
+      // R5/R17: validate the full planned route via confirmRoute, then start
+      // the first leg's single-leg gate. confirmRoute returns an updated
+      // starMap (origin node marked 'visited' + finalized routePath);
+      // setupNextTravelLeg then reads routePath[0] to set currentLocation +
+      // the Approaching gate timer. (R8 Depart reuses setupNextTravelLeg.)
+      if (!prevState.starMap) return prevState;
+      const origin = prevState.currentLocation;
+      const result = confirmRoute(prevState.starMap, action.plannedRoute, origin);
+      if (result.error) return { ...prevState, lastError: result.error, screen: 'STAR_MAP' };
+      const stateWithRoute = {
+        ...prevState,
+        starMap: result.starMap,
+        routePath: result.routePath,
+        routeTravelTimeSeconds: result.routeTravelTimeSeconds,
+      };
+      return setupNextTravelLeg(stateWithRoute, currentTime);
     }
 
     default:

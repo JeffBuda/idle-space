@@ -1,55 +1,57 @@
-// src/components/screens/StarMapScreen.tsx
+// src/components/screens/star-map/StarMapScreen.tsx
 //
 // Production star map screen: renders the generated graph as an interactive
-// SVG, a draggable bottom-sheet-style route panel, and zoom controls.
+// SVG, a bottom-sheet-style route panel, and zoom controls.
 //
-// Per the architecture rules (docs/star-map-plan/phase-4-components-and-css.md):
-//   - Imports ONLY from types/ and CSS — NO engine/ or db/ imports.
-//   - All game logic (graph generation, pathfinding, route validation) lives
-//     in src/engine/starmap.ts and is dispatched via props callbacks.
-//   - Component-level logic is UI transforms only (status->CSS class, zoom
-//     display, empty/disabled states).
-import type { StarMapState, StarMapRouteSegment, GameState } from '../../types/game-state';
+// Architecture (R17/R18):
+//   - All game logic (graph generation, pathfinding, route validation,
+//     route confirmation, travel time) lives in src/engine/ + shared
+//     src/utils/star-map.ts — NEVER imported here from engine/.
+//   - Component-local intermediate state (plannedRoute, zoomLevel) is
+//     managed by StarMapScreen.reducer.ts via useReducer.
+//   - Pure helper functions live in star-map-utils.ts and are unit tested
+//     in star-map-utils.test.ts.
+//   - This component imports ONLY from types/, utils/star-map, and its own
+//     co-located reducer + utils — NO engine/ imports (enforced by ESLint
+//     boundaries and tests/architecture.test.ts).
+
+import { useReducer, useMemo } from 'react';
+import type { GameState, StarMapNode, StarMapEdge } from '../../../types/game-state';
+import { getNodeById } from '../../../utils/star-map';
+import { createStarMapReducer, initStarMapUIState } from './StarMapScreen.reducer';
+import { derivePlannedRouteFromRoutePath } from './star-map-utils';
 import './StarMapScreen.css';
 
 export interface StarMapScreenProps {
-  gameState: GameState | null;
-  starMap: StarMapState | null;
-  routePath: StarMapRouteSegment[];
-  routeTravelTimeSeconds: number;
-  onNodeToggle: (nodeId: string) => void;
-  onRemoveStop: (nodeId: string) => void;
-  onClearRoute: () => void;
-  onZoomIn: () => void;
-  onZoomOut: () => void;
-  onGo: () => void;
+  gameState: GameState;
+  onGo: (plannedRoute: string[]) => void;
   onBack: () => void;
 }
 
-export const StarMapScreen = ({
-  gameState,
-  starMap,
-  routePath,
-  routeTravelTimeSeconds,
-  onNodeToggle,
-  onRemoveStop,
-  onClearRoute,
-  onZoomIn,
-  onZoomOut,
-  onGo,
-  onBack,
-}: StarMapScreenProps) => {
+export const StarMapScreen = ({ gameState, onGo, onBack }: StarMapScreenProps) => {
+  const starMap = gameState.starMap;
+  const nodes = useMemo(() => starMap?.nodes ?? [], [starMap]);
+  const edges = starMap?.edges ?? [];
+  const currentLocation = gameState.currentLocation;
+  const routePath = gameState.routePath;
+  const routeTravelTimeSeconds = gameState.routeTravelTimeSeconds;
+
+  // Initialize component-local state: derive plannedRoute from saved routePath
+  // (R18 — so the player can modify a previously confirmed route), zoom = 1.0.
+  const initialStops = useMemo(() => derivePlannedRouteFromRoutePath(routePath), [routePath]);
+  const reducer = useMemo(
+    () => createStarMapReducer(nodes, currentLocation),
+    [nodes, currentLocation],
+  );
+  const [state, dispatch] = useReducer(reducer, initialStops, initStarMapUIState);
+
   if (!starMap) return null;
 
-  const { nodes, plannedRoute, zoomLevel } = starMap;
-  // R2/R8: the canonical player location now lives on GameState.currentLocation,
-  // not on StarMapState.currentLocationId (removed). Derive here for rendering —
-  // this is a read-only lookup, not a mirrored/owned field.
-  const currentLocation = gameState?.currentLocation ?? null;
+  const { plannedRoute, zoomLevel } = state;
+
+  // ---- Derived display values (pure transforms, no game math) ----
 
   // Flatten route segments into an ordered, deduplicated list of node IDs.
-  // Each StarMapRouteSegment.path is an ordered array of node IDs for one leg;
-  // concatenating all legs gives the full route as a flat path.
   const routeNodeIds: string[] = routePath.reduce((acc: string[], seg) => {
     for (const id of seg.path) {
       if (!acc.includes(id)) acc.push(id);
@@ -57,33 +59,29 @@ export const StarMapScreen = ({
     return acc;
   }, []);
 
-  // Determine the node IDs that are part of the computed route path visual.
-  const pathNodeIds = new Set(routeNodeIds.slice(1, -1).filter((id) => id !== currentLocation));
-
   // Build a set of route edge pairs for highlighting edges in the selected route.
-  // Per the UI Interaction Specification: edges are active when source and target
-  // match a sequential pair in the active route, INCLUDING currentLocationId to
-  // the first node (e.g., currentLocation -> index 0; index 0 -> index 1, etc.).
+  // When plannedRoute is empty but a saved routePath exists, use its stops.
+  const routeStops =
+    plannedRoute.length > 0 ? plannedRoute : derivePlannedRouteFromRoutePath(routePath);
   const routeEdgePairs = new Set<string>();
-  if (plannedRoute.length > 0) {
-    // Edge from the player's current location to the first route stop
-    const first = plannedRoute[0]!;
+  if (currentLocation && routeStops.length > 0) {
+    const first = routeStops[0]!;
     routeEdgePairs.add(`${currentLocation}->${first}`);
     routeEdgePairs.add(`${first}->${currentLocation}`);
-    for (let i = 0; i < plannedRoute.length - 1; i++) {
-      const a = plannedRoute[i];
-      const b = plannedRoute[i + 1];
+    for (let i = 0; i < routeStops.length - 1; i++) {
+      const a = routeStops[i]!;
+      const b = routeStops[i + 1]!;
       routeEdgePairs.add(`${a}->${b}`);
       routeEdgePairs.add(`${b}->${a}`);
     }
   }
 
-  // Helper: generate SVG polyline points for the active route path
+  // SVG polyline points for the active route path (finalized routePath)
   const getRoutePoints = (): string => {
     if (routeNodeIds.length === 0) return '';
     return routeNodeIds
       .map((id) => {
-        const node = nodes.find((n) => n.id === id);
+        const node = getNodeById(nodes, id);
         return node ? `${node.x} ${node.y}` : '';
       })
       .filter(Boolean)
@@ -100,7 +98,7 @@ export const StarMapScreen = ({
             type="button"
             className="btn btn--icon"
             data-testid="zoom-out"
-            onClick={onZoomOut}
+            onClick={() => dispatch({ type: 'ZOOM_OUT' })}
             aria-label="Zoom out"
           >
             −
@@ -110,7 +108,7 @@ export const StarMapScreen = ({
             type="button"
             className="btn btn--icon"
             data-testid="zoom-in"
-            onClick={onZoomIn}
+            onClick={() => dispatch({ type: 'ZOOM_IN' })}
             aria-label="Zoom in"
           >
             +
@@ -135,10 +133,11 @@ export const StarMapScreen = ({
       >
         <svg viewBox="0 0 100 100" className="star-map-svg" data-testid="star-map-svg">
           {/* Render edges as lines */}
-          {starMap.edges.map((edge, i) => {
-            const fromNode = nodes.find((n) => n.id === edge.from);
-            const toNode = nodes.find((n) => n.id === edge.to);
+          {edges.map((edge: StarMapEdge, i: number) => {
+            const fromNode = getNodeById(nodes, edge.from);
+            const toNode = getNodeById(nodes, edge.to);
             if (!fromNode || !toNode) return null;
+            const isActive = routeEdgePairs.has(`${edge.from}->${edge.to}`);
             return (
               <line
                 key={`edge-${i}`}
@@ -146,20 +145,10 @@ export const StarMapScreen = ({
                 y1={fromNode.y}
                 x2={toNode.x}
                 y2={toNode.y}
-                className={
-                  routeEdgePairs.has(`${edge.from}->${edge.to}`)
-                    ? 'star-map-edge star-map-edge--route'
-                    : 'star-map-edge'
-                }
-                data-testid={
-                  routeEdgePairs.has(`${edge.from}->${edge.to}`) ? 'route-edge-active' : undefined
-                }
-                stroke={
-                  routeEdgePairs.has(`${edge.from}->${edge.to}`)
-                    ? 'var(--color-star-route)'
-                    : 'var(--color-star-edge)'
-                }
-                strokeWidth={routeEdgePairs.has(`${edge.from}->${edge.to}`) ? '0.5' : '0.3'}
+                className={isActive ? 'star-map-edge star-map-edge--route' : 'star-map-edge'}
+                data-testid={isActive ? 'route-edge-active' : undefined}
+                stroke={isActive ? 'var(--color-star-route)' : 'var(--color-star-edge)'}
+                strokeWidth={isActive ? '0.5' : '0.3'}
               />
             );
           })}
@@ -175,7 +164,7 @@ export const StarMapScreen = ({
           )}
 
           {/* Render nodes */}
-          {nodes.map((node) => {
+          {nodes.map((node: StarMapNode) => {
             const isCurrent = node.id === currentLocation;
             const isInRoute = plannedRoute.includes(node.id);
             const nodeClass = `star-map-node star-map-node--${node.status}`;
@@ -184,7 +173,7 @@ export const StarMapScreen = ({
                 key={node.id}
                 className={nodeClass}
                 data-testid={`node-${node.id}`}
-                onClick={() => onNodeToggle(node.id)}
+                onClick={() => dispatch({ type: 'TOGGLE_NODE', nodeId: node.id })}
                 style={{ cursor: isCurrent ? 'default' : 'pointer' }}
               >
                 {isCurrent ? (
@@ -202,13 +191,11 @@ export const StarMapScreen = ({
                     cy={node.y - 3}
                     r={isInRoute ? 1.6 : 1.2}
                     fill={
-                      node.status === 'current'
-                        ? 'var(--color-star-current)'
-                        : node.status === 'visited'
-                          ? 'var(--color-star-visited)'
-                          : pathNodeIds.has(node.id)
-                            ? 'var(--color-star-route)'
-                            : 'var(--color-star-unknown)'
+                      node.status === 'visited'
+                        ? 'var(--color-star-visited)'
+                        : isInRoute
+                          ? 'var(--color-star-route)'
+                          : 'var(--color-star-unknown)'
                     }
                   />
                 )}
@@ -237,8 +224,8 @@ export const StarMapScreen = ({
         ) : (
           <>
             <ul data-testid="itinerary-list">
-              {plannedRoute.map((nodeId, index) => {
-                const node = nodes.find((n) => n.id === nodeId);
+              {plannedRoute.map((nodeId: string, index: number) => {
+                const node = getNodeById(nodes, nodeId);
                 return (
                   <li key={nodeId} className="itinerary-stop">
                     <span data-testid={`stop-index-${nodeId}`}>{index + 1}.</span>
@@ -248,7 +235,7 @@ export const StarMapScreen = ({
                       className="btn btn--icon btn--small"
                       data-testid={`remove-stop-${nodeId}`}
                       aria-label={`Remove ${node ? node.name : nodeId} from route`}
-                      onClick={() => onRemoveStop(nodeId)}
+                      onClick={() => dispatch({ type: 'REMOVE_STOP', nodeId })}
                     >
                       ✕
                     </button>
@@ -265,11 +252,17 @@ export const StarMapScreen = ({
               type="button"
               className="btn btn--secondary"
               data-testid="clear-route"
-              onClick={onClearRoute}
+              onClick={() => dispatch({ type: 'CLEAR_ROUTE' })}
             >
               Clear Route
             </button>
-            <button type="button" className="btn btn--primary" data-testid="go-btn" onClick={onGo}>
+            <button
+              type="button"
+              className="btn btn--primary"
+              data-testid="go-btn"
+              onClick={() => onGo(plannedRoute)}
+              disabled={plannedRoute.length === 0}
+            >
               Go!
             </button>
           </>
