@@ -1,6 +1,6 @@
 // src/db.ts
 import { openDB, type DBSchema } from 'idb';
-import type { GameState } from '../types/game-state';
+import type { GameState, GameConstants } from '../types/game-state';
 
 export interface AppStatus {
   installed: boolean;
@@ -72,6 +72,16 @@ const generateRngSeed = (): string => {
   return bytes[0].toString(36);
 };
 
+/**
+ * Canonical game constants for a brand-new install. Shared by the db layer's
+ * GAME_STATE_DEFAULT and the hooks layer's "New Game" reinitialization so the
+ * first-download defaults live in exactly one place (single source of truth).
+ */
+export const DEFAULT_GAME_CONSTANTS: GameConstants = {
+  defaultActionTimeSeconds: 30,
+  rareOreTimeMultiplier: 2,
+};
+
 const GAME_STATE_DEFAULT: GameState = {
   lastTimestamp: Date.now(),
   elapsedSeconds: 0,
@@ -85,7 +95,7 @@ const GAME_STATE_DEFAULT: GameState = {
   idleTimer: null,
   oreCounts: { commonOre: 0, rareOre: 0 },
   selectedOre: null,
-  constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
+  constants: { ...DEFAULT_GAME_CONSTANTS },
   lastError: null,
   starMap: null,
   routePath: [],
@@ -242,4 +252,20 @@ export async function saveLogEntries(entries: LogEntry[]): Promise<void> {
 export async function clearLogEntries(): Promise<void> {
   const db = await openDB<SpaceIdleDB>(DB_NAME, DB_VERSION);
   await db.delete('space_idle_logs', LOGS_KEY);
+}
+
+/**
+ * Hard "New Game" wipe: atomically clears the `game_state` record AND every
+ * persisted debug log entry in a single readwrite transaction, so the next
+ * launch behaves exactly like a fresh install's save (no progress, no logs).
+ *
+ * App-status metadata (install/firstVisit, kept in `keyval`) is intentionally
+ * preserved — a new game resets *progress*, not the app install state.
+ */
+export async function resetAllGameData(): Promise<void> {
+  const db = await openDB<SpaceIdleDB>(DB_NAME, DB_VERSION);
+  const tx = db.transaction(['game_state', LOGS_STORE_NAME], 'readwrite');
+  await tx.objectStore('game_state').delete(GAME_STATE_KEY);
+  await tx.objectStore(LOGS_STORE_NAME).delete(LOGS_KEY);
+  await tx.done;
 }

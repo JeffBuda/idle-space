@@ -12,6 +12,7 @@ describe('SettingsMenu', () => {
     appStatusVisible: false,
     onToggleAppStatus: vi.fn(),
     onForceUpdate: vi.fn(),
+    onNewGame: vi.fn(),
   };
 
   beforeEach(() => {
@@ -149,6 +150,28 @@ describe('SettingsMenu', () => {
     expect(screen.getByTestId('settings-card')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('force-ui-update'));
+    expect(screen.queryByTestId('settings-card')).not.toBeInTheDocument();
+  });
+
+  it('renders the New Game button in the gear menu', () => {
+    render(<SettingsMenu {...defaultProps} />);
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    expect(screen.getByTestId('new-game')).toBeInTheDocument();
+  });
+
+  it('calls onNewGame when the New Game button is clicked', () => {
+    render(<SettingsMenu {...defaultProps} />);
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    fireEvent.click(screen.getByTestId('new-game'));
+    expect(defaultProps.onNewGame).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes settings card after triggering New Game', () => {
+    render(<SettingsMenu {...defaultProps} />);
+    fireEvent.click(screen.getByTestId('settings-gear'));
+    expect(screen.getByTestId('settings-card')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('new-game'));
     expect(screen.queryByTestId('settings-card')).not.toBeInTheDocument();
   });
 });

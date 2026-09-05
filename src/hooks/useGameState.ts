@@ -6,7 +6,16 @@ import type { IdleGateStatus, IdleRewardSummary, Screen } from '../types/game-st
 import { engineReducer, type GameAction } from '../engine/reducer';
 import { createInitialGameState } from '../engine/flow';
 import { withLogging } from '../logging/logger';
-import { getGameState, saveGameState, initGameState, initDB, migrateGameState } from '../db';
+import {
+  getGameState,
+  saveGameState,
+  initGameState,
+  initDB,
+  migrateGameState,
+  resetAllGameData,
+  DEFAULT_GAME_CONSTANTS,
+} from '../db';
+import { createRandomSeed } from '../utils/rng';
 
 export type { GameState };
 
@@ -42,6 +51,11 @@ export interface UseGameStateResult {
 
   // Typed navigation helper (convenience wrapper around dispatch)
   navigateTo: (to: Screen) => void;
+
+  // New Game: wipes persisted progress + logs and reseeds a fresh game state
+  // (new star map + route, WELCOME screen) with a new rngSeed — as if the game
+  // were freshly downloaded.
+  startNewGame: () => Promise<void>;
 }
 
 export const useGameState = (): UseGameStateResult => {
@@ -301,5 +315,29 @@ export const useGameState = (): UseGameStateResult => {
       },
       [dispatch],
     ),
+    // Hard "New Game" reset — reinitializes the game to a brand-new state:
+    //   1. resetAllGameData(): atomically wipes the persisted game_state record
+    //      + all debug logs (as if first download).
+    //   2. createInitialGameState(): pure engine fn seeds a fresh star map +
+    //      one-leg route with a new crypto rngSeed, WELCOME screen, zero ore,
+    //      and the shipped-default constants (hard reset, per design).
+    //   3. Persist + reset the live tick/save refs so the running intervals
+    //      operate cleanly on the fresh state.
+    // Lives in the hooks layer (not engine) because it touches db + crypto;
+    // reuses the exact same first-launch path for deterministic parity.
+    startNewGame: useCallback(async () => {
+      const now = Date.now();
+      await resetAllGameData();
+      const newState = createInitialGameState(
+        createRandomSeed(),
+        now,
+        DEFAULT_GAME_CONSTANTS.defaultActionTimeSeconds,
+        DEFAULT_GAME_CONSTANTS.rareOreTimeMultiplier,
+      );
+      gameStateRef.current = newState;
+      lastTickRef.current = now; // prevent a stale 1s tick on the old state
+      setGameState(newState);
+      await saveGameState({ ...newState, lastError: null });
+    }, []),
   };
 };

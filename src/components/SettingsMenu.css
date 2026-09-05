@@ -94,6 +94,14 @@
   border-radius: var(--radius-small);
 }
 
+/* Visual separator above destructive actions (e.g. New Game). */
+.settings-divider {
+  height: 1px;
+  background-color: var(--color-border-subtle);
+  margin: var(--space-md) 0;
+  width: 100%;
+}
+
 /* Sandbox / debug tool — info-blue accent to distinguish from normal
    toggles (green) and destructive actions (red). */
 .settings-toggle--sandbox {
