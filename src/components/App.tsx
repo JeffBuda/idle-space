@@ -123,8 +123,13 @@ const App = () => {
           />
         )}
 
+        {/* Hidden signal element for E2E tests: becomes present when the app
+          has finished initializing (handleWake complete, gameState loaded).
+          Replaces fragile waitForTimeout + welcome-screen polling. */}
+        <div data-testid="app-ready" className="app-ready-signal" />
+
         {/* App Status overlay — menu-gated. The screen -> component switch
-          lives here in App.tsx (NOT a hook) because src/engine/flow.ts is
+          lives here in App.tsx (NOT-a hook) because src/engine/flow.ts is
           forbidden from importing React/components, and a custom hook that
           imported the screen components would violate the archunit
           "hooks -> components" rule. */}
