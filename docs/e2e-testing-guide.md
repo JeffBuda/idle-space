@@ -157,35 +157,80 @@ element that represents a verifiable app state.
 
 ### The problem
 
-Star map generation uses `crypto.getRandomValues()` for its seed. Without a
-fixed seed, the random extra-edges can create a direct edge between nodes the
-tests assume are non-adjacent (e.g. `sys_5` adjacent to `sys_1`), causing
-~15% intermittent failures.
+The star map is generated deterministically from `GameState.rngSeed` (via
+`createSeededRNG` in `src/utils/rng.ts`), but `createInitialGameState` picks a
+random seed using `crypto.getRandomValues()`. Without controlling the seed,
+the random extra-edges can create a direct edge between nodes the tests assume
+are non-adjacent (e.g. `sys_5` adjacent to `sys_1`), causing ~15% intermittent
+failures.
 
-### The fix
+### The fix: inject `rngSeed` before the app loads
 
-Override `crypto.getRandomValues` in a `beforeEach` hook via
-`page.addInitScript`:
+The game engine already supports full determinism — `generateStarMap(seed)`
+in `src/engine/starmap.ts` accepts a `seed: string` parameter and
+`enterStarMap(state)` in `src/engine/flow.ts` will **regenerate** the star map
+from `state.rngSeed` whenever `state.starMap` is `null`.
+
+The correct pattern (used by `tests/e2e/cache-update.spec.ts`) is to write
+the desired game state — including `rngSeed` and `starMap: null` — to
+IndexedDB **BEFORE** the app's first `page.goto('/')`. Use the
+`injectGameState` helper from `cache-update.spec.ts`, which leverages
+`page.addInitScript` to run IndexedDB writes before the app's own scripts:
 
 ```ts
-test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
-    crypto.getRandomValues = ((arr: Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray) => {
-      for (let i = 0; i < arr.length; i++) {
-        arr[i] = 0;
-      }
-      return arr;
-    }) as unknown as typeof crypto.getRandomValues;
+import { generateStarMap } from '../../src/engine/starmap';
+
+// Verify topology BEFORE committing (see "Verifying the seed's topology" below)
+const sys5Edges = new Set(
+  generateStarMap('test-seed', null).nodes.find((n) => n.id === 'sys_5')!.edges,
+);
+console.assert(!sys5Edges.has('sys_1'), 'sys_5 must NOT be adjacent to sys_1');
+
+// In your test:
+await injectGameState(page, {
+  // …full game state fields…
+  rngSeed: 'test-seed',
+  starMap: null, // forces enterStarMap → generateStarMap('test-seed', …)
+});
+await page.goto('/');
+await expect(page.getByTestId('app-ready')).toBeAttached();
+// Star map is now deterministic: same seed → same edge set every run.
+```
+
+**Why this works:**
+
+1. `addInitScript` queues a script that fires on the next navigation
+   (`page.goto('/')`), before the app's JavaScript initializes.
+2. The injected state (including `rngSeed: 'test-seed'`, `starMap: null`)
+   is written to IndexedDB during that script.
+3. When the app's `handleWake()` reads the saved state, `starMap` is `null`,
+   so `enterStarMap` calls `generateStarMap('test-seed', …)`.
+4. `generateStarMap` uses `createSeededRNG('test-seed')` → identical sequence
+   every run → identical edge set.
+
+**Why NOT post-load `writeGameState` + reload:** The app's auto-save interval
+(10 s) can overwrite the injected state before you inject it. Always inject
+BEFORE `page.goto('/')` per `AGENTS.md` §"E2E test timing".
+
+**Verifying the seed's topology** (do this once per chosen seed, before
+committing — either as a unit test or a quick scratch script):
+
+```ts
+import { describe, it, assert } from 'vitest';
+import { generateStarMap } from '../src/engine/starmap';
+
+describe('Star map seed topology', () => {
+  it('sys_5 is NOT adjacent to sys_1 for seed "test-seed"', () => {
+    const map = generateStarMap('test-seed', null);
+    const sys5Edges = new Set(map.nodes.find((n) => n.id === 'sys_5')!.edges);
+    assert.isFalse(sys5Edges.has('sys_1'), 'sys_5 must NOT be adjacent to sys_1 for this seed');
   });
 });
 ```
 
-Filling typed arrays with `0` produces seed `"0"`, in which the star map ring
-topology (`sys_0 <-> sys_1 <-> … <-> sys_9 <-> sys_0`) has no shortcut edges
-between non-adjacent nodes.
-
 **Rule:** If your test depends on procedurally generated topology, pin the
-seed and verify it produces the expected graph before committing.
+`rngSeed` field in the game state and verify the resulting graph topology
+before committing.
 
 ---
 
