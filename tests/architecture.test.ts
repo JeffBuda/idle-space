@@ -221,3 +221,48 @@ test('logging layer should have no circular dependencies', async () => {
     projectFiles(configPath).inFolder('src/logging').should().haveNoCycles(),
   ).toPassAsync();
 });
+
+// ---------------------------------------------------------------------------
+// E2E test isolation
+// (E2E specs interact via UI — they must NOT import from src/ layers directly.
+//  See docs/e2e-testing-guide.md §3 for the injectGameState pattern.)
+// ---------------------------------------------------------------------------
+test('e2e tests should not import from engine layer', async () => {
+  await expect(
+    projectFiles('./tsconfig.e2e.json')
+      .inFolder('tests/e2e')
+      .shouldNot()
+      .dependOnFiles()
+      .inFolder('src/engine'),
+  ).toPassAsync();
+});
+
+test('e2e tests should not import from db layer', async () => {
+  await expect(
+    projectFiles('./tsconfig.e2e.json')
+      .inFolder('tests/e2e')
+      .shouldNot()
+      .dependOnFiles()
+      .inFolder('src/db'),
+  ).toPassAsync();
+});
+
+test('e2e tests should not import from hooks layer', async () => {
+  await expect(
+    projectFiles('./tsconfig.e2e.json')
+      .inFolder('tests/e2e')
+      .shouldNot()
+      .dependOnFiles()
+      .inFolder('src/hooks'),
+  ).toPassAsync();
+});
+
+test('e2e tests should not import from utils layer', async () => {
+  await expect(
+    projectFiles('./tsconfig.e2e.json')
+      .inFolder('tests/e2e')
+      .shouldNot()
+      .dependOnFiles()
+      .inFolder('src/utils'),
+  ).toPassAsync();
+});

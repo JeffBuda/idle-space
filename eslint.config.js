@@ -34,6 +34,7 @@ export default tseslint.config(
         { type: 'utils', pattern: 'src/utils/**' },
         { type: 'hooks', pattern: 'src/hooks/**' },
         { type: 'components', pattern: 'src/components/**' },
+        { type: 'e2e', pattern: 'tests/e2e/**' },
       ],
       'boundaries/files': [{ category: 'test', pattern: 'src/**/*.test.{ts,tsx}' }],
     },
@@ -111,6 +112,20 @@ export default tseslint.config(
                 to: { file: { categories: 'test' } },
               },
             },
+            // E2E tests: interact with the app via browser UI only — must NOT
+            // import from any internal source layer (engine, db, hooks, utils,
+            // components). See docs/e2e-testing-guide.md §3 for the
+            // injectGameState-before-page.goto pattern.
+            {
+              from: { element: { type: 'e2e' } },
+              disallow: {
+                to: {
+                  element: {
+                    types: ['engine', 'db', 'hooks', 'utils', 'components'],
+                  },
+                },
+              },
+            },
           ],
         },
       ],
@@ -161,6 +176,29 @@ export default tseslint.config(
         {
           name: 'sessionStorage',
           message: 'DB layer must not use sessionStorage — use IndexedDB only',
+        },
+      ],
+    },
+  },
+  // ---- E2E test restrictions ----
+  // tests/e2e/*.spec.ts must inject deterministic seeds via injectGameState —
+  // never override or call crypto.getRandomValues directly. See docs/e2e-testing-guide.md §3.
+  {
+    files: ['tests/e2e/**/*.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "AssignmentExpression[left.type='MemberExpression'][left.object.name='crypto'][left.property.name='getRandomValues']",
+          message:
+            'Do not override crypto.getRandomValues in E2E tests. Inject a deterministic rngSeed via injectGameState(page, { rngSeed: "test-seed", starMap: null }) before page.goto("/"). See docs/e2e-testing-guide.md §3.',
+        },
+        {
+          selector:
+            "CallExpression[callee.type='MemberExpression'][callee.object.name='crypto'][callee.property.name='getRandomValues']",
+          message:
+            'Do not call crypto.getRandomValues in E2E tests. Inject a deterministic rngSeed via injectGameState instead. See docs/e2e-testing-guide.md §3.',
         },
       ],
     },
