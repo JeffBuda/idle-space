@@ -326,8 +326,6 @@ describe('App', () => {
     mockGameStateData.starMap = {
       nodes: [{ id: 'sys_0', name: 'Test', x: 50, y: 50, status: 'current', edges: [] }],
       edges: [],
-      plannedRoute: [],
-      zoomLevel: 1.0,
     };
     render(<App />);
     expect(screen.getByTestId('star-map-screen')).toBeInTheDocument();
@@ -343,8 +341,6 @@ describe('App', () => {
     mockGameStateData.starMap = {
       nodes: [{ id: 'sys_0', name: 'Sol', x: 50, y: 50, status: 'visited', edges: [] }],
       edges: [],
-      plannedRoute: [],
-      zoomLevel: 1.0,
     };
     render(<App />);
     expect(screen.getByTestId('planet-hub-title')).toHaveTextContent('Orbiting Sol');
@@ -372,8 +368,6 @@ describe('App', () => {
     mockGameStateData.starMap = {
       nodes: [{ id: 'sys_0', name: 'Sol', x: 50, y: 50, status: 'current', edges: [] }],
       edges: [],
-      plannedRoute: [],
-      zoomLevel: 1.0,
     };
     render(<App />);
     expect(screen.getByTestId('space-travel-title')).toHaveTextContent('Approaching Sol');

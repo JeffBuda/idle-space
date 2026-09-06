@@ -65,7 +65,7 @@ export const DebugConsole = ({ visible, onClose }: DebugConsoleProps) => {
           aria-label="Close debug console"
           onClick={onClose}
         >
-          Γ£ò
+          ✕
         </button>
       </div>
 

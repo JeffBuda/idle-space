@@ -25,23 +25,15 @@
   color: var(--color-white);
 }
 
-.zoom-controls {
+/* Header actions: close button only (zoom removed per Issue 4) */
+.star-map-header-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-}
-
-.zoom-controls span {
-  font-size: var(--font-size-1);
-  color: var(--color-text-secondary);
-  min-width: 48px;
-  text-align: center;
 }
 
 .star-map-canvas {
   flex: 1;
   overflow: hidden;
-  transition: transform 0.3s ease;
 }
 
 .star-map-svg {
@@ -76,9 +68,17 @@
 }
 
 .star-map-node rect {
-  /* Green filled-in square for current location (Endless Sky style) */
   fill: var(--color-star-current);
   cursor: default;
+}
+
+/* Current location node highlight (Issue 1) */
+.star-map-node--current rect {
+  fill: var(--color-star-current);
+}
+
+.star-map-node--current circle {
+  fill: var(--color-star-current);
 }
 
 .star-map-node--visited circle {
@@ -90,20 +90,55 @@
 }
 
 .star-map-label {
-  font-size: 2.5px;
+  font-size: 5px;
   fill: var(--color-text-secondary);
   pointer-events: none;
 }
 
-.route-panel {
+.route-drawer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   background: var(--color-panel);
   border-top: 2px solid var(--color-border);
-  padding: 12px 16px;
-  max-height: 40vh;
-  overflow-y: auto;
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  padding: 8px 16px 0;
+  box-shadow: var(--shadow-panel);
+  transform: translateY(0);
+  transition: transform 0.3s ease-out;
+  z-index: var(--z-star-map-drawer, 100);
 }
 
-.route-panel p {
+.route-drawer--open {
+  transform: translateY(0);
+}
+
+.route-drawer--closed .route-drawer-content {
+  display: none;
+}
+
+.route-drawer-handle {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 6px 0;
+  cursor: row-resize;
+  z-index: 1;
+}
+
+.route-drawer-thumb {
+  width: 40px;
+  height: 4px;
+  background: var(--color-border-subtle);
+  border-radius: 2px;
+}
+
+.route-drawer-content {
+  padding: 8px 0 12px;
+}
+
+.route-drawer p {
   margin: 0;
   color: var(--color-text-secondary);
   font-size: 0.85rem;

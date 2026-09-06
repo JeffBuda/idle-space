@@ -1,27 +1,18 @@
 // src/components/screens/star-map/StarMapScreen.reducer.ts
 //
 // Pure reducer for StarMapScreen's component-local intermediate state.
-// Manages `plannedRoute` (the proposed waypoint list before Go) and
-// `zoomLevel` (the UI zoom, not persisted). Neither belongs in the
-// engine/game state — they are discarded if the player cancels out of the
-// star map screen (R17/R18).
+// Manages `plannedRoute` (the proposed waypoint list before Go) — this is
+// discarded if the player cancels out of the star map screen (R17/R18).
 //
 // This file is a pure module (no React imports) so it can be unit-tested
 // directly with vitest without jsdom.
 
 import type { StarMapNode } from '../../../types/game-state';
-import {
-  toggleRouteStop,
-  removeRouteStop,
-  clearRoute,
-  handleZoom,
-  resetZoom,
-} from './star-map-utils';
+import { toggleRouteStop, removeRouteStop, clearRoute } from './star-map-utils';
 
 /** Component-local state for StarMapScreen's useReducer. */
 export interface StarMapUIState {
   plannedRoute: string[];
-  zoomLevel: number;
 }
 
 /** Actions dispatched by the StarMapScreen component. */
@@ -29,9 +20,6 @@ export type StarMapUIAction =
   | { type: 'TOGGLE_NODE'; nodeId: string }
   | { type: 'REMOVE_STOP'; nodeId: string }
   | { type: 'CLEAR_ROUTE' }
-  | { type: 'ZOOM_IN' }
-  | { type: 'ZOOM_OUT' }
-  | { type: 'RESET_ZOOM' }
   | { type: 'INIT_FROM_ROUTE_PATH'; stops: string[] };
 
 /**
@@ -41,7 +29,6 @@ export type StarMapUIAction =
  */
 export const initStarMapUIState = (initialStops: string[]): StarMapUIState => ({
   plannedRoute: initialStops,
-  zoomLevel: 1.0,
 });
 
 /**
@@ -69,12 +56,6 @@ export const createStarMapReducer = (nodes: StarMapNode[], origin: string | null
           ...state,
           plannedRoute: clearRoute(),
         };
-      case 'ZOOM_IN':
-        return { ...state, zoomLevel: handleZoom(state.zoomLevel, 'in') };
-      case 'ZOOM_OUT':
-        return { ...state, zoomLevel: handleZoom(state.zoomLevel, 'out') };
-      case 'RESET_ZOOM':
-        return { ...state, zoomLevel: resetZoom() };
       case 'INIT_FROM_ROUTE_PATH':
         return {
           ...state,

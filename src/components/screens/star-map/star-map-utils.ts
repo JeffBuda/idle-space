@@ -1,9 +1,9 @@
 // src/components/screens/star-map/star-map-utils.ts
 //
 // Pure UI-state helpers for the StarMapScreen component. These operate on
-// component-local state (plannedRoute: string[], zoomLevel: number) rather
-// than on StarMapState or GameState, so they can be unit-tested in isolation
-// without engine dependencies.
+// component-local state (plannedRoute: string[]) rather than on StarMapState
+// or GameState, so they can be unit-tested in isolation without engine
+// dependencies.
 //
 // Shared graph functions (findPath, isAdjacent, getNodeById, computeRoutePath)
 // are imported from src/utils/star-map.ts — the boundary-safe shared layer
@@ -12,12 +12,6 @@
 
 import { type StarMapNode } from '../../../types/game-state';
 import { isAdjacent } from '../../../utils/star-map';
-
-// Zoom constants (component-local — not persisted, per R17/R18)
-export const STAR_MAP_ZOOM_MIN = 0.4;
-export const STAR_MAP_ZOOM_MAX = 3.0;
-export const STAR_MAP_ZOOM_STEP = 0.3;
-export const STAR_MAP_ZOOM_DEFAULT = 1.0;
 
 // ---------------------------------------------------------------------------
 // Route panel operations (operate on plannedRoute: string[])
@@ -76,22 +70,6 @@ export const removeRouteStop = (plannedRoute: string[], nodeId: string): string[
 
 /** Clear the entire planned route. */
 export const clearRoute = (): string[] => [];
-
-// ---------------------------------------------------------------------------
-// Zoom operations (operate on zoomLevel: number)
-// ---------------------------------------------------------------------------
-
-/**
- * Adjust zoom level, clamped to [STAR_MAP_ZOOM_MIN, STAR_MAP_ZOOM_MAX].
- * Pure: returns a number, never mutates.
- */
-export const handleZoom = (zoomLevel: number, direction: 'in' | 'out'): number => {
-  const step = direction === 'in' ? STAR_MAP_ZOOM_STEP : -STAR_MAP_ZOOM_STEP;
-  return Math.max(STAR_MAP_ZOOM_MIN, Math.min(STAR_MAP_ZOOM_MAX, zoomLevel + step));
-};
-
-/** Reset zoom to the default (1.0 = 100%). */
-export const resetZoom = (): number => STAR_MAP_ZOOM_DEFAULT;
 
 // ---------------------------------------------------------------------------
 // Route path derivation (derive plannedRoute from saved routePath)

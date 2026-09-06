@@ -65,7 +65,23 @@ const enterStarMap = (state: GameState): GameState => {
     const starMap = generateStarMap(state.rngSeed, state.currentLocation);
     return { ...state, screen: 'STAR_MAP', starMap, lastError: null };
   }
-  return { ...state, screen: 'STAR_MAP', lastError: null };
+  // R2: Refresh node statuses to reflect the player's current location on
+  // re-entry. Mark currentLocation as 'current'; demote any stale 'current'
+  // node to 'visited' so the star map always highlights the system the
+  // player is actually on (per Issue 1: highlight current location).
+  const updatedNodes = state.starMap.nodes.map((n) => {
+    if (n.id === state.currentLocation) return { ...n, status: 'current' };
+    if (n.status === 'current' && state.currentLocation !== null) {
+      return { ...n, status: 'visited' };
+    }
+    return n;
+  });
+  return {
+    ...state,
+    screen: 'STAR_MAP',
+    starMap: { ...state.starMap, nodes: updatedNodes },
+    lastError: null,
+  };
 };
 
 export const navigate = (
@@ -171,7 +187,7 @@ export const createInitialGameState = (
   // R3: generate star map, pick a random first-destination, confirm the
   // one-leg route (origin=null → "deep space"), and store the finalized
   // routePath + travel time. seedInitialRoute now returns just the node ID.
-  const starMap = generateStarMap(seed, null);
+  const starMap = generateStarMap(seed, 'sys_0');
   const destinationId = seedInitialRoute(starMap, seed, null);
   const confirm = confirmRoute(starMap, [destinationId], null);
   return {
