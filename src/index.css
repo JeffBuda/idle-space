@@ -18,6 +18,7 @@
   --color-fill-hover-subtle: rgba(255, 255, 255, 0.03);
   --color-accent: #4ade80;
   --color-accent-hover: #68d368;
+  --color-warning: #ff8c42;
   --color-negative: #f87177;
   --color-info: #63b3ed;
   --color-debug-cyan: rgba(100, 200, 255, 0.8);
@@ -142,6 +143,48 @@
   --color-info-bg-subtle: rgba(99, 179, 237, 0.1);
   --color-negative-bg-subtle: rgba(248, 113, 119, 0.1);
   --color-negative-bg-hover: rgba(248, 113, 119, 0.2);
+
+  /* ── Debug Theme Tokens (consumed by React Aria components via GameThemeProvider) ── */
+  --debug-font-family:
+    Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+  --debug-font-size-sm: 0.8rem;
+  --debug-font-size-md: 0.875rem;
+  --debug-font-size-lg: 1rem;
+  --debug-font-weight-regular: 400;
+  --debug-font-weight-medium: 600;
+  --debug-font-weight-semibold: 700;
+  --debug-color-bg: var(--color-bg);
+  --debug-color-surface: var(--color-surface);
+  --debug-color-surface-alt: var(--color-surface-alt);
+  --debug-color-border: var(--color-border);
+  --debug-color-border-subtle: var(--color-border-subtle);
+  --debug-color-text: var(--color-text);
+  --debug-color-text-secondary: var(--color-text-secondary);
+  --debug-color-text-muted: var(--color-text-muted);
+  --debug-color-white: var(--color-white);
+  --debug-color-accent: var(--color-accent);
+  --debug-color-accent-hover: var(--color-accent-hover);
+  --debug-color-warn: var(--color-warning);
+  --debug-color-warn-hover: #ffb347;
+  --debug-color-fill-hover: var(--color-fill-hover);
+  --debug-color-fill-hover-subtle: var(--color-fill-hover-subtle);
+  --debug-radius-card: var(--radius-card);
+  --debug-radius-input: var(--radius-input);
+  --debug-radius-small: var(--radius-small);
+  --debug-radius-modal: var(--radius-modal);
+  --debug-shadow-panel: var(--shadow-console);
+  --debug-shadow-modal: var(--shadow-modal);
+  --debug-shadow-card: var(--shadow-card);
+  --debug-z-panel: var(--z-console);
+  --debug-z-modal: var(--z-modal);
+  --debug-z-dropdown: var(--z-dropdown);
+  --debug-transition-speed: 0.2s;
+  --debug-touch-target-min: var(--touch-target-min);
+  --debug-touch-target-frequent: var(--touch-target-frequent);
+  --debug-safe-area-bottom: env(safe-area-inset-bottom);
+  --debug-color-overlay: var(--color-overlay);
+  --debug-color-backdrop: var(--color-backdrop);
 }
 
 * {

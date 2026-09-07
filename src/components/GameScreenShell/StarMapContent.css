@@ -1,0 +1,191 @@
+/* src/components/GameScreenShell/StarMapContent.css */
+/* Star map rendering for the GameScreenShell's bottom-drawer "Star Map" tab. */
+/* Mobile-first (390x844 viewport), matching existing patterns. */
+
+.star-map-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  gap: var(--space-md);
+}
+
+.star-map-canvas-wrapper {
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.star-map-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.star-map-edge {
+  stroke: var(--color-star-edge, #444);
+  stroke-width: 0.3;
+}
+
+.star-map-edge--route {
+  stroke: var(--color-accent);
+  stroke-width: 0.5;
+  stroke-linecap: round;
+}
+
+.star-map-route {
+  stroke: var(--color-accent);
+  stroke-width: 0.5;
+  stroke-dasharray: 1 1;
+}
+
+.star-map-node {
+  transition: r 0.2s ease;
+}
+
+.star-map-node circle {
+  cursor: pointer;
+}
+
+.star-map-node--current circle {
+  fill: var(--color-star-current);
+}
+
+.star-map-node--visited circle {
+  fill: var(--color-star-visited);
+}
+
+.star-map-node--unknown circle {
+  fill: var(--color-star-unknown);
+}
+
+.star-map-label {
+  font-size: 5px;
+  fill: var(--color-text-secondary);
+  pointer-events: none;
+}
+
+.star-map-empty {
+  padding: var(--space-xl);
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+/* Route planning drawer (collapsible) */
+.route-drawer {
+  position: relative;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+.route-drawer--open {
+  max-height: 300px;
+}
+
+.route-drawer--closed .route-drawer-content {
+  display: none;
+}
+
+.route-drawer--closed {
+  max-height: 32px;
+}
+
+.route-drawer-handle {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: var(--space-3xs) 0;
+  cursor: row-resize;
+  z-index: 1;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.route-drawer-thumb {
+  width: 40px;
+  height: 4px;
+  background: var(--color-border-subtle);
+  border-radius: 2px;
+}
+
+.route-drawer-content {
+  padding: var(--space-md);
+}
+
+.route-drawer p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-875);
+}
+
+.itinerary-stop {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-3xs) 0;
+}
+
+.itinerary-stop span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Ensure itinerary-stop buttons stay at 44x44px — override any flex stretching */
+.itinerary-stop button {
+  flex: none !important;
+  flex-shrink: 0 !important;
+  width: var(--touch-target-min) !important;
+  height: var(--touch-target-min) !important;
+  min-width: var(--touch-target-min) !important;
+  min-height: var(--touch-target-min) !important;
+}
+
+.route-summary {
+  margin: var(--space-sm) 0;
+  font-size: var(--font-size-875);
+  color: var(--color-text-secondary);
+}
+
+/* Override full-width mobile button rule for icon buttons in itinerary */
+@media (max-width: 600px) {
+  .itinerary-stop button {
+    width: var(--touch-target-min) !important;
+    height: var(--touch-target-min) !important;
+    min-width: var(--touch-target-min) !important;
+    min-height: var(--touch-target-min) !important;
+    flex: none !important;
+    padding: 0 !important;
+  }
+}
+
+.btn--icon {
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  width: var(--touch-target-min);
+  height: var(--touch-target-min);
+  flex: none;
+  padding: 0;
+  font-size: 1.2rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn--small {
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  width: var(--touch-target-min);
+  height: var(--touch-target-min);
+  flex: none;
+  padding: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

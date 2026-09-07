@@ -1,0 +1,174 @@
+/* src/components/GameScreenShell/ScreenContent.css */
+/* Screen-specific content styles for the GameScreenShell */
+
+.screen-content-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  padding: var(--space-xl);
+}
+
+.screen-subtitle {
+  font-size: var(--font-size-1);
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.screen-hint {
+  font-size: var(--font-size-875);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.ore-selector {
+  display: flex;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.ore-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3xs);
+  padding: var(--space-md) var(--space-sm);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background-color: var(--color-bg);
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+  min-height: var(--touch-target-min);
+}
+
+.ore-option:hover {
+  border-color: var(--color-accent);
+}
+
+.ore-option--selected {
+  border-color: var(--color-accent);
+  background-color: rgba(99, 179, 237, 0.1);
+}
+
+.ore-option--selected .ore-name {
+  color: var(--color-accent);
+}
+
+.ore-name {
+  font-size: var(--font-size-875);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.ore-tag {
+  font-size: var(--font-size-75);
+  color: var(--color-text-secondary);
+}
+
+.ore-tally {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.tally-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.tally-label {
+  font-size: var(--font-size-875);
+  color: var(--color-text-secondary);
+}
+
+.tally-value {
+  font-size: var(--font-size-875);
+  font-weight: 600;
+  color: var(--color-white);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Action buttons */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-input);
+  font-family: var(--debug-font-family);
+  font-size: var(--font-size-1);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    opacity 0.2s ease;
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+  padding: var(--space-sm) var(--space-xl);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn--lg {
+  font-size: var(--font-size-1);
+  padding: var(--space-md) var(--space-2xl);
+}
+
+.btn--primary {
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.btn--primary:hover:not(:disabled) {
+  background-color: var(--color-accent-hover);
+}
+
+.btn--accent {
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.btn--accent:hover:not(:disabled) {
+  background-color: var(--color-accent-hover);
+}
+
+.btn--secondary {
+  background-color: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.btn--secondary:hover:not(:disabled) {
+  background-color: var(--color-fill-hover);
+}
+
+/* Mobile: full-width action buttons */
+@media (max-width: 600px) {
+  .screen-content-block {
+    padding: var(--space-lg);
+  }
+
+  .game-screen-actions .btn {
+    flex: 1;
+    min-width: var(--touch-target-min);
+    min-height: var(--touch-target-min);
+  }
+
+  .ore-selector {
+    gap: var(--space-sm);
+  }
+
+  .ore-option {
+    min-height: var(--touch-target-min);
+  }
+}

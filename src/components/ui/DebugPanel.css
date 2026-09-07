@@ -1,0 +1,17 @@
+/* src/components/ui/DebugPanel.css */
+
+.debug-panel {
+  background-color: var(--debug-color-surface);
+  border: 1px solid var(--debug-color-border);
+  border-radius: var(--debug-radius-card);
+  padding: var(--space-lg);
+  box-shadow: var(--debug-shadow-card);
+  transition:
+    border-color var(--debug-transition-speed) ease,
+    box-shadow var(--debug-transition-speed) ease;
+}
+
+.debug-panel:hover {
+  border-color: var(--debug-color-border-interactive);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+}

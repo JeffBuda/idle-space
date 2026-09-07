@@ -1,17 +1,15 @@
-// src/components/screens/star-map/star-map-utils.ts
+// src/components/GameScreenShell/stellar-map-utils.ts
 //
-// Pure UI-state helpers for the StarMapScreen component. These operate on
+// Pure UI-state helpers for the StarMapContent component. These operate on
 // component-local state (plannedRoute: string[]) rather than on StarMapState
 // or GameState, so they can be unit-tested in isolation without engine
 // dependencies.
 //
 // Shared graph functions (findPath, isAdjacent, getNodeById, computeRoutePath)
 // are imported from src/utils/star-map.ts — the boundary-safe shared layer
-// that BOTH engine and components may use. This avoids duplicating graph
-// algorithms while keeping components out of the engine boundary.
-
-import { type StarMapNode } from '../../../types/game-state';
-import { isAdjacent } from '../../../utils/star-map';
+// that BOTH engine and components may use.
+import type { StarMapNode } from '../../types/game-state';
+import { isAdjacent } from '../../utils/star-map';
 
 // ---------------------------------------------------------------------------
 // Route panel operations (operate on plannedRoute: string[])
@@ -41,21 +39,17 @@ export const toggleRouteStop = (
   nodes: StarMapNode[],
   origin: string | null,
 ): string[] => {
-  // Reject if node is the current location
   const node = nodes.find((n) => n.id === nodeId);
   if (!node || node.status === 'current') return plannedRoute;
 
-  // If already in the route, truncate at this node (sever the tail)
   const existingIndex = plannedRoute.indexOf(nodeId);
   if (existingIndex >= 0) {
     return plannedRoute.slice(0, existingIndex);
   }
 
-  // Validate adjacency to the tail (or origin if route is empty)
   const referenceId = plannedRoute.length > 0 ? plannedRoute[plannedRoute.length - 1] : origin;
-
   if (referenceId === null || !isAdjacent(nodes, referenceId, nodeId)) {
-    return plannedRoute; // reject: not directly connected
+    return plannedRoute;
   }
 
   return [...plannedRoute, nodeId];
@@ -77,9 +71,7 @@ export const clearRoute = (): string[] => [];
 
 /**
  * Derive stop IDs from a saved GameState.routePath (array of StarMapRouteSegment).
- * Each segment's `to` field is a stop; extracting them gives the waypoint list
- * so the component can initialize its plannedRoute from the player's existing
- * route (e.g. after a previous "Go" that was never started).
+ * Each segment's `to` field is a stop; extracting them gives the waypoint list.
  */
 export const derivePlannedRouteFromRoutePath = (routePath: { to: string }[]): string[] =>
   routePath.map((seg) => seg.to);

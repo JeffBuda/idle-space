@@ -118,3 +118,9 @@ cat dist/manifest.webmanifest | node -e "const m=JSON.parse(require('fs').readFi
   layout, gotchas from Phase 1 iOS install banner work)
 - `C:\Users\jeffr\git\Scoresceror` — sibling PWA project with a working
   GitHub Pages + VitePWA setup (reference implementation for manifest paths)
+
+## 0. Work Session Hygiene
+
+- Work in feature branches: always git checkout -b feature/xxx off main
+- Intermediate commits are your safety net: commit after each sub-task to create recoverable checkpoints so git checkout -- . or git reset does not lose work
+- Recover from inadvertant resets: use git reflog to find last good state, then git reset --hard to restore; untracked (new) files survive but tracked file modifications do not
