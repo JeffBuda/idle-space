@@ -238,7 +238,7 @@ export function StarMapContent({ gameState, onGo }: StarMapContentProps) {
                 onClick={() => onGo(plannedRoute)}
                 disabled={plannedRoute.length === 0}
               >
-                Go!
+                Set Course
               </button>
             </>
           )}

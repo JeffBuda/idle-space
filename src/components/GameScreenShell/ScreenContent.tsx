@@ -22,6 +22,7 @@ export interface ScreenDeps {
   gate: IdleGateStatus | null;
   dispatch: (action: GameAction) => void;
   dispatchStarMapGo: (route: string[]) => void;
+  onChartCourse: () => void;
 }
 
 // ── Status bar items ────────────────────────────────────────────────────
@@ -337,7 +338,7 @@ const GateButton = ({
 
 /** Builds the full set of GameScreenShell props for the current screen. */
 export function getScreenProps(deps: ScreenDeps): GameScreenShellProps {
-  const { gameState, screen, oreCounts, gate, dispatch, dispatchStarMapGo } = deps;
+  const { gameState, screen, oreCounts, gate, dispatch, dispatchStarMapGo, onChartCourse } = deps;
   const planetName = getNodeName(
     gameState.starMap?.nodes ?? null,
     gameState.currentLocation,
@@ -488,7 +489,7 @@ export function getScreenProps(deps: ScreenDeps): GameScreenShellProps {
               label="Chart Course"
               testId="nav-star-map"
               variant="btn--primary"
-              onClick={() => dispatch({ type: 'NAVIGATE', to: 'STAR_MAP' })}
+              onClick={onChartCourse}
             />
             <GateButton
               label={departLabel}
@@ -500,29 +501,6 @@ export function getScreenProps(deps: ScreenDeps): GameScreenShellProps {
         ),
       };
     }
-
-    case 'STAR_MAP':
-      return {
-        title,
-        statusItems,
-        children: (
-          <p className="screen-hint" data-testid="star-map-notice">
-            Plan your route using the Star Map tab below.
-          </p>
-        ),
-        detailsContent: <PlanetDetails gameState={gameState} />,
-        gameState,
-        onStarMapGo: dispatchStarMapGo,
-        defaultDrawerTab: 'star-map',
-        actionButtons: (
-          <GateButton
-            label="Back"
-            testId="back-btn"
-            variant="btn--secondary"
-            onClick={() => dispatch({ type: 'NAVIGATE', to: 'PLANET' })}
-          />
-        ),
-      };
 
     default:
       return {

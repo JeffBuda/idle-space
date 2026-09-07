@@ -4,7 +4,6 @@
 // and Star Map. Renders on every screen. Collapses to a thumb handle
 // when closed. Tab content is always rendered (not conditionally mounted)
 // so StarMapContent always has its SVG dimensions.
-import { useState } from 'react';
 import { DebugConsole } from '../DebugConsole';
 import { GameStateViewer } from '../GameStateViewer';
 import { AppStatusViewer } from '../AppStatusViewer';
@@ -23,6 +22,14 @@ export interface BottomDrawerProps {
   detailsContent: React.ReactNode;
   onForceUpdate?: () => void;
   onNewGame?: () => void;
+  /** Drawer open state (controlled) */
+  drawerOpen: boolean;
+  /** Active tab (controlled) */
+  activeTab: DrawerTabId;
+  /** Called when drawer open state changes */
+  onDrawerOpenChange: (open: boolean) => void;
+  /** Called when the active tab changes */
+  onTabChange: (tab: DrawerTabId) => void;
 }
 
 const TABS: { id: DrawerTabId; label: string }[] = [
@@ -42,11 +49,12 @@ export const BottomDrawer = ({
   detailsContent,
   onForceUpdate,
   onNewGame,
+  drawerOpen,
+  activeTab,
+  onDrawerOpenChange,
+  onTabChange,
 }: BottomDrawerProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<DrawerTabId>('details');
-
-  const handleToggle = () => setIsOpen(!isOpen);
+  const handleToggle = () => onDrawerOpenChange(!drawerOpen);
 
   const renderTabContent = () => (
     <>
@@ -95,30 +103,30 @@ export const BottomDrawer = ({
   );
 
   return (
-    <div className="bottom-drawer" data-testid="bottom-drawer">
+    <div className={`bottom-drawer`} data-testid={`bottom-drawer`}>
       <div
-        className={`drawer-handle ${isOpen ? 'drawer-handle--open' : ''}`}
-        data-testid="drawer-handle"
+        className={`drawer-handle ${drawerOpen ? 'drawer-handle--open' : ''}`}
+        data-testid={`drawer-handle`}
         onClick={handleToggle}
-        aria-label={isOpen ? 'Collapse details' : 'Show details and star map'}
+        aria-label={drawerOpen ? 'Collapse details' : 'Show details and star map'}
       >
-        <div className="drawer-thumb" />
+        <div className={`drawer-thumb`} />
       </div>
 
       <div
-        className={`drawer-panel ${isOpen ? 'drawer-panel--open' : 'drawer-panel--closed'}`}
-        data-testid="drawer-panel"
+        className={`drawer-panel ${drawerOpen ? 'drawer-panel--open' : 'drawer-panel--closed'}`}
+        data-testid={`drawer-panel`}
       >
-        <div className="drawer-tablist" role="tablist" data-testid="drawer-tablist">
+        <div className={`drawer-tablist`} role={`tablist`} data-testid={`drawer-tablist`}>
           {TABS.map((tab) => (
             <button
               key={tab.id}
-              type="button"
-              role="tab"
+              type={`button`}
+              role={`tab`}
               aria-selected={activeTab === tab.id}
               className={`drawer-tab ${activeTab === tab.id ? 'drawer-tab--selected' : ''}`}
               data-testid={`drawer-tab-${tab.id}`}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => onTabChange(tab.id)}
             >
               {tab.label}
             </button>

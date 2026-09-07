@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { GameThemeProvider } from './ui';
 import { GameScreenShell } from './GameScreenShell/GameScreenShell';
 import { getScreenProps } from './GameScreenShell/ScreenContent';
@@ -8,7 +8,7 @@ import { useDbStatus } from '../hooks/useDbStatus';
 import OfflineGreeting from './OfflineGreeting';
 import { MiningRewardModal } from './MiningRewardModal';
 import { NewGameConfirmModal } from './NewGameConfirmModal';
-import { BottomDrawer } from './BottomDrawer/BottomDrawer';
+import { BottomDrawer, type DrawerTabId } from './BottomDrawer/BottomDrawer';
 import { clearCacheAndUpdate } from '../utils/cache';
 import './App.css';
 
@@ -18,6 +18,8 @@ const App = () => {
   const [installReady, setInstallReady] = useState(false);
   const [confirmNewGameVisible, setConfirmNewGameVisible] = useState(false);
   const [forceUpdateKey, setForceUpdateKey] = useState(0);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<DrawerTabId>('details');
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -68,6 +70,11 @@ const App = () => {
     setForceUpdateKey((k) => k + 1);
   };
 
+  const handleChartCourse = useCallback(() => {
+    setActiveTab('star-map');
+    setDrawerOpen(true);
+  }, []);
+
   const screenProps = gameState
     ? getScreenProps({
         gameState,
@@ -76,6 +83,7 @@ const App = () => {
         gate,
         dispatch,
         dispatchStarMapGo,
+        onChartCourse: handleChartCourse,
       })
     : null;
 
@@ -127,6 +135,10 @@ const App = () => {
           detailsContent={screenProps?.detailsContent ?? null}
           onForceUpdate={handleForceUpdate}
           onNewGame={() => setConfirmNewGameVisible(true)}
+          drawerOpen={drawerOpen}
+          activeTab={activeTab}
+          onDrawerOpenChange={setDrawerOpen}
+          onTabChange={setActiveTab}
         />
 
         {/* "New Game" confirmation — destructive reset is delegated to the hook. */}
