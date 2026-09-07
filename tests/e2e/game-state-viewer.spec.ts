@@ -1,5 +1,6 @@
 // tests/e2e/game-state-viewer.spec.ts
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type TestInfo } from '@playwright/test';
+import { captureScreenshot } from './screenshot-helpers';
 
 /**
  * E2E tests for the game state viewer panel.
@@ -54,15 +55,18 @@ test.describe.serial('game state viewer', () => {
     await clearGameState(page);
   });
 
-  test('game state viewer is hidden by default', async ({ page }) => {
+  test('game state viewer is hidden by default', async ({ page }, testInfo: TestInfo) => {
     await page.goto('/');
     await page.waitForTimeout(1000);
     console.log('Page loaded, checking viewer is hidden by default');
     await expect(page.getByTestId('game-state-viewer')).toHaveCount(0);
-    console.log('Game state viewer is not present \u2014 correct');
+    console.log('Game state viewer is not present — correct');
+    await captureScreenshot(page, testInfo, 'game-state-hidden-default', 1);
   });
 
-  test('clicking "View Game State" opens the game state viewer', async ({ page }) => {
+  test('clicking "View Game State" opens the game state viewer', async ({
+    page,
+  }, testInfo: TestInfo) => {
     await page.goto('/');
     await page.waitForTimeout(1000);
     console.log('Page loaded, opening settings');
@@ -70,15 +74,17 @@ test.describe.serial('game state viewer', () => {
     await page.getByTestId('settings-gear').click();
     await expect(page.getByTestId('settings-card')).toBeVisible();
     console.log('Settings card opened');
+    await captureScreenshot(page, testInfo, 'settings-card-opened', 1);
 
     await page.getByTestId('toggle-game-state').click();
     console.log('Clicked "View Game State" toggle');
 
     await expect(page.getByTestId('game-state-viewer')).toBeVisible();
     console.log('Game state viewer is now visible');
+    await captureScreenshot(page, testInfo, 'game-state-viewer-opened', 2);
   });
 
-  test('game state viewer displays formatted JSON', async ({ page }) => {
+  test('game state viewer displays formatted JSON', async ({ page }, testInfo: TestInfo) => {
     await page.goto('/');
     await page.waitForTimeout(1000);
 
@@ -93,9 +99,10 @@ test.describe.serial('game state viewer', () => {
     expect(content).toBeTruthy();
     expect(content).toContain('totalDistanceKm');
     console.log('Game state JSON contains expected keys');
+    await captureScreenshot(page, testInfo, 'game-state-json-displayed', 1);
   });
 
-  test('close button hides the game state viewer', async ({ page }) => {
+  test('close button hides the game state viewer', async ({ page }, testInfo: TestInfo) => {
     await page.goto('/');
     await page.waitForTimeout(1000);
 
@@ -104,9 +111,11 @@ test.describe.serial('game state viewer', () => {
 
     await expect(page.getByTestId('game-state-viewer')).toBeVisible();
     console.log('Game state viewer opened');
+    await captureScreenshot(page, testInfo, 'game-state-viewer-open', 1);
 
     await page.getByTestId('game-state-close').click();
     await expect(page.getByTestId('game-state-viewer')).toHaveCount(0);
     console.log('Game state viewer closed after clicking close button');
+    await captureScreenshot(page, testInfo, 'game-state-viewer-closed', 2);
   });
 });

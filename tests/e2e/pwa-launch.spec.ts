@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type TestInfo } from '@playwright/test';
+import { captureScreenshot } from './screenshot-helpers';
 
 test.use({ viewport: { width: 390, height: 844 } });
 
@@ -44,15 +45,17 @@ async function waitForServiceWorker(page: Page, timeoutMs = 5000): Promise<void>
 // Helper: open the menu-gated App Status overlay so status widgets
 // (Service Worker, IndexedDB, Build Information, travel time) are visible.
 // ---------------------------------------------------------------------------
-const openAppStatus = async (page: Page) => {
+async function openAppStatus(page: Page): Promise<void> {
   await page.getByTestId('settings-gear').click();
   await page.getByTestId('toggle-app-status').click();
-};
+}
 
 // ---------------------------------------------------------------------------
 // Test 1 — UI Render: main header and status widgets exist in the DOM.
 // ---------------------------------------------------------------------------
-test('Test 1 (UI Render): main headers and status widgets exist', async ({ page }) => {
+test('Test 1 (UI Render): main headers and status widgets exist', async ({
+  page,
+}, testInfo: TestInfo) => {
   await page.goto('/');
   await openAppStatus(page);
 
@@ -72,6 +75,7 @@ test('Test 1 (UI Render): main headers and status widgets exist', async ({ page 
   // Wait for game state to load
   await expect(page.getByTestId('total-travel-time')).toBeVisible();
   await expect(page.getByTestId('total-distance')).toBeVisible();
+  await captureScreenshot(page, testInfo, 'ui-render-all-widgets', 1);
 });
 
 // ---------------------------------------------------------------------------
@@ -79,7 +83,7 @@ test('Test 1 (UI Render): main headers and status widgets exist', async ({ page 
 // ---------------------------------------------------------------------------
 test('Test 2 (Service Worker Registration): controller becomes active within 10 seconds', async ({
   page,
-}) => {
+}, testInfo: TestInfo) => {
   await page.goto('/');
   await openAppStatus(page);
 
@@ -89,17 +93,21 @@ test('Test 2 (Service Worker Registration): controller becomes active within 10 
 
   const hasController = await page.evaluate(() => navigator.serviceWorker?.controller !== null);
   expect(hasController).toBe(true);
+  await captureScreenshot(page, testInfo, 'sw-registered-active', 1);
 });
 
 // ---------------------------------------------------------------------------
 // Test 3 — IndexedDB Operations: data persists across a page reload.
 // ---------------------------------------------------------------------------
-test('Test 3 (IndexedDB Operations): state persists across reload', async ({ page }) => {
+test('Test 3 (IndexedDB Operations): state persists across reload', async ({
+  page,
+}, testInfo: TestInfo) => {
   await page.goto('/');
   await openAppStatus(page);
 
   // Wait for game state to load
   await expect(page.getByTestId('total-travel-time')).toBeVisible();
+  await captureScreenshot(page, testInfo, 'idb-before-reload', 1);
 
   // Reload the page
   await page.reload();
@@ -107,6 +115,8 @@ test('Test 3 (IndexedDB Operations): state persists across reload', async ({ pag
 
   // Wait for game state to load again
   await expect(page.getByTestId('total-travel-time')).toBeVisible();
+
+  await captureScreenshot(page, testInfo, 'idb-after-reload', 2);
 
   // Verify game state still exists after reload
   const gameState = await getGameStateFromIDB(page);
@@ -120,13 +130,17 @@ test('Test 3 (IndexedDB Operations): state persists across reload', async ({ pag
 // ---------------------------------------------------------------------------
 // Test 4 — Game State Creation: game_state is created on first load.
 // ---------------------------------------------------------------------------
-test('Test 4 (Game State Creation): game state is created and displayed', async ({ page }) => {
+test('Test 4 (Game State Creation): game state is created and displayed', async ({
+  page,
+}, testInfo: TestInfo) => {
   await page.goto('/');
   await openAppStatus(page);
 
   // Wait for game state to load
   await expect(page.getByTestId('total-travel-time')).toBeVisible();
   await expect(page.getByTestId('total-distance')).toBeVisible();
+
+  await captureScreenshot(page, testInfo, 'game-state-created', 1);
 
   // Verify game state was written to IndexedDB
   const gameState = await getGameStateFromIDB(page);

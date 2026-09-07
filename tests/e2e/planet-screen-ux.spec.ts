@@ -9,7 +9,8 @@
 // for primary actions (Land, Chart Course) and btn--secondary for the
 // secondary action (Depart). The Depart button's testid was also unified
 // to always be "nav-space-travel" regardless of route state.
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type TestInfo } from '@playwright/test';
+import { captureScreenshot } from './screenshot-helpers';
 
 test.use({ viewport: { width: 390, height: 844 } });
 
@@ -97,7 +98,9 @@ test.describe.serial('PLANET screen action-bar UX', () => {
     await clearIndexedDB(page);
   });
 
-  test('app loads without runtime errors on PLANET screen', async ({ page }) => {
+  test('app loads without runtime errors on PLANET screen', async ({
+    page,
+  }, testInfo: TestInfo) => {
     const errors: string[] = [];
     page.on('pageerror', (err) => errors.push(err.message));
 
@@ -105,11 +108,14 @@ test.describe.serial('PLANET screen action-bar UX', () => {
     await page.goto('/');
     await waitForAppReady(page);
 
+    await captureScreenshot(page, testInfo, 'planet-screen-loaded', 1);
     expect(errors).toEqual([]);
     console.log('App loaded without runtime errors on PLANET screen');
   });
 
-  test('Land and Chart Course buttons use btn--primary variant', async ({ page }) => {
+  test('Land and Chart Course buttons use btn--primary variant', async ({
+    page,
+  }, testInfo: TestInfo) => {
     await injectGameState(page, PLANET_STATE);
     await page.goto('/');
     await waitForAppReady(page);
@@ -125,11 +131,13 @@ test.describe.serial('PLANET screen action-bar UX', () => {
     await expect(chartCourseBtn).toHaveClass(/btn--primary/);
     await expect(chartCourseBtn).toHaveText('Chart Course');
     console.log('Chart Course button has btn--primary variant');
+
+    await captureScreenshot(page, testInfo, 'primary-buttons-land-chart-course', 1);
   });
 
   test('Depart button uses nav-space-travel testid with btn--secondary variant', async ({
     page,
-  }) => {
+  }, testInfo: TestInfo) => {
     await injectGameState(page, PLANET_STATE);
     await page.goto('/');
     await waitForAppReady(page);
@@ -139,9 +147,11 @@ test.describe.serial('PLANET screen action-bar UX', () => {
     await expect(departBtn).toHaveClass(/btn--secondary/);
     await expect(departBtn).toHaveText('Depart');
     console.log('Depart button has btn--secondary variant and nav-space-travel testid');
+
+    await captureScreenshot(page, testInfo, 'secondary-button-depart', 1);
   });
 
-  test('Planet screen title shows Orbiting', async ({ page }) => {
+  test('Planet screen title shows Orbiting', async ({ page }, testInfo: TestInfo) => {
     await injectGameState(page, PLANET_STATE);
     await page.goto('/');
     await waitForAppReady(page);
@@ -150,5 +160,7 @@ test.describe.serial('PLANET screen action-bar UX', () => {
     await expect(titleEl).toBeVisible();
     await expect(titleEl).toHaveText(/Orbiting/i);
     console.log(`Planet screen title: "${await titleEl.textContent()}"`);
+
+    await captureScreenshot(page, testInfo, 'planet-screen-title-orbiting', 1);
   });
 });

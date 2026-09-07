@@ -6,7 +6,8 @@
 //
 // Uses the iPhone 12 viewport (390x844) per E2E conventions.
 // Runs in a serial describe block because it mutates IndexedDB state.
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type TestInfo } from '@playwright/test';
+import { captureScreenshot } from './screenshot-helpers';
 
 test.use({ viewport: { width: 390, height: 844 } });
 
@@ -116,7 +117,9 @@ test.describe.serial('PWA Cache Invalidation', () => {
     await clearIndexedDB(page);
   });
 
-  test('should clear Service Worker cache but preserve IndexedDB game state', async ({ page }) => {
+  test('should clear Service Worker cache but preserve IndexedDB game state', async ({
+    page,
+  }, testInfo: TestInfo) => {
     // 1. Inject mock save state into IndexedDB BEFORE the app loads, so the
     //    auto-save interval (10s) doesn't overwrite it with the default state.
     const injectedState = {
@@ -151,6 +154,7 @@ test.describe.serial('PWA Cache Invalidation', () => {
       'Pre-update save state injected:',
       (beforeState as Record<string, unknown>).totalDistanceKm,
     );
+    await captureScreenshot(page, testInfo, 'cache-update-before-reload', 1);
 
     // 2. Open settings and trigger Force UI Update.
     await openSettings(page);
@@ -166,6 +170,7 @@ test.describe.serial('PWA Cache Invalidation', () => {
     ]);
     expect(navigationResult).not.toBeNull();
     console.log('Page reloaded after cache wipe (navigation succeeded)');
+    await captureScreenshot(page, testInfo, 'cache-update-after-reload', 1);
 
     // 3. Verify IndexedDB game state survived the reload + cache wipe.
     await expect(page.getByTestId('settings-gear')).toBeVisible();
