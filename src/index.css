@@ -16,8 +16,8 @@
   --color-border-interactive: rgba(255, 255, 255, 0.2);
   --color-fill-hover: rgba(255, 255, 255, 0.08);
   --color-fill-hover-subtle: rgba(255, 255, 255, 0.03);
-  --color-accent: #4ade80;
-  --color-accent-hover: #68d368;
+  --color-accent: #63b3ed;
+  --color-accent-hover: #93c5fd;
   --color-warning: #ff8c42;
   --color-negative: #f87177;
   --color-info: #63b3ed;
@@ -57,7 +57,7 @@
   --shadow-console: 0 -4px 24px rgba(0, 0, 0, 0.5);
   --shadow-modal: 0 24px 48px rgba(0, 0, 0, 0.5);
   --shadow-ios: 0 -4px 24px rgba(0, 0, 0, 0.4);
-  --shadow-accent-hover: 0 4px 16px rgba(74, 222, 128, 0.3);
+  --shadow-accent-hover: 0 4px 16px rgba(147, 199, 253, 0.3);
 
   /* ── Layout ─────────────────────────────────── */
   --max-content-width: 600px;
