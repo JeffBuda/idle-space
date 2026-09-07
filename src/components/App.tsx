@@ -80,7 +80,7 @@ const App = () => {
       <GameThemeProvider>
         <div className="app">
           <header className="app-header">
-            <h1>Space Exploration Idle PWA</h1>
+            <h1>Idle Space</h1>
             <DebugDrawer
               trigger={
                 <DebugButton data-testid="settings-gear" variant="ghost" aria-label="Open settings">
@@ -169,7 +169,7 @@ const App = () => {
     <GameThemeProvider>
       <div className="app">
         <header className="app-header">
-          <h1>Space Exploration Idle PWA</h1>
+          <h1>Idle Space</h1>
           <DebugDrawer
             trigger={
               <DebugButton data-testid="settings-gear" variant="ghost" aria-label="Open settings">

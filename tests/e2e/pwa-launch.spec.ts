@@ -60,7 +60,7 @@ test('Test 1 (UI Render): main headers and status widgets exist', async ({
   await openAppStatus(page);
 
   // Header
-  await expect(page.getByRole('heading', { name: 'Space Exploration Idle PWA' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Idle Space' })).toBeVisible();
 
   // Status widgets
   await expect(page.getByText('Service Worker')).toBeVisible();

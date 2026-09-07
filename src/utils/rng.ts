@@ -1,6 +1,6 @@
 // src/utils/rng.ts
 //
-// Centralized RNG utilities for the Space Idle engine.
+// Centralized RNG utilities for the Idle Space engine.
 //
 // Two functions serve different purposes:
 //   - createSeededRNG: deterministic PRNG for reproducible procedural generation.

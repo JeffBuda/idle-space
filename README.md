@@ -1,10 +1,10 @@
-# Space Exploration Idle PWA
+# Idle Space
 
 A Progressive Web App (PWA) built with **React 18**, **TypeScript**, and **Vite**, designed for offline play via service worker caching and IndexedDB persistence.
 
 ## Overview
 
-This project is the Phase 1 foundation of the Space Exploration Idle game. It includes:
+This project is the Phase 1 foundation of the Idle Space game. It includes:
 
 - **PWA Shell** — Standalone display mode, Web App Manifest, and service worker via `vite-plugin-pwa`.
 - **Testing Pyramid**:

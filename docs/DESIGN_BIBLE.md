@@ -1,4 +1,4 @@
-# Design Bible — Space Exploration Idle PWA
+# Design Bible — Idle Space
 
 > **Single source of truth for all UX/UI work.** When this file exists and is
 > up-to-date, **always read it before implementing any UI or component

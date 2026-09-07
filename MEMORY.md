@@ -28,7 +28,7 @@
 
 ## 1. Project Overview
 
-**Space Exploration Idle PWA** — a Progressive Web App built with React 18,
+**Idle Space** — a Progressive Web App built with React 18,
 TypeScript, and Vite. Phase 1 foundation includes a PWA shell (standalone
 display mode, Web App Manifest, service worker via `vite-plugin-pwa`),
 client-side game engine (`src/engine/`), and a full testing pyramid

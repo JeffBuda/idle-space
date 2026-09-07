@@ -192,7 +192,7 @@ describe('App', () => {
     await act(async () => {
       render(<App />);
     });
-    expect(screen.getByRole('heading', { name: 'Space Exploration Idle PWA' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Idle Space' })).toBeInTheDocument();
   });
 
   it('renders all essential status widgets without errors', async () => {

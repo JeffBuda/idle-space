@@ -1,10 +1,10 @@
-# Space Exploration Idle PWA — Architecture
+# Idle Space — Architecture
 
 > **Status:** Working document — describes the intended target architecture and current state.
 
 ## 1. Overview
 
-Space Exploration Idle PWA is a client-side Progressive Web App built with React 18, TypeScript, and Vite. It uses a **strict separation** between the React presentation layer and a pure functional game engine. There is no backend server.
+Idle Space is a client-side Progressive Web App built with React 18, TypeScript, and Vite. It uses a **strict separation** between the React presentation layer and a pure functional game engine. There is no backend server.
 
 ## 2. Layer Architecture
 
