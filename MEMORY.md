@@ -247,6 +247,8 @@ export const IOS_INSTALL_PROMPT_DISMISSED_KEY = 'iosInstallPromptDismissed';
 6. Use forward slashes in `editor` tool paths on this Windows environment.
 7. Omit `.ts`/`.tsx` extensions in imports — Vite + `allowImportingTsExtensions`
    resolves them.
+8. **Formatting**: NEVER fix indentation or whitespace via the editor tools, custom .cjs scripts, or manual find/replace. The editor tool on Windows + PowerShell doubles leading whitespace on substring replacements. Always run npm run format (Prettier) for all code formatting fixes.
+9. When making bulk edits across files, use node -e with absolute paths for reliability.
 
 ---
 
