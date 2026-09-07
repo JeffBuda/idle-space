@@ -49,6 +49,7 @@ const App = () => {
     clearIdleReward,
     isLoading,
     dispatch,
+    gate,
     dispatchStarMapGo,
     startNewGame,
   } = useGameState();
@@ -72,7 +73,7 @@ const App = () => {
         gameState,
         screen,
         oreCounts: gameState.oreCounts,
-        gate: null,
+        gate,
         dispatch,
         dispatchStarMapGo,
       })

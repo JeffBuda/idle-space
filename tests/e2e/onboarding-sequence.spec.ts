@@ -26,6 +26,15 @@ const waitForAppReady = async (page: Page) => {
   await page.waitForTimeout(1000);
 };
 
+const getGateTimeValue = async (page: Page): Promise<number | null> => {
+  const gateTimeText = await page.getByTestId('gate-time').textContent();
+  console.log('gate-time text:', gateTimeText);
+  const match = gateTimeText?.match(/(\d+)s/);
+  if (match) return parseInt(match[1], 10);
+  if (gateTimeText?.includes('Ready!')) return 0;
+  return null;
+};
+
 test.describe.serial('Onboarding Sequence', () => {
   test.beforeEach(async ({ page }) => {
     await clearIndexedDB(page);
@@ -111,5 +120,49 @@ test.describe.serial('Onboarding Sequence', () => {
     const shell = page.getByTestId('game-screen-shell');
     await expect(shell).toBeVisible();
     console.log('Game screen shell still visible after New Game');
+  });
+
+  test('launch from WELCOME shows Approaching screen with countdown timer', async ({ page }) => {
+    await page.goto('/');
+    await waitForAppReady(page);
+
+    // Click Launch! to transition to SPACE_TRAVEL (Approaching)
+    const launchBtn = page.getByTestId('launch-btn');
+    await launchBtn.click();
+    await page.waitForTimeout(2000);
+
+    // Verify we're on the Approaching screen
+    const screenTitle = page.getByTestId('screen-title');
+    await expect(screenTitle).toContainText('Approaching');
+    console.log('Screen title is:', await screenTitle.textContent());
+
+    // Verify the gate progress bar is present in the DOM
+    const gateProgress = page.getByTestId('gate-progress');
+    console.log('gate-progress count:', await gateProgress.count());
+
+    // Wait for the first 1-second tick to fire
+    await page.waitForTimeout(2000);
+
+    // The gate-progress should be visible once the gate is active
+    await expect(gateProgress).toBeVisible();
+    console.log('gate-progress is visible');
+
+    // Verify the gate time is visible and counting down
+    const gateTime = page.getByTestId('gate-time');
+    await expect(gateTime).toBeVisible();
+
+    const time1 = await getGateTimeValue(page);
+    console.log('First gate time reading:', time1);
+
+    await page.waitForTimeout(3000);
+
+    const time2 = await getGateTimeValue(page);
+    console.log('Second gate time reading:', time2);
+
+    // Time should have decreased (counting down)
+    expect(time1).not.toBeNull();
+    expect(time2).not.toBeNull();
+    expect(time2).toBeLessThan(time1);
+    console.log('Countdown timer is counting down correctly');
   });
 });
