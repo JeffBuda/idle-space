@@ -438,20 +438,15 @@ export function getScreenProps(deps: ScreenDeps): GameScreenShellProps {
         defaultDrawerTab: 'details',
         actionButtons: (
           <>
+            {/* Faster! is always shown — the auto-loop (processMiningGate) handles
+                passive ore accrual on every tick; manual Collect restarts the
+                gate in place via COMPLETE_ACTION — no Collect button needed. */}
             {gate && !gate.expired && (
               <GateButton
                 label="Faster!"
                 testId="hurry-btn"
                 variant="btn--accent"
                 onClick={() => dispatch({ type: 'HURRY' })}
-              />
-            )}
-            {gate?.expired && (
-              <GateButton
-                label="Collect"
-                testId="complete-action-btn"
-                variant="btn--primary"
-                onClick={() => dispatch({ type: 'COMPLETE_ACTION' })}
               />
             )}
             <GateButton

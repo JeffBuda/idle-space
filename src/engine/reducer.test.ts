@@ -289,7 +289,9 @@ describe('onboarding flow dispatch', () => {
     // jump to expiry, then complete
     s = { ...s, idleTimer: { ...s.idleTimer!, remainingSeconds: 0 } };
     s = engineReducer(s, { type: 'COMPLETE_ACTION' }, TIME, 'test-seed');
-    expect(s.screen).toBe('PLANET');
+    // R12: MINING COMPLETE stays on MINING (auto-loop) — awards 1 rareOre + restarts gate
+    expect(s.screen).toBe('MINING');
     expect(s.oreCounts).toEqual({ commonOre: 0, rareOre: 1 });
+    expect(s.idleTimer?.remainingSeconds).toBe(60); // gate restarted to full
   });
 });
