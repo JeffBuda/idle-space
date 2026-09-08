@@ -435,7 +435,6 @@ export function getScreenProps(deps: ScreenDeps): GameScreenShellProps {
         detailsContent: <MiningDetails gameState={gameState} />,
         gameState,
         onStarMapGo: dispatchStarMapGo,
-        defaultDrawerTab: 'details',
         actionButtons: (
           <>
             {/* Faster! is always shown — the auto-loop (processMiningGate) handles

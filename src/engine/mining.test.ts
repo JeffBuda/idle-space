@@ -8,22 +8,23 @@ import { type OreType } from '../types/game-state';
 
 const TIME = 2_000_000;
 
-const baseMining = (over: Partial<GameState> = {}): GameState => ({
-  lastTimestamp: TIME,
-  elapsedSeconds: 0,
-  totalElapsedGameTime: 0,
-  totalDistanceKm: 0,
-  rngSeed: 'test-seed',
-  version: '0.1.0',
-  screen: 'MINING',
-  idleTimer: null,
-  oreCounts: { commonOre: 0, rareOre: 0 },
-  selectedOre: null,
-  constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
-  lastError: null,
-  currentLocation: 'sys_0',
-  ...over,
-});
+const baseMining = (over: Partial<GameState> = {}): GameState =>
+  ({
+    lastTimestamp: TIME,
+    elapsedSeconds: 0,
+    totalElapsedGameTime: 0,
+    totalDistanceKm: 0,
+    rngSeed: 'test-seed',
+    version: '0.1.0',
+    screen: 'MINING',
+    idleTimer: null,
+    oreCounts: { commonOre: 0, rareOre: 0 },
+    selectedOre: null,
+    constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
+    lastError: null,
+    currentLocation: 'sys_0',
+    ...over,
+  }) as GameState;
 
 const miningTimer = (remaining: number, startedAt: number, target: number = 30) => ({
   screen: 'MINING' as const,

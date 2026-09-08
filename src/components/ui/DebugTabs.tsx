@@ -1,4 +1,5 @@
 // src/components/ui/DebugTabs.tsx
+import { useRef } from 'react';
 import { useTabListState } from '@react-stately/tabs';
 import { useTab, useTabList } from '@react-aria/tabs';
 import { FocusScope } from '@react-aria/focus';
@@ -7,7 +8,7 @@ import './DebugTabs.css';
 
 export interface DebugTab {
   id: string;
-  label: React.ReactNode;
+  label: string;
   content?: React.ReactNode;
   'data-testid'?: string;
 }
@@ -40,10 +41,13 @@ export function DebugTabs({
   const theme = useGameTheme();
   const state = useTabListState({
     selectedKey: defaultTab ?? tabs[0]?.id,
-    onSelectionChange: onTabChange,
+    onSelectionChange: onTabChange
+      ? (key: string | number) => onTabChange(key as string)
+      : undefined,
   });
 
-  const { tabs: tabRef } = useTabList({}, null, state);
+  const listRef = useRef<HTMLDivElement>(null);
+  const { tabListProps } = useTabList({}, state, listRef);
 
   return (
     <div
@@ -70,9 +74,9 @@ export function DebugTabs({
     >
       <FocusScope contain restoreFocus autoFocus={false}>
         <div
-          ref={tabRef}
+          {...tabListProps}
+          ref={listRef}
           className="debug-tablist"
-          role="tablist"
           data-testid={`${testId}-tablist`}
         >
           {tabs.map((tab) => (
@@ -97,19 +101,18 @@ interface DebugTabTriggerProps {
 }
 
 function DebugTabTrigger({ tab, state, testId }: DebugTabTriggerProps) {
-  const { tabRef } = useTab({ 'aria-label': tab.label }, state, null);
-  const isSelected = state.selectedKey === tab.id;
+  const tabRef = useRef<HTMLButtonElement>(null);
+  const { tabProps, isSelected } = useTab({ key: tab.id, 'aria-label': tab.label }, state, tabRef);
 
   return (
     <button
+      {...tabProps}
       ref={tabRef}
       type="button"
-      role="tab"
-      aria-selected={isSelected}
       aria-controls={`${testId}-panel-${tab.id}`}
       data-testid={tab['data-testid'] ?? `${testId}-tab-${tab.id}`}
       className={`debug-tab ${isSelected ? 'debug-tab--selected' : ''}`}
-      onClick={() => state.setSelected(tab.id)}
+      onClick={() => state.setSelectedKey(tab.id)}
     >
       {tab.label}
     </button>

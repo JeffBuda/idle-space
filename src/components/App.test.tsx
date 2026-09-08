@@ -1,14 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import App from './App';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import type { GameState } from '../types/game-state';
 
 vi.mock('../hooks/useDbStatus', () => ({
   useDbStatus: vi.fn().mockReturnValue('Connected'),
 }));
 
-const mockGameStateData = {
+const mockGameStateData: GameState = {
   lastTimestamp: Date.now(),
   elapsedSeconds: 100,
   totalElapsedGameTime: 100,
@@ -53,7 +55,10 @@ vi.mock('../utils/cache', () => ({
 }));
 
 vi.mock('@react-stately/overlays', () => ({
-  useOverlayTriggerState: (props) => ({
+  useOverlayTriggerState: (props: {
+    isOpen?: boolean;
+    onOpenChange?: (open: boolean) => void;
+  }) => ({
     isOpen: Boolean(props.isOpen),
     open: () => props.onOpenChange && props.onOpenChange(true),
     close: () => props.onOpenChange && props.onOpenChange(false),
@@ -63,11 +68,11 @@ vi.mock('@react-stately/overlays', () => ({
 }));
 
 vi.mock('@react-aria/focus', () => ({
-  FocusScope: ({ children }) => children,
+  FocusScope: ({ children }: { children: ReactNode }) => children,
 }));
 
 vi.mock('@react-aria/button', () => ({
-  useButton: (props) => {
+  useButton: (props: { onPress?: () => void; type?: string; isDisabled?: boolean }) => {
     const onPress = props.onPress;
     return {
       buttonProps: {
@@ -90,7 +95,7 @@ vi.mock('../hooks/useDebugLogs', () => ({
 
 // React Aria mocks for GameScreenShell tabs
 vi.mock('@react-stately/tabs', () => ({
-  useTabListState: (props) => ({
+  useTabListState: (props: { selectedKey?: string }) => ({
     selectedKey: props.selectedKey || 'details',
     setSelected: vi.fn(),
   }),
@@ -101,7 +106,7 @@ vi.mock('@react-aria/tabs', () => ({
   useTabList: () => ({ tabListProps: {}, tabListRef: { current: null } }),
 }));
 
-const mockServiceWorker = (controller = null) => {
+const mockServiceWorker = (controller: object | null = null) => {
   Object.defineProperty(navigator, 'serviceWorker', {
     value: {
       controller,
@@ -125,7 +130,6 @@ describe('App', () => {
     mockGameStateData.starMap = null;
     mockGameStateData.selectedOre = null;
     mockGameStateData.idleTimer = null;
-    mockGameStateData.idleReward = null;
   });
 
   it('renders the landing page title', async () => {

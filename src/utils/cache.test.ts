@@ -56,7 +56,7 @@ const createMockRegistration = (
       arr.forEach((l) =>
         typeof l === 'function'
           ? l(event ?? new Event(type))
-          : (l as EventListener).handleEvent(event ?? new Event(type)),
+          : (l as EventListenerObject).handleEvent(event ?? new Event(type)),
       );
     },
   } as unknown as ServiceWorkerRegistration;
@@ -89,7 +89,7 @@ const mockServiceWorker = (
       arr.forEach((l) =>
         typeof l === 'function'
           ? l(new Event(type))
-          : (l as EventListener).handleEvent(new Event(type)),
+          : (l as EventListenerObject).handleEvent(new Event(type)),
       );
     },
   };

@@ -8,7 +8,7 @@ import { DebugConsole } from '../DebugConsole';
 import { GameStateViewer } from '../GameStateViewer';
 import { AppStatusViewer } from '../AppStatusViewer';
 import { StarMapContent } from '../GameScreenShell/StarMapContent';
-import type { GameState } from '../hooks/useGameState';
+import type { GameState } from '../../hooks/useGameState';
 import './BottomDrawer.css';
 
 export type DrawerTabId = 'details' | 'debug-console' | 'game-state' | 'app-status' | 'star-map';

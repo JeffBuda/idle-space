@@ -70,9 +70,9 @@ const enterStarMap = (state: GameState): GameState => {
   // node to 'visited' so the star map always highlights the system the
   // player is actually on (per Issue 1: highlight current location).
   const updatedNodes = state.starMap.nodes.map((n) => {
-    if (n.id === state.currentLocation) return { ...n, status: 'current' };
+    if (n.id === state.currentLocation) return { ...n, status: 'current' as const };
     if (n.status === 'current' && state.currentLocation !== null) {
-      return { ...n, status: 'visited' };
+      return { ...n, status: 'visited' as const };
     }
     return n;
   });

@@ -162,7 +162,7 @@ test.describe.serial('Onboarding Sequence', () => {
     // Time should have decreased (counting down)
     expect(time1).not.toBeNull();
     expect(time2).not.toBeNull();
-    expect(time2).toBeLessThan(time1);
+    expect(time2).toBeLessThan(time1!);
     console.log('Countdown timer is counting down correctly');
   });
 });

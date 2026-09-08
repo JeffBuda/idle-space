@@ -67,7 +67,7 @@ export default defineConfig(({ mode }) => {
             },
           ],
         },
-        includeAssETS: ['**/*.{js,css,png,svg,ico}'],
+        includeAssets: ['**/*.{js,css,png,svg,ico}'],
       }),
     ],
   };

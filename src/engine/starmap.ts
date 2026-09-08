@@ -186,7 +186,7 @@ export const confirmRoute = (
   const nodes =
     origin === null
       ? starMap.nodes
-      : starMap.nodes.map((n) => (n.id === origin ? { ...n, status: 'visited' } : n));
+      : starMap.nodes.map((n) => (n.id === origin ? { ...n, status: 'visited' as const } : n));
   return {
     starMap: { ...starMap, nodes },
     routePath,

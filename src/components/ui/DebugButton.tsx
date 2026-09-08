@@ -55,7 +55,7 @@ export const DebugButton = forwardRef<HTMLButtonElement, DebugButtonProps>(
 
     // Merge forwarded ref with internal ref
     const mergedRef = (node: HTMLButtonElement | null) => {
-      buttonRef.current = node;
+      (buttonRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
       if (typeof ref === 'function') ref(node);
       else if (ref) (ref as React.MutableRefObject<HTMLButtonElement | null>).current = node;
     };

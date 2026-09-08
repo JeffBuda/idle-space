@@ -42,13 +42,13 @@ export function DebugModal({
     onOpenChange,
   });
   const dialogRef = useRef<HTMLDivElement>(null);
-  const { overlayProps, underlayProps, titleProps, closeButtonRef } = useOverlay(
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const { overlayProps, underlayProps } = useOverlay(
     {
       isOpen: state.isOpen,
       onClose: state.close,
       shouldCloseOnBlur: true,
       isDismissable: true,
-      'aria-label': label,
     },
     dialogRef,
   );
@@ -105,11 +105,7 @@ export function DebugModal({
               >
                 <div className="debug-modal-content">
                   <div className="debug-modal-header">
-                    <h3
-                      {...titleProps}
-                      data-testid={`${testId}-title`}
-                      className="debug-modal-title"
-                    >
+                    <h3 data-testid={`${testId}-title`} className="debug-modal-title">
                       {label}
                     </h3>
                     {closeButton && (

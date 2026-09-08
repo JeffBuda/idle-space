@@ -54,8 +54,8 @@ describe('generateStarMap', () => {
 
   it('does not carry plannedRoute or zoomLevel (R17/R18)', () => {
     const map = makeMap();
-    expect((map as Record<string, unknown>).plannedRoute).toBeUndefined();
-    expect((map as Record<string, unknown>).zoomLevel).toBeUndefined();
+    expect((map as unknown as Record<string, unknown>).plannedRoute).toBeUndefined();
+    expect((map as unknown as Record<string, unknown>).zoomLevel).toBeUndefined();
   });
 });
 
