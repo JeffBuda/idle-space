@@ -1,5 +1,6 @@
 // tests/e2e/onboarding-sequence.spec.ts
 import { test, expect, type Page } from '@playwright/test';
+import { dismissIOSInstallBanner } from './screenshot-helpers';
 
 test.use({ viewport: { width: 390, height: 844 } });
 
@@ -88,6 +89,7 @@ test.describe.serial('Onboarding Sequence', () => {
     await waitForAppReady(page);
 
     // Open the drawer
+    await dismissIOSInstallBanner(page);
     await page.getByTestId('drawer-handle').click();
     await page.waitForTimeout(500);
 
@@ -127,6 +129,7 @@ test.describe.serial('Onboarding Sequence', () => {
     await waitForAppReady(page);
 
     // Click Launch! to transition to SPACE_TRAVEL (Approaching)
+    await dismissIOSInstallBanner(page);
     const launchBtn = page.getByTestId('launch-btn');
     await launchBtn.click();
     await page.waitForTimeout(2000);

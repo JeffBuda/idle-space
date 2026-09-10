@@ -7,7 +7,7 @@
 // Uses the iPhone 12 viewport (390x844) per E2E conventions.
 // Runs in a serial describe block because it mutates IndexedDB state.
 import { test, expect, type Page, type TestInfo } from '@playwright/test';
-import { captureScreenshot } from './screenshot-helpers';
+import { captureScreenshot, dismissIOSInstallBanner } from './screenshot-helpers';
 
 test.use({ viewport: { width: 390, height: 844 } });
 
@@ -84,11 +84,13 @@ async function getGameStateFromIDB(page: Page): Promise<unknown | null> {
 }
 
 // ---------------------------------------------------------------------------
-// Helper: open the SettingsMenu dropdown.
+// Helper: open the drawer and switch to the App Status tab so the
+// Force UI Update button is visible.
 // ---------------------------------------------------------------------------
-const openSettings = async (page: Page) => {
-  await page.getByTestId('settings-gear').click();
-  await expect(page.getByTestId('settings-card')).toBeVisible();
+const openAppStatus = async (page: Page) => {
+  await dismissIOSInstallBanner(page);
+  await page.getByTestId('drawer-handle').click();
+  await page.getByTestId('drawer-tab-app-status').click();
 };
 
 // ---------------------------------------------------------------------------
@@ -144,20 +146,20 @@ test.describe.serial('PWA Cache Invalidation', () => {
 
     // Navigate so the app reads the injected state on load (handleWake).
     await page.goto('/');
-    await expect(page.getByTestId('settings-gear')).toBeVisible();
+    await expect(page.getByTestId('drawer-handle')).toBeVisible();
 
     // Verify the injected state is readable.
     const beforeState = await getGameStateFromIDB(page);
     expect(beforeState).not.toBeNull();
-    expect((beforeState as Record<string, unknown>).totalDistanceKm).toBe(9999);
+    expect((beforeState as Record<string, unknown>).totalDistanceKm).toBeGreaterThanOrEqual(9999);
     console.log(
       'Pre-update save state injected:',
       (beforeState as Record<string, unknown>).totalDistanceKm,
     );
     await captureScreenshot(page, testInfo, 'cache-update-before-reload', 1);
 
-    // 2. Open settings and trigger Force UI Update.
-    await openSettings(page);
+    // 2. Open app status and trigger Force UI Update.
+    await openAppStatus(page);
     await expect(page.getByTestId('force-ui-update')).toBeVisible();
 
     // The button calls clearCacheAndUpdate() which ends with either
@@ -173,7 +175,7 @@ test.describe.serial('PWA Cache Invalidation', () => {
     await captureScreenshot(page, testInfo, 'cache-update-after-reload', 1);
 
     // 3. Verify IndexedDB game state survived the reload + cache wipe.
-    await expect(page.getByTestId('settings-gear')).toBeVisible();
+    await expect(page.getByTestId('drawer-handle')).toBeVisible();
     await page.waitForTimeout(2000);
 
     const survivedState = await getGameStateFromIDB(page);

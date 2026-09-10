@@ -1,5 +1,5 @@
 import { test, expect, type Page, type TestInfo } from '@playwright/test';
-import { captureScreenshot } from './screenshot-helpers';
+import { captureScreenshot, dismissIOSInstallBanner } from './screenshot-helpers';
 
 test.use({ viewport: { width: 390, height: 844 } });
 
@@ -42,12 +42,13 @@ async function waitForServiceWorker(page: Page, timeoutMs = 5000): Promise<void>
 }
 
 // ---------------------------------------------------------------------------
-// Helper: open the menu-gated App Status overlay so status widgets
+// Helper: open the drawer and switch to the App Status tab so status widgets
 // (Service Worker, IndexedDB, Build Information, travel time) are visible.
 // ---------------------------------------------------------------------------
 async function openAppStatus(page: Page): Promise<void> {
-  await page.getByTestId('settings-gear').click();
-  await page.getByTestId('toggle-app-status').click();
+  await dismissIOSInstallBanner(page);
+  await page.getByTestId('drawer-handle').click();
+  await page.getByTestId('drawer-tab-app-status').click();
 }
 
 // ---------------------------------------------------------------------------
@@ -73,8 +74,12 @@ test('Test 1 (UI Render): main headers and status widgets exist', async ({
   await expect(page.getByTestId('install-status')).toBeVisible();
 
   // Wait for game state to load
-  await expect(page.getByTestId('total-travel-time')).toBeVisible();
-  await expect(page.getByTestId('total-distance')).toBeVisible();
+  await expect(
+    page.getByTestId('drawer-tabpanel-app-status').getByTestId('total-travel-time'),
+  ).toBeVisible();
+  await expect(
+    page.getByTestId('drawer-tabpanel-app-status').getByTestId('total-distance'),
+  ).toBeVisible();
   await captureScreenshot(page, testInfo, 'ui-render-all-widgets', 1);
 });
 
@@ -87,7 +92,9 @@ test('Test 2 (Service Worker Registration): controller becomes active within 10 
   await page.goto('/');
   await openAppStatus(page);
 
-  await expect(page.getByTestId('total-travel-time')).toBeVisible();
+  await expect(
+    page.getByTestId('drawer-tabpanel-app-status').getByTestId('total-travel-time'),
+  ).toBeVisible();
 
   await waitForServiceWorker(page, 10000);
 
@@ -106,7 +113,9 @@ test('Test 3 (IndexedDB Operations): state persists across reload', async ({
   await openAppStatus(page);
 
   // Wait for game state to load
-  await expect(page.getByTestId('total-travel-time')).toBeVisible();
+  await expect(
+    page.getByTestId('drawer-tabpanel-app-status').getByTestId('total-travel-time'),
+  ).toBeVisible();
   await captureScreenshot(page, testInfo, 'idb-before-reload', 1);
 
   // Reload the page
@@ -114,7 +123,9 @@ test('Test 3 (IndexedDB Operations): state persists across reload', async ({
   await openAppStatus(page);
 
   // Wait for game state to load again
-  await expect(page.getByTestId('total-travel-time')).toBeVisible();
+  await expect(
+    page.getByTestId('drawer-tabpanel-app-status').getByTestId('total-travel-time'),
+  ).toBeVisible();
 
   await captureScreenshot(page, testInfo, 'idb-after-reload', 2);
 
@@ -137,8 +148,12 @@ test('Test 4 (Game State Creation): game state is created and displayed', async 
   await openAppStatus(page);
 
   // Wait for game state to load
-  await expect(page.getByTestId('total-travel-time')).toBeVisible();
-  await expect(page.getByTestId('total-distance')).toBeVisible();
+  await expect(
+    page.getByTestId('drawer-tabpanel-app-status').getByTestId('total-travel-time'),
+  ).toBeVisible();
+  await expect(
+    page.getByTestId('drawer-tabpanel-app-status').getByTestId('total-distance'),
+  ).toBeVisible();
 
   await captureScreenshot(page, testInfo, 'game-state-created', 1);
 

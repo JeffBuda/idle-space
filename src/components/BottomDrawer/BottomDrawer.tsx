@@ -68,13 +68,20 @@ export const BottomDrawer = ({
         className={`drawer-tab-panel ${activeTab === 'debug-console' ? 'is-active' : ''}`}
         data-testid="drawer-tabpanel-debug-console"
       >
-        <DebugConsole visible={true} onClose={() => {}} />
+        <DebugConsole
+          visible={activeTab === 'debug-console'}
+          onClose={() => onTabChange('details')}
+        />
       </section>
       <section
         className={`drawer-tab-panel ${activeTab === 'game-state' ? 'is-active' : ''}`}
         data-testid="drawer-tabpanel-game-state"
       >
-        <GameStateViewer visible={true} gameState={gameState} onClose={() => {}} />
+        <GameStateViewer
+          visible={activeTab === 'game-state'}
+          gameState={gameState}
+          onClose={() => onTabChange('details')}
+        />
       </section>
       <section
         className={`drawer-tab-panel ${activeTab === 'app-status' ? 'is-active' : ''}`}

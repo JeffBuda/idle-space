@@ -1,14 +1,14 @@
 // tests/e2e/debug-console.spec.ts
 import { test, expect, type Page, type TestInfo } from '@playwright/test';
-import { captureScreenshot } from './screenshot-helpers';
+import { captureScreenshot, dismissIOSInstallBanner } from './screenshot-helpers';
 
 /**
  * E2E tests for the diagnostic logging system.
  *
  * These tests verify:
- *   - The gear icon (ΓÜÖ∩╕Å) appears in the app header
- *   - Clicking the gear opens the settings card
- *   - The debug console toggle and panel work end-to-end
+ *   - The drawer handle appears in the app header
+ *   - Clicking the handle opens the drawer panel
+ *   - The debug console tab and panel work end-to-end
  *   - Log entries from app events (wake/suspend) appear in the console
  *
  * Serial block is used because idle progression writes to IndexedDB
@@ -79,42 +79,44 @@ const waitForLogEntries = async (page: Page, minCount = 1, timeout = 10000) => {
 // ---------------------------------------------------------------------------
 // Basic UI tests (no IDB mutation)
 // ---------------------------------------------------------------------------
-test('gear icon is visible in the app header', async ({ page }, testInfo: TestInfo) => {
+test('drawer handle is visible in the app header', async ({ page }, testInfo: TestInfo) => {
   await page.goto('/');
-  const gear = page.getByTestId('settings-gear');
+  const gear = page.getByTestId('drawer-handle');
   await expect(gear).toBeVisible();
-  console.log('Settings gear icon is visible in header');
-  await captureScreenshot(page, testInfo, 'settings-gear-visible', 1);
+  console.log('Drawer handle is visible in header');
+  await captureScreenshot(page, testInfo, 'drawer-handle-visible', 1);
 });
 
-test('clicking the gear icon opens the settings card', async ({ page }, testInfo: TestInfo) => {
+test('clicking the drawer handle opens the drawer panel', async ({ page }, testInfo: TestInfo) => {
   await page.goto('/');
-  const gear = page.getByTestId('settings-gear');
+  await dismissIOSInstallBanner(page);
+  const gear = page.getByTestId('drawer-handle');
   await expect(gear).toBeVisible();
   await gear.click();
 
-  const card = page.getByTestId('settings-card');
+  const card = page.getByTestId('drawer-panel');
   await expect(card).toBeVisible();
-  console.log('Settings card opened after clicking gear');
-  await captureScreenshot(page, testInfo, 'settings-card-opened', 1);
+  console.log('Drawer panel opened after clicking handle');
+  await captureScreenshot(page, testInfo, 'drawer-opened', 1);
 });
 
-test('clicking outside the settings card closes it', async ({ page }, testInfo: TestInfo) => {
+test('clicking the handle again closes the drawer panel', async ({ page }, testInfo: TestInfo) => {
   await page.goto('/');
-  await page.getByTestId('settings-gear').click();
-  await expect(page.getByTestId('settings-card')).toBeVisible();
+  await dismissIOSInstallBanner(page);
+  await page.getByTestId('drawer-handle').click();
+  await expect(page.getByTestId('drawer-panel')).toBeVisible();
 
-  await captureScreenshot(page, testInfo, 'settings-card-open', 1);
+  await captureScreenshot(page, testInfo, 'drawer-open', 1);
 
-  // Click at a position far from the settings card
-  await page.mouse.click(20, 20);
+  // Click the handle again to collapse the drawer
+  await page.getByTestId('drawer-handle').click();
   await page.waitForTimeout(200);
 
-  const card = page.getByTestId('settings-card');
+  const card = page.getByTestId('drawer-panel');
   const isVisible = await card.isVisible();
   expect(isVisible).toBeFalsy();
-  console.log('Settings card closed after clicking outside');
-  await captureScreenshot(page, testInfo, 'settings-card-closed', 2);
+  console.log('Drawer panel closed after clicking handle again');
+  await captureScreenshot(page, testInfo, 'drawer-closed', 2);
 });
 
 // ---------------------------------------------------------------------------
@@ -124,9 +126,12 @@ test.describe.serial('debug console toggle flow', () => {
   test.beforeEach(async ({ page }) => {
     await clearIndexedDB(page);
     await page.goto('/');
+    // Dismiss iOS install banner so it doesn't intercept clicks on the
+    // drawer handle (the banner has z-index: 9999 and covers the bottom).
+    await dismissIOSInstallBanner(page);
     // Wait for the app to finish loading (game state loaded via handleWake).
     // This ensures the APP_WAKE log entry has been dispatched before tests run.
-    await page.waitForSelector('[data-testid="settings-gear"]', {
+    await page.waitForSelector('[data-testid="drawer-handle"]', {
       timeout: 10000,
     });
   });
@@ -134,20 +139,20 @@ test.describe.serial('debug console toggle flow', () => {
   test('toggling "Show Debug Console" reveals the console panel', async ({
     page,
   }, testInfo: TestInfo) => {
-    // Open settings
-    await page.getByTestId('settings-gear').click();
-    await expect(page.getByTestId('settings-card')).toBeVisible();
+    // Open drawer
+    await page.getByTestId('drawer-handle').click();
+    await expect(page.getByTestId('drawer-panel')).toBeVisible();
 
-    await captureScreenshot(page, testInfo, 'settings-card-opened', 1);
+    await captureScreenshot(page, testInfo, 'drawer-opened', 1);
 
-    // The toggle button should say "Show Debug Console" initially
-    const toggle = page.getByTestId('toggle-debug-console');
-    await expect(toggle).toBeVisible();
-    const toggleText = await toggle.textContent();
-    expect(toggleText).toContain('Show Debug Console');
+    // The tab button should say "Debug Console"
+    const debugTab = page.getByTestId('drawer-tab-debug-console');
+    await expect(debugTab).toBeVisible();
+    const tabText = await debugTab.textContent();
+    expect(tabText).toContain('Debug Console');
 
-    // Toggle debug console on
-    await toggle.click();
+    // Click the Debug Console tab
+    await debugTab.click();
 
     // Debug console should appear
     const consolePanel = page.getByTestId('debug-console');
@@ -167,9 +172,9 @@ test.describe.serial('debug console toggle flow', () => {
   test('debug console displays log entries from app events (not game ticks)', async ({
     page,
   }, testInfo: TestInfo) => {
-    // Open settings and toggle debug console on
-    await page.getByTestId('settings-gear').click();
-    await page.getByTestId('toggle-debug-console').click();
+    // Open drawer and switch to debug console tab
+    await page.getByTestId('drawer-handle').click();
+    await page.getByTestId('drawer-tab-debug-console').click();
 
     const consolePanel = page.getByTestId('debug-console');
     await expect(consolePanel).toBeVisible();
@@ -201,9 +206,9 @@ test.describe.serial('debug console toggle flow', () => {
   test('debug console shows empty state when no logs exist', async ({
     page,
   }, testInfo: TestInfo) => {
-    // Open settings and toggle debug console on
-    await page.getByTestId('settings-gear').click();
-    await page.getByTestId('toggle-debug-console').click();
+    // Open drawer and switch to debug console tab
+    await page.getByTestId('drawer-handle').click();
+    await page.getByTestId('drawer-tab-debug-console').click();
 
     await expect(page.getByTestId('debug-console')).toBeVisible();
 
@@ -222,8 +227,8 @@ test.describe.serial('debug console toggle flow', () => {
   test('debug console filter dropdown filters by category', async ({
     page,
   }, testInfo: TestInfo) => {
-    await page.getByTestId('settings-gear').click();
-    await page.getByTestId('toggle-debug-console').click();
+    await page.getByTestId('drawer-handle').click();
+    await page.getByTestId('drawer-tab-debug-console').click();
 
     await expect(page.getByTestId('debug-console')).toBeVisible();
     // Wait for at least one APP_WAKE entry from page load before filtering
@@ -257,8 +262,8 @@ test.describe.serial('debug console toggle flow', () => {
 
   test('debug console logs suspend and resume events', async ({ page }, testInfo: TestInfo) => {
     // Open debug console -- page load already produced an APP_WAKE entry
-    await page.getByTestId('settings-gear').click();
-    await page.getByTestId('toggle-debug-console').click();
+    await page.getByTestId('drawer-handle').click();
+    await page.getByTestId('drawer-tab-debug-console').click();
     await expect(page.getByTestId('debug-console')).toBeVisible();
     // Wait for at least one APP_WAKE entry from page load
     await waitForLogEntries(page);
@@ -304,8 +309,8 @@ test.describe.serial('debug console toggle flow', () => {
   });
 
   test('debug console refresh button reloads entries', async ({ page }, testInfo: TestInfo) => {
-    await page.getByTestId('settings-gear').click();
-    await page.getByTestId('toggle-debug-console').click();
+    await page.getByTestId('drawer-handle').click();
+    await page.getByTestId('drawer-tab-debug-console').click();
 
     await expect(page.getByTestId('debug-console')).toBeVisible();
 

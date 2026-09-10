@@ -32,8 +32,8 @@ test('debug app loading errors', async ({ page }, testInfo: TestInfo) => {
   expect(errors).toEqual([]);
   expect(consoleMessages).toEqual([]);
 
-  // Settings gear (DebugDrawer trigger) should be visible
-  const gearButton = page.getByTestId('settings-gear');
-  await expect(gearButton).toBeVisible();
-  await captureScreenshot(page, testInfo, 'settings-gear-visible', 2);
+  // Bottom drawer handle should be visible
+  const drawerHandle = page.getByTestId('drawer-handle');
+  await expect(drawerHandle).toBeVisible();
+  await captureScreenshot(page, testInfo, 'drawer-handle-visible', 2);
 });

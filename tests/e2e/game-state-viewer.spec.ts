@@ -1,14 +1,14 @@
 // tests/e2e/game-state-viewer.spec.ts
 import { test, expect, type Page, type TestInfo } from '@playwright/test';
-import { captureScreenshot } from './screenshot-helpers';
+import { captureScreenshot, dismissIOSInstallBanner } from './screenshot-helpers';
 
 /**
  * E2E tests for the game state viewer panel.
  *
  * These tests verify:
  *   - The game state viewer is initially hidden
- *   - Clicking the settings gear opens the settings card
- *   - Clicking "View Game State" opens the game state viewer panel
+ *   - Clicking the drawer handle opens the drawer panel
+ *   - Clicking the "Game State" tab opens the game state viewer panel
  *   - The viewer displays game state as formatted JSON
  *   - The close button hides the viewer
  */
@@ -58,6 +58,7 @@ test.describe.serial('game state viewer', () => {
   test('game state viewer is hidden by default', async ({ page }, testInfo: TestInfo) => {
     await page.goto('/');
     await page.waitForTimeout(1000);
+    await dismissIOSInstallBanner(page);
     console.log('Page loaded, checking viewer is hidden by default');
     await expect(page.getByTestId('game-state-viewer')).toHaveCount(0);
     console.log('Game state viewer is not present — correct');
@@ -69,15 +70,16 @@ test.describe.serial('game state viewer', () => {
   }, testInfo: TestInfo) => {
     await page.goto('/');
     await page.waitForTimeout(1000);
+    await dismissIOSInstallBanner(page);
     console.log('Page loaded, opening settings');
 
-    await page.getByTestId('settings-gear').click();
-    await expect(page.getByTestId('settings-card')).toBeVisible();
-    console.log('Settings card opened');
-    await captureScreenshot(page, testInfo, 'settings-card-opened', 1);
+    await page.getByTestId('drawer-handle').click();
+    await expect(page.getByTestId('drawer-panel')).toBeVisible();
+    console.log('Drawer panel opened');
+    await captureScreenshot(page, testInfo, 'drawer-opened', 1);
 
-    await page.getByTestId('toggle-game-state').click();
-    console.log('Clicked "View Game State" toggle');
+    await page.getByTestId('drawer-tab-game-state').click();
+    console.log('Clicked Game State tab');
 
     await expect(page.getByTestId('game-state-viewer')).toBeVisible();
     console.log('Game state viewer is now visible');
@@ -87,9 +89,10 @@ test.describe.serial('game state viewer', () => {
   test('game state viewer displays formatted JSON', async ({ page }, testInfo: TestInfo) => {
     await page.goto('/');
     await page.waitForTimeout(1000);
+    await dismissIOSInstallBanner(page);
 
-    await page.getByTestId('settings-gear').click();
-    await page.getByTestId('toggle-game-state').click();
+    await page.getByTestId('drawer-handle').click();
+    await page.getByTestId('drawer-tab-game-state').click();
 
     const json = page.getByTestId('game-state-json');
     await expect(json).toBeVisible();
@@ -105,9 +108,10 @@ test.describe.serial('game state viewer', () => {
   test('close button hides the game state viewer', async ({ page }, testInfo: TestInfo) => {
     await page.goto('/');
     await page.waitForTimeout(1000);
+    await dismissIOSInstallBanner(page);
 
-    await page.getByTestId('settings-gear').click();
-    await page.getByTestId('toggle-game-state').click();
+    await page.getByTestId('drawer-handle').click();
+    await page.getByTestId('drawer-tab-game-state').click();
 
     await expect(page.getByTestId('game-state-viewer')).toBeVisible();
     console.log('Game state viewer opened');
