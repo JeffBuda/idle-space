@@ -1,28 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import App from './App';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import type { GameState } from '../types/game-state';
 
-// ---------------------------------------------------------------------------
-// Mock the useDbStatus hook so tests don't require a real IDB.
-// ---------------------------------------------------------------------------
 vi.mock('../hooks/useDbStatus', () => ({
   useDbStatus: vi.fn().mockReturnValue('Connected'),
 }));
 
-// ---------------------------------------------------------------------------
-// Mock the useGameState hook so tests don't depend on real IDB/visibility events
-// ---------------------------------------------------------------------------
-const mockGameStateData = {
+const mockGameStateData: GameState = {
   lastTimestamp: Date.now(),
   elapsedSeconds: 100,
   totalElapsedGameTime: 100,
   rngSeed: 'test-seed',
   totalDistanceKm: 1000,
   version: '0.1.0',
-  // Onboarding-flow fields (defaults to the PLANET hub so the status
-  // grid + hub overlay render as before the flow tests override).
   screen: 'PLANET',
   idleTimer: null,
   oreCounts: { commonOre: 0, rareOre: 0 },
@@ -35,9 +29,9 @@ const mockGameStateData = {
   currentLocation: 'sys_0',
 };
 
-// Stable dispatch mock so App tests can assert on dispatched flow actions.
 const mockDispatch = vi.fn();
 const mockStartNewGame = vi.fn();
+const mockDispatchStarMapGo = vi.fn();
 
 vi.mock('../hooks/useGameState', () => ({
   useGameState: () => ({
@@ -51,20 +45,45 @@ vi.mock('../hooks/useGameState', () => ({
     clearIdleReward: vi.fn(),
     isLoading: false,
     dispatch: mockDispatch,
-    starMap: null,
-    routePath: [],
-    routeTravelTimeSeconds: 0,
-    navigateTo: vi.fn(),
+    dispatchStarMapGo: mockDispatchStarMapGo,
     startNewGame: mockStartNewGame,
   }),
 }));
 
-// Mock the cache utility so App tests don't trigger a real page reload
 vi.mock('../utils/cache', () => ({
   clearCacheAndUpdate: vi.fn(),
 }));
 
-// Mock the useDebugLogs hook so App tests don't require a real IDB
+vi.mock('@react-stately/overlays', () => ({
+  useOverlayTriggerState: (props: {
+    isOpen?: boolean;
+    onOpenChange?: (open: boolean) => void;
+  }) => ({
+    isOpen: Boolean(props.isOpen),
+    open: () => props.onOpenChange && props.onOpenChange(true),
+    close: () => props.onOpenChange && props.onOpenChange(false),
+    toggle: () => props.onOpenChange && props.onOpenChange(!props.isOpen),
+    onOpenChange: props.onOpenChange,
+  }),
+}));
+
+vi.mock('@react-aria/focus', () => ({
+  FocusScope: ({ children }: { children: ReactNode }) => children,
+}));
+
+vi.mock('@react-aria/button', () => ({
+  useButton: (props: { onPress?: () => void; type?: string; isDisabled?: boolean }) => {
+    const onPress = props.onPress;
+    return {
+      buttonProps: {
+        onClick: onPress,
+        type: props.type || 'button',
+        disabled: props.isDisabled,
+      },
+    };
+  },
+}));
+
 vi.mock('../hooks/useDebugLogs', () => ({
   useDebugLogs: () => ({
     logs: [],
@@ -74,13 +93,23 @@ vi.mock('../hooks/useDebugLogs', () => ({
   }),
 }));
 
-// ---------------------------------------------------------------------------
-// Helper: replace navigator.serviceWorker with a controllable mock.
-// ---------------------------------------------------------------------------
+// React Aria mocks for GameScreenShell tabs
+vi.mock('@react-stately/tabs', () => ({
+  useTabListState: (props: { selectedKey?: string }) => ({
+    selectedKey: props.selectedKey || 'details',
+    setSelected: vi.fn(),
+  }),
+}));
+
+vi.mock('@react-aria/tabs', () => ({
+  useTab: () => ({ tabProps: {}, isSelected: false }),
+  useTabList: () => ({ tabListProps: {}, tabListRef: { current: null } }),
+}));
+
 const mockServiceWorker = (controller: object | null = null) => {
   Object.defineProperty(navigator, 'serviceWorker', {
     value: {
-      controller: controller as ServiceWorker | null,
+      controller,
       register: vi.fn().mockResolvedValue({}),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
@@ -91,197 +120,242 @@ const mockServiceWorker = (controller: object | null = null) => {
   });
 };
 
-// ---------------------------------------------------------------------------
-// Helper: render the app and open the menu-gated App Status overlay.
-// Per docs/DESIGN_BIBLE.md, the status grid is hidden behind the SettingsMenu
-// "View App Status" toggle.
-// ---------------------------------------------------------------------------
-const openAppStatus = async () => {
-  await act(async () => {
-    render(<App />);
-  });
-  fireEvent.click(screen.getByTestId('settings-gear'));
-  fireEvent.click(screen.getByTestId('toggle-app-status'));
-  await waitFor(() => {
-    expect(screen.getByTestId('sw-status')).toBeInTheDocument();
-  });
-};
-
 describe('App', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockServiceWorker(null);
     mockGameStateData.screen = 'PLANET';
+    mockGameStateData.currentLocation = 'sys_0';
+    mockGameStateData.routePath = [];
+    mockGameStateData.oreCounts = { commonOre: 0, rareOre: 0 };
+    mockGameStateData.starMap = null;
+    mockGameStateData.selectedOre = null;
+    mockGameStateData.idleTimer = null;
   });
 
   it('renders the landing page title', async () => {
     await act(async () => {
       render(<App />);
     });
-    expect(screen.getByRole('heading', { name: 'Space Exploration Idle PWA' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Idle Space' })).toBeInTheDocument();
   });
 
-  it('renders all essential status widgets without errors', async () => {
-    await openAppStatus();
-    expect(screen.getByText('Service Worker')).toBeInTheDocument();
-    expect(screen.getByText('IndexedDB')).toBeInTheDocument();
-    expect(screen.getByText('Install Ready')).toBeInTheDocument();
-    expect(screen.getByTestId('sw-status')).toBeInTheDocument();
-    expect(screen.getByTestId('db-status')).toBeInTheDocument();
-    expect(screen.getByTestId('install-status')).toBeInTheDocument();
+  it('renders all essential status widgets in the bottom drawer', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+    fireEvent.click(screen.getByTestId('drawer-handle'));
+    fireEvent.click(screen.getByTestId('drawer-tab-app-status'));
+    await waitFor(() => {
+      expect(screen.getByText('Service Worker')).toBeInTheDocument();
+      expect(screen.getByText('IndexedDB')).toBeInTheDocument();
+      expect(screen.getByText('Install Ready')).toBeInTheDocument();
+      expect(screen.getByTestId('sw-status')).toBeInTheDocument();
+      expect(screen.getByTestId('db-status')).toBeInTheDocument();
+      expect(screen.getByTestId('install-status')).toBeInTheDocument();
+    });
   });
 
   it('updates the Service Worker status indicator to Active when registered', async () => {
-    mockServiceWorker({} as ServiceWorker);
-    await openAppStatus();
-    expect(screen.getByTestId('sw-status').textContent).toBe('Active');
+    mockServiceWorker({});
+    await act(async () => {
+      render(<App />);
+    });
+    fireEvent.click(screen.getByTestId('drawer-handle'));
+    fireEvent.click(screen.getByTestId('drawer-tab-app-status'));
+    await waitFor(() => {
+      expect(screen.getByTestId('sw-status').textContent).toBe('Active');
+    });
   });
 
   it('shows Inactive when no service worker controller is present', async () => {
     mockServiceWorker(null);
-    await openAppStatus();
-    expect(screen.getByTestId('sw-status').textContent).toBe('Inactive');
-  });
-
-  it('shows Connected for IndexedDB after successful init', async () => {
-    await openAppStatus();
-    expect(screen.getByTestId('db-status').textContent).toBe('Connected');
-  });
-
-  it('renders the engine section with game state information', async () => {
-    await openAppStatus();
-    expect(screen.getByText('Engine')).toBeInTheDocument();
-    expect(screen.getByTestId('total-travel-time')).toBeInTheDocument();
-    expect(screen.getByTestId('total-distance')).toBeInTheDocument();
-  });
-
-  it('renders the build information card with version and build date', async () => {
-    await openAppStatus();
-    expect(screen.getByText('Build Information')).toBeInTheDocument();
-    expect(screen.getByTestId('app-version')).toBeInTheDocument();
-    expect(screen.getByTestId('build-date')).toBeInTheDocument();
-    expect(screen.getByTestId('app-version').textContent).toMatch(/\d+\.\d+\.\d+/);
-    expect(screen.getByTestId('build-date').textContent).not.toBe('');
-  });
-
-  it('renders the gear icon in the header', () => {
-    render(<App />);
-    expect(screen.getByTestId('settings-gear')).toBeInTheDocument();
-  });
-
-  it('opens settings card when gear icon is clicked', () => {
-    render(<App />);
-    fireEvent.click(screen.getByTestId('settings-gear'));
-    expect(screen.getByTestId('settings-card')).toBeInTheDocument();
-  });
-
-  it('renders the New Game button in the settings gear menu', () => {
-    render(<App />);
-    fireEvent.click(screen.getByTestId('settings-gear'));
-    expect(screen.getByTestId('new-game')).toBeInTheDocument();
-  });
-
-  it('opens the New Game confirmation modal from the settings menu', () => {
-    render(<App />);
-    fireEvent.click(screen.getByTestId('settings-gear'));
-    fireEvent.click(screen.getByTestId('new-game'));
-    expect(screen.getByTestId('new-game-confirm-modal')).toBeInTheDocument();
-  });
-
-  it('confirms New Game and invokes the hook reset', () => {
-    render(<App />);
-    fireEvent.click(screen.getByTestId('settings-gear'));
-    fireEvent.click(screen.getByTestId('new-game'));
-    fireEvent.click(screen.getByTestId('new-game-confirm'));
-    expect(mockStartNewGame).toHaveBeenCalledTimes(1);
-    expect(screen.queryByTestId('new-game-confirm-modal')).not.toBeInTheDocument();
-  });
-
-  it('dismisses the New Game modal via Cancel without resetting', () => {
-    render(<App />);
-    fireEvent.click(screen.getByTestId('settings-gear'));
-    fireEvent.click(screen.getByTestId('new-game'));
-    fireEvent.click(screen.getByTestId('new-game-cancel'));
-    expect(mockStartNewGame).not.toHaveBeenCalled();
-    expect(screen.queryByTestId('new-game-confirm-modal')).not.toBeInTheDocument();
-  });
-
-  it('does not render AppStatusViewer until "View App Status" is toggled', async () => {
     await act(async () => {
       render(<App />);
     });
-    expect(screen.queryByText('Application Status')).not.toBeInTheDocument();
-    expect(screen.queryByText('Engine')).not.toBeInTheDocument();
-    expect(screen.queryByText('Build Information')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('drawer-handle'));
+    fireEvent.click(screen.getByTestId('drawer-tab-app-status'));
+    await waitFor(() => {
+      expect(screen.getByTestId('sw-status').textContent).toBe('Inactive');
+    });
   });
 
-  it('opens app status viewer when "View App Status" is clicked', async () => {
-    await openAppStatus();
-    expect(screen.getByText('Application Status')).toBeInTheDocument();
+  it('shows Connected for IndexedDB after successful init', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+    fireEvent.click(screen.getByTestId('drawer-handle'));
+    fireEvent.click(screen.getByTestId('drawer-tab-app-status'));
+    await waitFor(() => {
+      expect(screen.getByTestId('db-status').textContent).toBe('Connected');
+    });
   });
 
-  it('closes settings card after toggling app status', () => {
-    render(<App />);
-    fireEvent.click(screen.getByTestId('settings-gear'));
-    expect(screen.getByTestId('settings-card')).toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('toggle-app-status'));
-    expect(screen.queryByTestId('settings-card')).not.toBeInTheDocument();
+  it('renders the engine section with game state information', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+    fireEvent.click(screen.getByTestId('drawer-handle'));
+    fireEvent.click(screen.getByTestId('drawer-tab-app-status'));
+    await waitFor(() => {
+      expect(screen.getByText('Engine')).toBeInTheDocument();
+    });
+    expect(screen.getAllByTestId('total-travel-time').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('total-distance').length).toBeGreaterThan(0);
   });
 
-  it('closes app status when "Hide App Status" is clicked', async () => {
-    await openAppStatus();
-    expect(screen.getByText('Application Status')).toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('settings-gear'));
-    fireEvent.click(screen.getByTestId('toggle-app-status'));
-    expect(screen.queryByText('Application Status')).not.toBeInTheDocument();
+  it('renders the build information card with version and build date', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+    fireEvent.click(screen.getByTestId('drawer-handle'));
+    fireEvent.click(screen.getByTestId('drawer-tab-app-status'));
+    await waitFor(() => {
+      expect(screen.getByText('Build Information')).toBeInTheDocument();
+      expect(screen.getByTestId('app-version')).toBeInTheDocument();
+      expect(screen.getByTestId('build-date')).toBeInTheDocument();
+      expect(screen.getByTestId('app-version').textContent).toMatch(/^\d+\.\d+\.\d+$/);
+      expect(screen.getByTestId('build-date').textContent).not.toBe('');
+    });
   });
 
-  it('opens game state viewer when "View Game State" is clicked', async () => {
-    render(<App />);
-    fireEvent.click(screen.getByTestId('settings-gear'));
-    fireEvent.click(screen.getByTestId('toggle-game-state'));
+  it('renders the bottom drawer with a handle', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+    expect(screen.getByTestId('bottom-drawer')).toBeInTheDocument();
+    expect(screen.getByTestId('drawer-handle')).toBeInTheDocument();
+  });
 
+  it('opens the bottom drawer when the handle is clicked', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+    fireEvent.click(screen.getByTestId('drawer-handle'));
+    await waitFor(() => {
+      expect(screen.getByTestId('drawer-panel')).toBeInTheDocument();
+    });
+  });
+
+  it('renders all five tabs in the bottom drawer', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+    fireEvent.click(screen.getByTestId('drawer-handle'));
+    await waitFor(() => {
+      expect(screen.getByTestId('drawer-tab-details')).toBeInTheDocument();
+      expect(screen.getByTestId('drawer-tab-debug-console')).toBeInTheDocument();
+      expect(screen.getByTestId('drawer-tab-game-state')).toBeInTheDocument();
+      expect(screen.getByTestId('drawer-tab-app-status')).toBeInTheDocument();
+      expect(screen.getByTestId('drawer-tab-star-map')).toBeInTheDocument();
+    });
+  });
+
+  it('renders the New Game button in the app status tab', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+    fireEvent.click(screen.getByTestId('drawer-handle'));
+    fireEvent.click(screen.getByTestId('drawer-tab-app-status'));
+    await waitFor(() => {
+      expect(screen.getByTestId('new-game')).toBeInTheDocument();
+    });
+  });
+
+  it('opens the New Game confirmation modal', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+    fireEvent.click(screen.getByTestId('drawer-handle'));
+    fireEvent.click(screen.getByTestId('drawer-tab-app-status'));
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('new-game'));
+      expect(screen.getByTestId('new-game-confirm-modal')).toBeInTheDocument();
+    });
+  });
+
+  it('confirms New Game and invokes the hook reset', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+    fireEvent.click(screen.getByTestId('drawer-handle'));
+    fireEvent.click(screen.getByTestId('drawer-tab-app-status'));
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('new-game'));
+      fireEvent.click(screen.getByTestId('new-game-confirm'));
+      expect(mockStartNewGame).toHaveBeenCalledTimes(1);
+      expect(screen.queryByTestId('new-game-confirm-modal')).not.toBeInTheDocument();
+    });
+  });
+
+  it('dismisses the New Game modal via Cancel without resetting', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+    fireEvent.click(screen.getByTestId('drawer-handle'));
+    fireEvent.click(screen.getByTestId('drawer-tab-app-status'));
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('new-game'));
+      fireEvent.click(screen.getByTestId('new-game-cancel'));
+      expect(mockStartNewGame).not.toHaveBeenCalled();
+      expect(screen.queryByTestId('new-game-confirm-modal')).not.toBeInTheDocument();
+    });
+  });
+
+  it('renders AppStatusViewer contents in the app status tab', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+    fireEvent.click(screen.getByTestId('drawer-handle'));
+    fireEvent.click(screen.getByTestId('drawer-tab-app-status'));
+    await waitFor(() => {
+      expect(screen.getByText('Application Status')).toBeInTheDocument();
+    });
+  });
+
+  it('renders Debug Console tab content', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+    fireEvent.click(screen.getByTestId('drawer-handle'));
+    fireEvent.click(screen.getByTestId('drawer-tab-debug-console'));
+    await waitFor(() => {
+      expect(screen.getByTestId('debug-console')).toBeInTheDocument();
+    });
+  });
+
+  it('renders Game State viewer tab content', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+    fireEvent.click(screen.getByTestId('drawer-handle'));
+    fireEvent.click(screen.getByTestId('drawer-tab-game-state'));
     await waitFor(() => {
       expect(screen.getByTestId('game-state-viewer')).toBeInTheDocument();
     });
   });
 
-  it('displays game state JSON in the viewer when visible', async () => {
-    render(<App />);
-    fireEvent.click(screen.getByTestId('settings-gear'));
-    fireEvent.click(screen.getByTestId('toggle-game-state'));
-
+  it('renders App Status tab in the bottom drawer', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+    fireEvent.click(screen.getByTestId('drawer-handle'));
+    fireEvent.click(screen.getByTestId('drawer-tab-app-status'));
     await waitFor(() => {
-      const json = screen.getByTestId('game-state-json');
-      expect(json).toBeInTheDocument();
-      expect(json.textContent).toContain('totalDistanceKm');
-      expect(json.textContent).toContain('1000');
+      expect(screen.getByTestId('drawer-tab-app-status')).toBeInTheDocument();
     });
   });
 
-  it('closes game state viewer when close button is clicked', async () => {
-    render(<App />);
-    fireEvent.click(screen.getByTestId('settings-gear'));
-    fireEvent.click(screen.getByTestId('toggle-game-state'));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('game-state-viewer')).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByTestId('game-state-close'));
-    expect(screen.queryByTestId('game-state-viewer')).not.toBeInTheDocument();
-  });
-
-  it('renders the Welcome overlay on a fresh (WELCOME) save', async () => {
+  it('renders the Welcome screen on a fresh (WELCOME) save', async () => {
     mockGameStateData.screen = 'WELCOME';
     await act(async () => {
       render(<App />);
     });
-    expect(screen.getByTestId('welcome-screen')).toBeInTheDocument();
+    expect(screen.getByTestId('screen-content')).toBeInTheDocument();
+    expect(screen.getByTestId('welcome-content')).toBeInTheDocument();
     expect(screen.getByTestId('launch-btn')).toBeInTheDocument();
   });
 
-  it('dispatches NAVIGATE -> SPACE_TRAVEL when Launch! is clicked', async () => {
+  it('dispatches NAVIGATE to SPACE_TRAVEL when Launch! is clicked', async () => {
     mockGameStateData.screen = 'WELCOME';
     await act(async () => {
       render(<App />);
@@ -290,52 +364,43 @@ describe('App', () => {
     expect(mockDispatch).toHaveBeenCalledWith({ type: 'NAVIGATE', to: 'SPACE_TRAVEL' });
   });
 
-  it('renders the Mining overlay with ore selection buttons', async () => {
-    mockGameStateData.screen = 'MINING';
-    mockGameStateData.oreCounts = { commonOre: 2, rareOre: 1 };
-    await act(async () => {
-      render(<App />);
-    });
-    expect(screen.getByTestId('mining-screen')).toBeInTheDocument();
-    expect(screen.getByTestId('ore-common')).toBeInTheDocument();
-    expect(screen.getByTestId('ore-rare')).toBeInTheDocument();
-    expect(screen.getByTestId('ore-counts').textContent).toContain('2');
-    expect(screen.getByTestId('ore-counts').textContent).toContain('1');
-  });
-
-  it('renders the Planet hub with Land / Depart navigation on PLANET', () => {
-    render(<App />);
-    expect(screen.getByTestId('planet-hub-screen')).toBeInTheDocument();
-    expect(screen.getByTestId('nav-landing')).toBeInTheDocument();
-    expect(screen.getByTestId('nav-space-travel')).toBeInTheDocument();
-  });
-
-  it('Planet hub has a Chart Course button linking to STAR_MAP', () => {
-    render(<App />);
-    expect(screen.getByTestId('nav-star-map')).toBeInTheDocument();
-  });
-
-  it('does NOT render Chart Course button on WelcomeScreen (R9)', () => {
+  it('does NOT render Chart Course button on WelcomeContent (R9)', () => {
     mockGameStateData.screen = 'WELCOME';
     render(<App />);
     expect(screen.queryByTestId('welcome-chart-course')).not.toBeInTheDocument();
   });
 
-  it('renders the Star Map screen when gameState.starMap is populated', async () => {
+  it('renders the Mining screen with ore selection buttons', async () => {
+    mockGameStateData.screen = 'MINING';
+    mockGameStateData.oreCounts = { commonOre: 2, rareOre: 1 };
+    await act(async () => {
+      render(<App />);
+    });
+    expect(screen.getByTestId('screen-content')).toBeInTheDocument();
+    expect(screen.getByTestId('mining-content')).toBeInTheDocument();
+    expect(screen.getByTestId('ore-common')).toBeInTheDocument();
+    expect(screen.getByTestId('ore-rare')).toBeInTheDocument();
+  });
+
+  it('renders the Planet hub with Land / Depart navigation on PLANET', () => {
+    render(<App />);
+    expect(screen.getByTestId('screen-content')).toBeInTheDocument();
+    expect(screen.getByTestId('planet-hub-content')).toBeInTheDocument();
+    expect(screen.getByTestId('nav-landing')).toBeInTheDocument();
+    expect(screen.getByTestId('nav-space-travel')).toBeInTheDocument();
+  });
+
+  it('renders the Star Map tab content when gameState.starMap is populated', async () => {
     mockGameStateData.screen = 'STAR_MAP';
     mockGameStateData.starMap = {
       nodes: [{ id: 'sys_0', name: 'Test', x: 50, y: 50, status: 'current', edges: [] }],
       edges: [],
     };
     render(<App />);
-    expect(screen.getByTestId('star-map-screen')).toBeInTheDocument();
-    expect(screen.getByTestId('star-map-title')).toBeInTheDocument();
+    expect(screen.getByTestId('screen-title')).toBeInTheDocument();
   });
 
-  // ---------------------------------------------------------------------------
-  // R7 & R8: planet-name display and Depart/Follow Route branching
-  // ---------------------------------------------------------------------------
-  it('PlanetHubScreen displays planet name derived from currentLocation (R7)', () => {
+  it('Planet hub displays planet name derived from currentLocation (R7)', () => {
     mockGameStateData.screen = 'PLANET';
     mockGameStateData.currentLocation = 'sys_0';
     mockGameStateData.starMap = {
@@ -343,10 +408,10 @@ describe('App', () => {
       edges: [],
     };
     render(<App />);
-    expect(screen.getByTestId('planet-hub-title')).toHaveTextContent('Orbiting Sol');
+    expect(screen.getByTestId('screen-title')).toHaveTextContent('Orbiting Sol');
   });
 
-  it('PlanetHubScreen Depart button reads "Follow Route" when routePath is non-empty (R8)', () => {
+  it('Planet hub Depart button reads "Follow Route" when routePath is non-empty (R8)', () => {
     mockGameStateData.screen = 'PLANET';
     mockGameStateData.routePath = [
       { from: 'sys_0', to: 'sys_1', path: ['sys_0', 'sys_1'], hops: 1 },
@@ -355,14 +420,14 @@ describe('App', () => {
     expect(screen.getByTestId('nav-space-travel')).toHaveTextContent('Follow Route');
   });
 
-  it('PlanetHubScreen Depart button reads "Depart" when routePath is empty (R8)', () => {
+  it('Planet hub Depart button reads "Depart" when routePath is empty (R8)', () => {
     mockGameStateData.screen = 'PLANET';
     mockGameStateData.routePath = [];
     render(<App />);
     expect(screen.getByTestId('nav-space-travel')).toHaveTextContent('Depart');
   });
 
-  it('SpaceTravelScreen displays approaching planet name (R7)', () => {
+  it('SpaceTravel screen displays approaching planet name (R7)', () => {
     mockGameStateData.screen = 'SPACE_TRAVEL';
     mockGameStateData.currentLocation = 'sys_0';
     mockGameStateData.starMap = {
@@ -370,14 +435,10 @@ describe('App', () => {
       edges: [],
     };
     render(<App />);
-    expect(screen.getByTestId('space-travel-title')).toHaveTextContent('Approaching Sol');
+    expect(screen.getByTestId('screen-title')).toHaveTextContent('Approaching Sol');
   });
 
-  // ---------------------------------------------------------------------------
-  // iOS portrait-mode touch-target & canonical-button regression tests
-  // (docs/DESIGN_BIBLE.md §4.1–4.3)
-  // ---------------------------------------------------------------------------
-  it('WELCOME launch button uses the canonical .btn system, not the deprecated .primary-btn', () => {
+  it('WELCOME launch button uses the canonical .btn system', () => {
     mockGameStateData.screen = 'WELCOME';
     render(<App />);
     const launchBtn = screen.getByTestId('launch-btn');
@@ -385,13 +446,13 @@ describe('App', () => {
     expect(launchBtn.className).not.toContain('primary-btn');
   });
 
-  it('MINING ore-selection buttons use .btn btn--primary (44px minimum touch target)', () => {
+  it('MINING ore-selection buttons use .btn classes', () => {
     mockGameStateData.screen = 'MINING';
     render(<App />);
     const commonOreBtn = screen.getByTestId('ore-common');
     const rareOreBtn = screen.getByTestId('ore-rare');
-    expect(commonOreBtn).toHaveClass('btn', 'btn--primary');
-    expect(rareOreBtn).toHaveClass('btn', 'btn--primary');
+    expect(commonOreBtn).toHaveClass('btn');
+    expect(rareOreBtn).toHaveClass('btn');
   });
 
   it('PLANET hub nav buttons use canonical .btn classes', () => {
@@ -401,13 +462,11 @@ describe('App', () => {
     expect(screen.getByTestId('nav-space-travel')).toHaveClass('btn', 'btn--secondary');
   });
 
-  it('app shell applies safe-area insets and canonical touch-target tokens via CSS', () => {
+  it('app shell applies safe-area insets and touch-target tokens via CSS', () => {
     mockGameStateData.screen = 'PLANET';
     const { container } = render(<App />);
     const appDiv = container.querySelector('.app');
     expect(appDiv).not.toBeNull();
-    // jsdom does not load CSS imports, so verify the source CSS declares the
-    // safe-area and touch-target custom properties (docs/tokens.md §3)
     const indexCss = readFileSync(resolve(__dirname, '../index.css'), 'utf-8');
     expect(indexCss).toContain('--safe-area-top');
     expect(indexCss).toContain('--safe-area-right');

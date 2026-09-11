@@ -1,21 +1,20 @@
-// src/components/screens/star-map/StarMapScreen.reducer.ts
+// src/components/GameScreenShell/StarMapContent.reducer.ts
 //
-// Pure reducer for StarMapScreen's component-local intermediate state.
+// Pure reducer for StarMapContent's component-local intermediate state.
 // Manages `plannedRoute` (the proposed waypoint list before Go) — this is
-// discarded if the player cancels out of the star map screen (R17/R18).
+// discarded if the player navigates away from the star map tab.
 //
 // This file is a pure module (no React imports) so it can be unit-tested
 // directly with vitest without jsdom.
+import type { StarMapNode } from '../../types/game-state';
+import { toggleRouteStop, removeRouteStop, clearRoute } from './stellar-map-utils';
 
-import type { StarMapNode } from '../../../types/game-state';
-import { toggleRouteStop, removeRouteStop, clearRoute } from './star-map-utils';
-
-/** Component-local state for StarMapScreen's useReducer. */
+/** Component-local state for StarMapContent's useReducer. */
 export interface StarMapUIState {
   plannedRoute: string[];
 }
 
-/** Actions dispatched by the StarMapScreen component. */
+/** Actions dispatched by the StarMapContent component. */
 export type StarMapUIAction =
   | { type: 'TOGGLE_NODE'; nodeId: string }
   | { type: 'REMOVE_STOP'; nodeId: string }

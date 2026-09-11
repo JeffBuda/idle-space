@@ -15,6 +15,8 @@ interface AppStatusViewerProps {
   swStatus: 'Active' | 'Inactive';
   dbStatus: string;
   installReady: boolean;
+  onForceUpdate?: () => void;
+  onNewGame?: () => void;
 }
 
 export const AppStatusViewer = ({
@@ -22,6 +24,8 @@ export const AppStatusViewer = ({
   swStatus,
   dbStatus,
   installReady,
+  onForceUpdate,
+  onNewGame,
 }: AppStatusViewerProps) => (
   <>
     <section className="status-card">
@@ -83,5 +87,33 @@ export const AppStatusViewer = ({
         </span>
       </div>
     </section>
+
+    {(onForceUpdate || onNewGame) && (
+      <section className="status-card">
+        <h2>Actions</h2>
+        <div className="status-item">
+          {onForceUpdate && (
+            <button
+              type="button"
+              className="btn btn--secondary"
+              data-testid="force-ui-update"
+              onClick={onForceUpdate}
+            >
+              Force UI Update
+            </button>
+          )}
+          {onNewGame && (
+            <button
+              type="button"
+              className="btn btn--warn"
+              data-testid="new-game"
+              onClick={onNewGame}
+            >
+              New Game
+            </button>
+          )}
+        </div>
+      </section>
+    )}
   </>
 );

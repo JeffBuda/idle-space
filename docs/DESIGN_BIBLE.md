@@ -1,4 +1,4 @@
-# Design Bible — Space Exploration Idle PWA
+# Design Bible — Idle Space
 
 > **Single source of truth for all UX/UI work.** When this file exists and is
 > up-to-date, **always read it before implementing any UI or component
@@ -46,7 +46,7 @@ When you give me a vague prompt like _"add a ship status panel"_, I will:
   --color-surface: #1a202c; /* card surface */
   --color-border: rgba(255, 255, 255, 0.1); /* default */
   --color-border-subtle: rgba(255, 255, 255, 0.05); /* subtle separator */
-  --color-accent: #4ade80; /* accent-green */
+  --color-accent: #63b3ed; /* accent-cyan */
   --color-negative: #f87177; /* accent-red */
   --radius-card: 12px;
   --radius-modal: 16px;

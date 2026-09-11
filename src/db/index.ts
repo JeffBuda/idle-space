@@ -171,12 +171,14 @@ export async function initDB(): Promise<AppStatus> {
 }
 
 export async function getAppStatus(): Promise<AppStatus | undefined> {
+  await initDB();
   const db = await openDB<SpaceIdleDB>(DB_NAME, DB_VERSION);
   const value = await db.get('keyval', APP_STATUS_KEY);
   return value as AppStatus | undefined;
 }
 
 export async function setAppStatus(status: AppStatus): Promise<void> {
+  await initDB();
   const db = await openDB<SpaceIdleDB>(DB_NAME, DB_VERSION);
   await db.put('keyval', status, APP_STATUS_KEY);
 }
@@ -186,6 +188,7 @@ export async function setAppStatus(status: AppStatus): Promise<void> {
  * Returns undefined if no game state has been saved yet.
  */
 export async function getGameState(): Promise<GameState | undefined> {
+  await initDB();
   const db = await openDB<SpaceIdleDB>(DB_NAME, DB_VERSION);
   return await db.get('game_state', GAME_STATE_KEY);
 }
@@ -194,6 +197,7 @@ export async function getGameState(): Promise<GameState | undefined> {
  * Saves the current game state to IndexedDB.
  */
 export async function saveGameState(state: GameState): Promise<void> {
+  await initDB();
   const db = await openDB<SpaceIdleDB>(DB_NAME, DB_VERSION);
   await db.put('game_state', state, GAME_STATE_KEY);
 }
@@ -232,6 +236,7 @@ export async function initGameState(): Promise<GameState> {
  * store. Returns undefined if no logs have been written yet.
  */
 export async function getLogEntries(): Promise<LogEntry[] | undefined> {
+  await initDB();
   const db = await openDB<SpaceIdleDB>(DB_NAME, DB_VERSION);
   return await db.get('space_idle_logs', LOGS_KEY);
 }
@@ -242,6 +247,7 @@ export async function getLogEntries(): Promise<LogEntry[] | undefined> {
  * LOG_ENTRY_LIMIT (ring-buffer policy).
  */
 export async function saveLogEntries(entries: LogEntry[]): Promise<void> {
+  await initDB();
   const db = await openDB<SpaceIdleDB>(DB_NAME, DB_VERSION);
   await db.put('space_idle_logs', entries, LOGS_KEY);
 }
@@ -250,6 +256,7 @@ export async function saveLogEntries(entries: LogEntry[]): Promise<void> {
  * Clears all persisted debug log entries.
  */
 export async function clearLogEntries(): Promise<void> {
+  await initDB();
   const db = await openDB<SpaceIdleDB>(DB_NAME, DB_VERSION);
   await db.delete('space_idle_logs', LOGS_KEY);
 }
@@ -263,6 +270,7 @@ export async function clearLogEntries(): Promise<void> {
  * preserved — a new game resets *progress*, not the app install state.
  */
 export async function resetAllGameData(): Promise<void> {
+  await initDB();
   const db = await openDB<SpaceIdleDB>(DB_NAME, DB_VERSION);
   const tx = db.transaction(['game_state', LOGS_STORE_NAME], 'readwrite');
   await tx.objectStore('game_state').delete(GAME_STATE_KEY);

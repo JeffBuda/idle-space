@@ -377,7 +377,7 @@ flex: none;
 
 ```tsx
 <header className="app-header">
-  <h1>Space Exploration Idle PWA</h1>
+  <h1>Idle Space</h1>
   <SettingsMenu ...props />
 </header>
 ````

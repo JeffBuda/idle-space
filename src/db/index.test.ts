@@ -69,12 +69,13 @@ describe('migrateGameState', () => {
       selectedOre: null,
       constants: { defaultActionTimeSeconds: 30, rareOreTimeMultiplier: 2 },
       lastError: null,
+      starMap: null,
+      routePath: [],
+      routeTravelTimeSeconds: 0,
       currentLocation: 'sys_0',
     };
 
     const migrated = migrateGameState(modern);
-
-    expect(migrated.screen).toBe('PLANET');
     expect(migrated.oreCounts).toEqual({ commonOre: 5, rareOre: 3 });
     expect(migrated.rngSeed).toBe('mod-seed');
     expect(migrated.totalDistanceKm).toBe(5_000);

@@ -108,6 +108,7 @@ describe('onboarding flow state machine', () => {
     it('SPACE_TRAVEL -> PLANET when the gate expired', () => {
       const n = completeAction(
         base({ screen: 'SPACE_TRAVEL', idleTimer: newGate('SPACE_TRAVEL', 0) }),
+        TIME,
       );
       expect(n.screen).toBe('PLANET');
       expect(n.idleTimer).toBeNull();
@@ -116,6 +117,7 @@ describe('onboarding flow state machine', () => {
     it('rejects completion before expiry', () => {
       const n = completeAction(
         base({ screen: 'SPACE_TRAVEL', idleTimer: newGate('SPACE_TRAVEL', 5) }),
+        TIME,
       );
       expect(n.lastError).toContain('not expired');
       expect(n.screen).toBe('SPACE_TRAVEL');
@@ -129,6 +131,7 @@ describe('onboarding flow state machine', () => {
             idleTimer: newGate('MINING', 0),
             oreCounts: { commonOre: 4, rareOre: 1 },
           }),
+          TIME,
         ).oreCounts,
       ).toEqual({ commonOre: 5, rareOre: 1 });
       expect(
@@ -139,12 +142,37 @@ describe('onboarding flow state machine', () => {
             idleTimer: newGate('MINING', 0),
             oreCounts: { commonOre: 2, rareOre: 0 },
           }),
+          TIME,
         ).oreCounts,
       ).toEqual({ commonOre: 2, rareOre: 1 });
     });
+    it('MINING restarts the gate in place (stays on MINING, not PLANET)', () => {
+      const n = completeAction(
+        base({
+          screen: 'MINING',
+          selectedOre: 'commonOre',
+          idleTimer: newGate('MINING', 0),
+          oreCounts: { commonOre: 4, rareOre: 1 },
+        }),
+        TIME,
+      );
+      // R12: manual Collect awards ore and restarts the gate — the player
+      // stays on the MINING screen so the auto-loop keeps ticking without
+      // needing to re-navigate through LANDING.
+      expect(n.screen).toBe('MINING');
+      expect(n.selectedOre).toBe('commonOre');
+      expect(n.idleTimer).toEqual({
+        screen: 'MINING',
+        targetSeconds: 30,
+        remainingSeconds: 30,
+        startedAt: TIME,
+      });
+      expect(n.oreCounts).toEqual({ commonOre: 5, rareOre: 1 });
+      expect(n.lastError).toBeNull();
+    });
     it('MINING with no ore records a lastError', () => {
       expect(
-        completeAction(base({ screen: 'MINING', idleTimer: newGate('MINING', 0) })).lastError,
+        completeAction(base({ screen: 'MINING', idleTimer: newGate('MINING', 0) }), TIME).lastError,
       ).toContain('no ore selected');
     });
   });
@@ -170,6 +198,20 @@ describe('onboarding flow state machine', () => {
       const n = hurry(s);
       expect(n).not.toBe(s);
       expect(s.idleTimer?.remainingSeconds).toBe(10);
+    });
+    it('MINING manual Collect stays on MINING screen', () => {
+      const n = processFlowAction(
+        base({
+          screen: 'MINING',
+          selectedOre: 'commonOre',
+          idleTimer: newGate('MINING', 0),
+          oreCounts: { commonOre: 4, rareOre: 1 },
+        }),
+        { type: 'COMPLETE_ACTION' },
+        TIME,
+      );
+      expect(n.screen).toBe('MINING');
+      expect(n.oreCounts).toEqual({ commonOre: 5, rareOre: 1 });
     });
     it('processFlowAction routes COMPLETE_ACTION and warns on IDLE_PROGRESSION', () => {
       expect(

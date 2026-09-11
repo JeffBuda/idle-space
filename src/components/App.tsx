@@ -1,41 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { GameThemeProvider } from './ui';
+import { GameScreenShell } from './GameScreenShell/GameScreenShell';
+import { getScreenProps } from './GameScreenShell/ScreenContent';
 import { IOSInstallBanner } from './IOSInstallBanner';
-import { AppStatusViewer } from './AppStatusViewer';
-import { WelcomeScreen } from './screens/WelcomeScreen';
-import { SpaceTravelScreen } from './screens/SpaceTravelScreen';
-import { LandingScreen } from './screens/LandingScreen';
-import { MiningScreen } from './screens/MiningScreen';
-import { PlanetHubScreen } from './screens/PlanetHubScreen';
 import { useGameState } from '../hooks/useGameState';
 import { useDbStatus } from '../hooks/useDbStatus';
 import OfflineGreeting from './OfflineGreeting';
 import { MiningRewardModal } from './MiningRewardModal';
-import { SettingsMenu } from './SettingsMenu';
 import { NewGameConfirmModal } from './NewGameConfirmModal';
-import { StarMapScreen } from './screens/star-map/StarMapScreen';
+import { BottomDrawer, type DrawerTabId } from './BottomDrawer/BottomDrawer';
 import { clearCacheAndUpdate } from '../utils/cache';
-import { DebugConsole } from './DebugConsole';
-import { GameStateViewer } from './GameStateViewer';
 import './App.css';
 
 const App = () => {
   const [swStatus, setSwStatus] = useState<'Active' | 'Inactive'>('Inactive');
   const dbStatus = useDbStatus();
   const [installReady, setInstallReady] = useState(false);
-  const [debugConsoleVisible, setDebugConsoleVisible] = useState(false);
-  const [gameStateVisible, setGameStateVisible] = useState(false);
-  const [appStatusVisible, setAppStatusVisible] = useState(false);
-  // "New Game" confirmation modal — local UI state only; the actual hard reset
-  // is delegated to the useGameState hook so the engine/db layers stay isolated.
   const [confirmNewGameVisible, setConfirmNewGameVisible] = useState(false);
-  const toggleDebugConsole = () => setDebugConsoleVisible(!debugConsoleVisible);
-  const toggleGameState = () => setGameStateVisible(!gameStateVisible);
-  const toggleAppStatus = () => setAppStatusVisible(!appStatusVisible);
-  const handleForceUpdate = () => {
-    clearCacheAndUpdate();
-  };
+  const [forceUpdateKey, setForceUpdateKey] = useState(0);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<DrawerTabId>('details');
 
-  // ---- Service Worker registration status ----
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       const sw = navigator.serviceWorker;
@@ -52,24 +37,21 @@ const App = () => {
     }
   }, []);
 
-  // ---- PWA installation readiness ----
   useEffect(() => {
     const manifestLink = document.querySelector('link[rel="manifest"]');
     setInstallReady('serviceWorker' in navigator && manifestLink !== null);
   }, []);
 
-  // Idle progression & offline tracking
   const {
     gameState,
     screen,
-    oreCounts,
-    gate,
     offlineSeconds,
     clearOfflineSeconds,
     idleReward,
     clearIdleReward,
     isLoading,
     dispatch,
+    gate,
     dispatchStarMapGo,
     startNewGame,
   } = useGameState();
@@ -78,165 +60,95 @@ const App = () => {
     clearOfflineSeconds();
   };
 
-  const handleChartCourse = () => {
-    dispatch({ type: 'NAVIGATE', to: 'STAR_MAP' });
-  };
-
-  // Confirms the "New Game" modal: the hook hard-resets all persisted progress
-  // (game state + logs) and reseeds a fresh game; the modal closes immediately.
   const handleNewGameConfirm = () => {
     void startNewGame();
     setConfirmNewGameVisible(false);
   };
 
-  if (isLoading) {
-    return (
-      <div className="app">
-        <header className="app-header">
-          <h1>Space Exploration Idle PWA</h1>
-          <SettingsMenu
-            debugConsoleVisible={debugConsoleVisible}
-            onToggleDebugConsole={toggleDebugConsole}
-            gameStateVisible={gameStateVisible}
-            onToggleGameState={toggleGameState}
-            appStatusVisible={appStatusVisible}
-            onToggleAppStatus={toggleAppStatus}
-            onForceUpdate={handleForceUpdate}
-            onNewGame={() => setConfirmNewGameVisible(true)}
-          />
-        </header>
-        <main>
-          <p>Loading game state...</p>
-        </main>
-      </div>
-    );
-  }
+  const handleForceUpdate = () => {
+    clearCacheAndUpdate();
+    setForceUpdateKey((k) => k + 1);
+  };
+
+  const handleChartCourse = useCallback(() => {
+    setActiveTab('star-map');
+    setDrawerOpen(true);
+  }, []);
+
+  const screenProps = gameState
+    ? getScreenProps({
+        gameState,
+        screen,
+        oreCounts: gameState.oreCounts,
+        gate,
+        dispatch,
+        dispatchStarMapGo,
+        onChartCourse: handleChartCourse,
+      })
+    : null;
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>Space Exploration Idle PWA</h1>
-        <SettingsMenu
-          debugConsoleVisible={debugConsoleVisible}
-          onToggleDebugConsole={toggleDebugConsole}
-          gameStateVisible={gameStateVisible}
-          onToggleGameState={toggleGameState}
-          appStatusVisible={appStatusVisible}
-          onToggleAppStatus={toggleAppStatus}
-          onForceUpdate={handleForceUpdate}
-          onNewGame={() => setConfirmNewGameVisible(true)}
-        />
-      </header>
+    <GameThemeProvider>
+      <div className="app" key={forceUpdateKey}>
+        <header className="app-header">
+          <h1>Idle Space</h1>
+        </header>
 
-      <main>
-        {appStatusVisible && (
-          <AppStatusViewer
-            gameState={gameState}
-            swStatus={swStatus}
-            dbStatus={dbStatus}
-            installReady={installReady}
+        <main>
+          {/* Hidden signal element for E2E tests: becomes present when the app
+              has finished initializing (handleWake complete, gameState loaded). */}
+          <div data-testid="app-ready" className="app-ready-signal" />
+
+          {gameState && screenProps && <GameScreenShell {...screenProps} />}
+        </main>
+
+        {/* Offline greeting modal (non-mining screens) */}
+        {idleReward === null && !isLoading && (
+          <OfflineGreeting
+            offlineSeconds={offlineSeconds}
+            onDismiss={clearOfflineSeconds}
+            onCollectRewards={handleCollectRewards}
           />
         )}
 
-        {/* Hidden signal element for E2E tests: becomes present when the app
-          has finished initializing (handleWake complete, gameState loaded).
-          Replaces fragile waitForTimeout + welcome-screen polling. */}
-        <div data-testid="app-ready" className="app-ready-signal" />
-
-        {/* App Status overlay — menu-gated. The screen -> component switch
-          lives here in App.tsx (NOT-a hook) because src/engine/flow.ts is
-          forbidden from importing React/components, and a custom hook that
-          imported the screen components would violate the archunit
-          "hooks -> components" rule. */}
-        {gameState && (
-          <>
-            {screen === 'WELCOME' && (
-              <WelcomeScreen onLaunch={() => dispatch({ type: 'NAVIGATE', to: 'SPACE_TRAVEL' })} />
-            )}
-            {screen === 'SPACE_TRAVEL' && (
-              <SpaceTravelScreen
-                gameState={gameState}
-                gate={gate}
-                onHurry={() => dispatch({ type: 'HURRY' })}
-                onComplete={() => dispatch({ type: 'COMPLETE_ACTION' })}
-              />
-            )}
-            {screen === 'LANDING' && (
-              <LandingScreen
-                gate={gate}
-                onHurry={() => dispatch({ type: 'HURRY' })}
-                onComplete={() => dispatch({ type: 'COMPLETE_ACTION' })}
-              />
-            )}
-            {screen === 'MINING' && (
-              <MiningScreen
-                gameState={gameState}
-                oreCounts={oreCounts}
-                gate={gate}
-                onOreSelect={(ore) => dispatch({ type: 'ORE_SELECTED', ore })}
-                onHurry={() => dispatch({ type: 'HURRY' })}
-                onComplete={() => dispatch({ type: 'COMPLETE_ACTION' })}
-                onNavigate={(to) => dispatch({ type: 'NAVIGATE', to })}
-              />
-            )}
-            {screen === 'PLANET' && (
-              <PlanetHubScreen
-                gameState={gameState}
-                onNavigate={(to) => dispatch({ type: 'NAVIGATE', to })}
-                onChartCourse={handleChartCourse}
-              />
-            )}
-            {screen === 'STAR_MAP' && gameState?.starMap && (
-              <StarMapScreen
-                gameState={gameState}
-                onGo={(plannedRoute) => dispatchStarMapGo(plannedRoute)}
-                onBack={() => dispatch({ type: 'NAVIGATE', to: 'PLANET' })}
-              />
-            )}
-          </>
+        {/* Welcome-back modal for resume-from-idle while mining */}
+        {idleReward !== null && (
+          <MiningRewardModal
+            reward={idleReward}
+            onDismiss={() => {
+              clearIdleReward();
+              clearOfflineSeconds();
+            }}
+          />
         )}
-      </main>
 
-      {/* Offline greeting modal (non-mining screens) */}
-      {idleReward === null && (
-        <OfflineGreeting
-          offlineSeconds={offlineSeconds}
-          onDismiss={clearOfflineSeconds}
-          onCollectRewards={handleCollectRewards}
+        {/* iOS install banner */}
+        <IOSInstallBanner />
+
+        {/* Bottom drawer with tabs: Details, Debug Console, Game State, App Status, Star Map */}
+        <BottomDrawer
+          gameState={gameState}
+          swStatus={swStatus}
+          dbStatus={dbStatus}
+          installReady={installReady}
+          dispatchStarMapGo={dispatchStarMapGo}
+          detailsContent={screenProps?.detailsContent ?? null}
+          onForceUpdate={handleForceUpdate}
+          onNewGame={() => setConfirmNewGameVisible(true)}
+          drawerOpen={drawerOpen}
+          activeTab={activeTab}
+          onDrawerOpenChange={setDrawerOpen}
+          onTabChange={setActiveTab}
         />
-      )}
 
-      {/* Welcome-back modal for resume-from-idle while mining */}
-      {idleReward !== null && (
-        <MiningRewardModal
-          reward={idleReward}
-          onDismiss={() => {
-            clearIdleReward();
-            clearOfflineSeconds();
-          }}
+        {/* "New Game" confirmation — destructive reset is delegated to the hook. */}
+        <NewGameConfirmModal
+          visible={confirmNewGameVisible}
+          onCancel={() => setConfirmNewGameVisible(false)}
+          onConfirm={handleNewGameConfirm}
         />
-      )}
-
-      {/* iOS install banner */}
-      <IOSInstallBanner />
-
-      {/* Debug console */}
-      <DebugConsole visible={debugConsoleVisible} onClose={() => setDebugConsoleVisible(false)} />
-
-      {/* Game state viewer */}
-      <GameStateViewer
-        visible={gameStateVisible}
-        gameState={gameState}
-        onClose={() => setGameStateVisible(false)}
-      />
-
-      {/* "New Game" confirmation — destructive reset is delegated to the hook. */}
-      <NewGameConfirmModal
-        visible={confirmNewGameVisible}
-        onCancel={() => setConfirmNewGameVisible(false)}
-        onConfirm={handleNewGameConfirm}
-      />
-    </div>
+      </div>
+    </GameThemeProvider>
   );
 };
 

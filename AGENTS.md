@@ -1,4 +1,4 @@
-# Space Exploration Idle PWA - Agent Instructions
+# Idle Space - Agent Instructions
 
 You are an autonomous AI developer working on a pure client-side Progressive Web App (PWA) game.
 
@@ -23,7 +23,7 @@ You are an autonomous AI developer working on a pure client-side Progressive Web
 
 ## Deep Context
 
-Before beginning complex architectural tasks, read `ARCHITECTURE.md` to understand the Space Idle economy, star map generation, and multi-layered testing pyramid (Node.js unit tests -> Vitest component tests -> Playwright WebKit E2E tests).
+Before beginning complex architectural tasks, read `ARCHITECTURE.md` to understand the Idle Space economy, star map generation, and multi-layered testing pyramid (Node.js unit tests -> Vitest component tests -> Playwright WebKit E2E tests).
 
 ## Supplementary Documentation
 

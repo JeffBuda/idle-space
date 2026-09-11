@@ -267,21 +267,21 @@ describe('onboarding flow dispatch', () => {
   });
 
   it('HURRY shaves 1s off the active gate', () => {
-    const s = { ...flowState, screen: 'SPACE_TRAVEL', idleTimer: gate(10, TIME) };
+    const s: GameState = { ...flowState, screen: 'SPACE_TRAVEL', idleTimer: gate(10, TIME) };
     expect(engineReducer(s, { type: 'HURRY' }, TIME, 'test-seed').idleTimer?.remainingSeconds).toBe(
       9,
     );
   });
 
   it('illegal NAVIGATE is rejected and sets lastError', () => {
-    const s = { ...flowState, screen: 'SPACE_TRAVEL', idleTimer: gate(5, TIME) };
+    const s: GameState = { ...flowState, screen: 'SPACE_TRAVEL', idleTimer: gate(5, TIME) };
     const r = engineReducer(s, { type: 'NAVIGATE', to: 'LANDING' }, TIME, 'test-seed');
     expect(r.lastError).toContain('Illegal navigation');
     expect(r.screen).toBe('SPACE_TRAVEL');
   });
 
   it('ORE_SELECTED Rare starts a 60s gate; COMPLETE awards rareOre', () => {
-    const mining = { ...flowState, screen: 'MINING', idleTimer: null };
+    const mining: GameState = { ...flowState, screen: 'MINING', idleTimer: null };
     let s = engineReducer(mining, { type: 'ORE_SELECTED', ore: 'rareOre' }, TIME, 'test-seed');
     expect(s.selectedOre).toBe('rareOre');
     expect(s.idleTimer?.targetSeconds).toBe(60);
@@ -289,7 +289,9 @@ describe('onboarding flow dispatch', () => {
     // jump to expiry, then complete
     s = { ...s, idleTimer: { ...s.idleTimer!, remainingSeconds: 0 } };
     s = engineReducer(s, { type: 'COMPLETE_ACTION' }, TIME, 'test-seed');
-    expect(s.screen).toBe('PLANET');
+    // R12: MINING COMPLETE stays on MINING (auto-loop) — awards 1 rareOre + restarts gate
+    expect(s.screen).toBe('MINING');
     expect(s.oreCounts).toEqual({ commonOre: 0, rareOre: 1 });
+    expect(s.idleTimer?.remainingSeconds).toBe(60); // gate restarted to full
   });
 });

@@ -1,0 +1,76 @@
+/* src/components/ui/DebugTabs.css */
+
+.debug-tabs {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* Tab list — mirrors .debug-controls layout */
+.debug-tablist {
+  display: flex;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--debug-color-border-subtle);
+  background-color: var(--debug-color-bg);
+  flex-wrap: wrap;
+}
+
+.debug-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--debug-font-family);
+  font-size: var(--debug-font-size-md);
+  font-weight: var(--debug-font-weight-medium);
+  color: var(--debug-color-text-secondary);
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--debug-radius-small) var(--debug-radius-small) 0 0;
+  padding: var(--space-xs) var(--space-lg);
+  cursor: pointer;
+  min-height: 44px;
+  min-width: 44px;
+  transition: all var(--debug-transition-speed) ease;
+  white-space: nowrap;
+}
+
+.debug-tab:hover {
+  color: var(--debug-color-text);
+  background-color: var(--debug-color-border-subtle);
+  border-color: var(--debug-color-border);
+}
+
+.debug-tab:focus-visible {
+  outline: 2px solid var(--debug-color-accent);
+  outline-offset: -2px;
+  border-radius: var(--debug-radius-small);
+}
+
+.debug-tab--selected {
+  color: var(--debug-color-accent);
+  border-color: var(--debug-color-accent);
+  border-bottom: 2px solid var(--debug-color-accent);
+  background-color: var(--debug-color-bg);
+}
+
+.debug-tab--selected:hover {
+  background-color: var(--debug-color-bg);
+}
+
+/* Tab panel */
+.debug-tabpanel {
+  padding: var(--space-lg);
+  border: 1px solid var(--debug-color-border-subtle);
+  border-top: none;
+  border-radius: 0 0 var(--debug-radius-card) var(--debug-radius-card);
+  background-color: var(--debug-color-surface);
+  min-height: 120px;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .debug-tab {
+    flex: 1;
+  }
+}

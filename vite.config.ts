@@ -25,9 +25,9 @@ export default defineConfig(({ mode }) => {
           enabled: true,
         },
         manifest: {
-          name: 'Space Exploration Idle PWA',
-          short_name: 'Space Idle',
-          description: 'A space exploration idle game built as a Progressive Web App',
+          name: 'Idle Space',
+          short_name: 'Idle Space',
+          description: 'An idle space exploration game',
           display: 'standalone',
           start_url: '.',
           background_color: '#0d1117',
@@ -67,7 +67,7 @@ export default defineConfig(({ mode }) => {
             },
           ],
         },
-        includeAssETS: ['**/*.{js,css,png,svg,ico}'],
+        includeAssets: ['**/*.{js,css,png,svg,ico}'],
       }),
     ],
   };

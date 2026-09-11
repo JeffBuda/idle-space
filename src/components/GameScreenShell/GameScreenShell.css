@@ -1,0 +1,214 @@
+/* src/components/GameScreenShell/GameScreenShell.css */
+/*
+ * GameScreenShell — full-screen mobile-first layout.
+ * Cyan / orange / black theme (unified, no green).
+ */
+
+.game-screen-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-height: 100vh;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--debug-font-family);
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* ── Main content ────────────────────────────────────────── */
+.game-screen-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--space-xl);
+  padding-bottom: var(--space-2xl);
+  min-height: 0;
+}
+
+/* ── Bottom drawer ───────────────────────────────────────── */
+.game-screen-drawer {
+  flex: none;
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  margin: 0 var(--space-xl);
+  margin-bottom: calc(max(var(--space-md), env(safe-area-inset-bottom)));
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+  z-index: var(--z-console);
+}
+
+/* Collapsed — show only the thumb */
+.game-screen-drawer.drawer--closed {
+  max-height: 24px;
+}
+
+/* Expanded — show tabs + content */
+.game-screen-drawer.drawer--open {
+  max-height: 45vh;
+}
+
+/* Thumb handle — always visible, draggable area */
+.drawer-handle {
+  width: 100%;
+  height: 24px;
+  min-height: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 4px;
+  cursor: row-resize;
+  border-top: 1px solid var(--color-border-subtle);
+  background-color: var(--color-bg);
+}
+
+.drawer-thumb {
+  width: 48px;
+  height: 4px;
+  background-color: var(--color-border-interactive);
+  border-radius: 2px;
+}
+
+/* Expanded panel */
+.drawer-panel {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(45vh - 24px);
+  overflow: hidden;
+}
+
+/* Tab list */
+.drawer-tablist {
+  display: flex;
+  background-color: var(--color-bg);
+  border-bottom: 1px solid var(--color-border-subtle);
+  flex: none;
+}
+
+.drawer-tab {
+  flex: 1;
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  background: none;
+  font-size: var(--font-size-875);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+  border-bottom: 2px solid transparent;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3xs);
+}
+
+.drawer-tab--selected {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}
+
+/* Tab panel content */
+.drawer-tabpanel {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-md);
+  min-height: 0;
+}
+
+.drawer-tabpanel__content {
+  color: var(--color-text);
+  font-size: var(--font-size-875);
+  line-height: 1.5;
+}
+
+.drawer-tabpanel__content h3,
+.drawer-tabpanel__content h4 {
+  font-size: var(--font-size-9);
+  color: var(--color-white);
+  margin: 0 0 var(--space-sm) 0;
+}
+
+.drawer-tabpanel__content p {
+  margin: 0 0 var(--space-sm) 0;
+}
+
+.drawer-tabpanel__content ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.drawer-tabpanel__content li {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-3xs) 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.drawer-tabpanel__content .label {
+  color: var(--color-text-secondary);
+}
+
+.drawer-tabpanel__content .value {
+  color: var(--color-white);
+  font-weight: 600;
+}
+
+.drawer-tabpanel__content .value--accent {
+  color: var(--color-accent);
+}
+
+.drawer-tabpanel__content .value--warn {
+  color: var(--color-warning);
+}
+
+/* Drawer footer (close button) */
+.drawer-footer {
+  flex: none;
+  padding: var(--space-sm) var(--space-md);
+  border-top: 1px solid var(--color-border-subtle);
+  display: flex;
+  justify-content: center;
+}
+
+/* ── Action button bar (thumb zone) ─────────────────────── */
+.game-screen-actions {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-xl);
+  padding-bottom: max(var(--space-md), env(safe-area-inset-bottom));
+  background-color: var(--color-bg);
+  border-top: 1px solid var(--color-border-subtle);
+  flex: none;
+}
+
+.game-screen-actions .btn {
+  flex: 1;
+}
+
+/* Ensure action buttons meet 44px minimum touch target on mobile */
+@media (max-width: 600px) {
+  .game-screen-actions .btn {
+    min-width: var(--touch-target-min);
+    min-height: var(--touch-target-min);
+  }
+
+  .game-screen-content {
+    padding: var(--space-lg);
+  }
+
+  .drawer-tab {
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--font-size-1);
+  }
+}

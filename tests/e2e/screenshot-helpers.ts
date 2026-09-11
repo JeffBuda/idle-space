@@ -35,3 +35,26 @@ export async function captureScreenshot(
     fullPage: true,
   });
 }
+
+/**
+ * Dismisses the iOS install banner (`ios-install-banner`) if it is visible.
+ *
+ * On iPhone 12 / WebKit mobile emulation the iOS install banner renders at
+ * the bottom of the viewport with `z-index: 9999`, intercepting touch events
+ * that target the drawer handle (also at the bottom of the screen).  Calling
+ * this helper before any drawer-handle interaction ensures clicks reach the
+ * handle rather than the banner.
+ *
+ * The banner sets a `sessionStorage` flag on dismiss, so subsequent navigations
+ * within the same tab will not re-show the banner.
+ */
+export async function dismissIOSInstallBanner(page: Page): Promise<void> {
+  const dismissBtn = page.getByTestId('ios-install-dismiss');
+  try {
+    await dismissBtn.waitFor({ state: 'visible', timeout: 2000 });
+    await dismissBtn.click();
+    console.log('iOS install banner dismissed');
+  } catch {
+    // Banner not visible — either not iOS or already dismissed. That's fine.
+  }
+}

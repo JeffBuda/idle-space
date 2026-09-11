@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { GameStateViewer } from './GameStateViewer';
+import type { GameState } from '../types/game-state';
 
 const mockGameState = {
   lastTimestamp: 1000000,
@@ -9,7 +10,7 @@ const mockGameState = {
   rngSeed: 'test-seed',
   totalDistanceKm: 5000,
   version: '0.1.0',
-};
+} as unknown as GameState;
 
 describe('GameStateViewer', () => {
   beforeEach(() => {
@@ -73,7 +74,7 @@ describe('GameStateViewer', () => {
     const stateWithNested = {
       ...mockGameState,
       oreCounts: { commonOre: 100, nested: { deepKey: 'deepValue' } },
-    };
+    } as unknown as GameState;
     render(<GameStateViewer visible={true} gameState={stateWithNested} onClose={vi.fn()} />);
     const json = screen.getByTestId('game-state-json');
     // oreCounts (top-level) is expanded — children visible
@@ -101,7 +102,7 @@ describe('GameStateViewer', () => {
     const stateWithNested = {
       ...mockGameState,
       oreCounts: { commonOre: 100, nested: { deepKey: 'deepValue' } },
-    };
+    } as unknown as GameState;
     render(<GameStateViewer visible={true} gameState={stateWithNested} onClose={vi.fn()} />);
     const json = screen.getByTestId('game-state-json');
     const expandToggles = json.querySelectorAll('.gs-tree-toggle[aria-label="Expand"]');
@@ -115,7 +116,7 @@ describe('GameStateViewer', () => {
     const stateWithNested = {
       ...mockGameState,
       oreCounts: { commonOre: 100 },
-    };
+    } as unknown as GameState;
     render(<GameStateViewer visible={true} gameState={stateWithNested} onClose={vi.fn()} />);
     const json = screen.getByTestId('game-state-json');
     const collapseToggle = json.querySelector('.gs-tree-toggle[aria-label="Collapse"]');

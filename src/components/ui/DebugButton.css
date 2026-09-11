@@ -1,0 +1,112 @@
+/* src/components/ui/DebugButton.css */
+
+/* Base button — mirrors .debug-btn from DebugConsole.css */
+.debug-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--debug-font-family);
+  font-size: var(--debug-font-size-md);
+  font-weight: var(--debug-font-weight-regular);
+  border-radius: var(--debug-radius-input);
+  border: 1px solid var(--debug-color-border);
+  background-color: var(--debug-color-border-subtle);
+  color: var(--debug-color-text);
+  cursor: pointer;
+  transition: all var(--debug-transition-speed) ease;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 4px 12px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* Hover / focus — same subtle fill as debug console */
+.debug-btn:hover {
+  background-color: var(--debug-color-fill-hover);
+}
+
+.debug-btn:focus-visible {
+  outline: 2px solid var(--debug-color-accent);
+  outline-offset: 2px;
+  border-radius: var(--debug-radius-small);
+}
+
+.debug-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Variant: accent — cyan button (matches debug console accent) */
+.debug-btn--accent {
+  border-color: var(--debug-color-accent);
+  background-color: rgba(100, 200, 255, 0.15);
+  color: var(--debug-color-white);
+}
+
+.debug-btn--accent:hover {
+  background-color: rgba(100, 200, 255, 0.25);
+  border-color: var(--debug-color-accent-hover);
+}
+
+/* Variant: primary — filled cyan, white text */
+.debug-btn--primary {
+  border-color: var(--debug-color-accent);
+  background-color: var(--debug-color-accent);
+  color: var(--debug-color-bg);
+  font-weight: var(--debug-font-weight-semibold);
+}
+
+.debug-btn--primary:hover {
+  background-color: var(--debug-color-accent-hover);
+  border-color: var(--debug-color-accent-hover);
+  box-shadow: 0 4px 16px rgba(100, 200, 255, 0.3);
+}
+
+/* Variant: secondary — transparent with border (default style) */
+.debug-btn--secondary {
+  border-color: var(--debug-color-border);
+  background-color: var(--debug-color-border-subtle);
+  color: var(--debug-color-text);
+}
+
+/* Variant: ghost — no border, hover fill only */
+.debug-btn--ghost {
+  border: 1px solid transparent;
+  background-color: transparent;
+  color: var(--debug-color-text-secondary);
+}
+
+.debug-btn--ghost:hover {
+  background-color: var(--debug-color-fill-hover-subtle);
+  color: var(--debug-color-text);
+}
+
+/* Variant: icon — compact, circular */
+.debug-btn--icon {
+  padding: 0;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  font-size: var(--debug-font-size-lg);
+}
+
+/* Size variants — iOS touch target minimums */
+.debug-btn--size-sm {
+  min-height: 44px;
+  padding: 2px 8px;
+  font-size: var(--debug-font-size-sm);
+}
+
+.debug-btn--size-md {
+  min-height: 44px;
+  padding: 4px 12px;
+  font-size: var(--debug-font-size-md);
+}
+
+.debug-btn--size-lg {
+  min-height: 48px;
+  padding: 8px 16px;
+  font-size: var(--debug-font-size-lg);
+}

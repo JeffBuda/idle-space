@@ -5,7 +5,7 @@ export default defineConfig({
   testMatch: ['**/*.spec.ts'],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retry: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: 'list',
   use: {

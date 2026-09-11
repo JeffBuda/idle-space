@@ -1,60 +1,59 @@
-// src/components/screens/star-map/StarMapScreen.tsx
+// src/components/GameScreenShell/StarMapContent.tsx
 //
-// Production star map screen: renders the generated graph as an interactive
-// SVG and a bottom-drawer-style route panel.
+// Reusable star map rendering used inside the GameScreenShell's bottom-drawer
+// "Star Map" tab.  Extracted from the old StarMapScreen so the star map is
+// always accessible on every screen via the drawer rather than being a
+// separate full-screen route.
 //
-// Architecture (R17/R18):
-//   - All game logic (graph generation, pathfinding, route validation,
-//     route confirmation, travel time) lives in src/engine/ + shared
-//     src/utils/star-map.ts — NEVER imported here from engine/.
-//   - Component-local intermediate state (plannedRoute, zoomLevel) is
-//     managed by StarMapScreen.reducer.ts via useReducer.
-//   - Pure helper functions live in star-map-utils.ts and are unit tested
-//     in star-map-utils.test.ts.
-//   - This component imports ONLY from types/, utils/star-map, and its own
-//     co-located reducer + utils — NO engine/ imports (enforced by ESLint
-//     boundaries and tests/architecture.test.ts).
-
+// All graph logic (findPath, isAdjacent, getNodeById, computeRoutePath) is
+// imported from src/utils/star-map.ts — the boundary-safe shared layer that
+// BOTH engine and components may use.  Component-local route state is managed
+// by StarMapContent.reducer.ts (no React imports → unit-testable with vitest).
 import { useReducer, useMemo, useState } from 'react';
-import type { GameState, StarMapNode, StarMapEdge } from '../../../types/game-state';
-import { getNodeById } from '../../../utils/star-map';
-import { createStarMapReducer, initStarMapUIState } from './StarMapScreen.reducer';
-import { derivePlannedRouteFromRoutePath } from './star-map-utils';
-import './StarMapScreen.css';
+import type {
+  GameState,
+  StarMapNode,
+  StarMapEdge,
+  StarMapRouteSegment,
+} from '../../types/game-state';
+import { getNodeById } from '../../utils/star-map';
+import { createStarMapReducer, initStarMapUIState } from './StarMapContent.reducer';
+import { derivePlannedRouteFromRoutePath } from './stellar-map-utils';
+import './StarMapContent.css';
 
-export interface StarMapScreenProps {
+export interface StarMapContentProps {
   gameState: GameState;
   onGo: (plannedRoute: string[]) => void;
-  onBack: () => void;
 }
 
-export const StarMapScreen = ({ gameState, onGo, onBack }: StarMapScreenProps) => {
+export function StarMapContent({ gameState, onGo }: StarMapContentProps) {
   const starMap = gameState.starMap;
   const nodes = useMemo(() => starMap?.nodes ?? [], [starMap]);
   const edges = starMap?.edges ?? [];
   const currentLocation = gameState.currentLocation;
-  const routePath = gameState.routePath;
+  const routePath: StarMapRouteSegment[] = gameState.routePath;
   const routeTravelTimeSeconds = gameState.routeTravelTimeSeconds;
 
-  // Initialize component-local state: derive plannedRoute from saved routePath
-  // (R18 — so the player can modify a previously confirmed route).
+  // Component-local state: the proposed waypoint list before pressing Go
   const initialStops = useMemo(() => derivePlannedRouteFromRoutePath(routePath), [routePath]);
   const reducer = useMemo(
     () => createStarMapReducer(nodes, currentLocation),
     [nodes, currentLocation],
   );
   const [state, dispatch] = useReducer(reducer, initialStops, initStarMapUIState);
-
-  // Bottom drawer toggle state (Issue 7)
   const [drawerOpen, setDrawerOpen] = useState(true);
 
-  if (!starMap) return null;
+  if (!starMap) {
+    return (
+      <div className="star-map-empty" data-testid="star-map-empty">
+        <p>No star map data available</p>
+      </div>
+    );
+  }
 
   const { plannedRoute } = state;
 
-  // ---- Derived display values (pure transforms, no game math) ----
-
-  // Flatten route segments into an ordered, deduplicated list of node IDs.
+  // Flatten route segments into an ordered, deduplicated list of node IDs
   const routeNodeIds: string[] = routePath.reduce((acc: string[], seg) => {
     for (const id of seg.path) {
       if (!acc.includes(id)) acc.push(id);
@@ -62,8 +61,6 @@ export const StarMapScreen = ({ gameState, onGo, onBack }: StarMapScreenProps) =
     return acc;
   }, []);
 
-  // Build a set of route edge pairs for highlighting edges in the selected route.
-  // When plannedRoute is empty but a saved routePath exists, use its stops.
   const routeStops =
     plannedRoute.length > 0 ? plannedRoute : derivePlannedRouteFromRoutePath(routePath);
   const routeEdgePairs = new Set<string>();
@@ -79,7 +76,6 @@ export const StarMapScreen = ({ gameState, onGo, onBack }: StarMapScreenProps) =
     }
   }
 
-  // SVG polyline points for the active route path (finalized routePath)
   const getRoutePoints = (): string => {
     if (routeNodeIds.length === 0) return '';
     return routeNodeIds
@@ -91,26 +87,12 @@ export const StarMapScreen = ({ gameState, onGo, onBack }: StarMapScreenProps) =
       .join(' ');
   };
 
-  return (
-    <section className="star-map-screen" data-testid="star-map-screen">
-      {/* Header: title + close (zoom removed per Issue 4) */}
-      <header className="star-map-header">
-        <h2 data-testid="star-map-title">Stellar Cartography</h2>
-        <div className="star-map-header-actions">
-          <button
-            type="button"
-            className="btn btn--icon"
-            data-testid="back-btn"
-            aria-label="Close star map"
-            onClick={onBack}
-          >
-            ✕
-          </button>
-        </div>
-      </header>
+  const handleToggleDrawer = () => setDrawerOpen(!drawerOpen);
 
+  return (
+    <section className="star-map-content" data-testid="star-map-content">
       {/* SVG graph canvas */}
-      <div className="star-map-canvas" data-testid="star-map-canvas">
+      <div className="star-map-canvas-wrapper" data-testid="star-map-canvas-wrapper">
         <svg viewBox="0 0 100 100" className="star-map-svg" data-testid="star-map-svg">
           {/* Render edges as lines */}
           {edges.map((edge: StarMapEdge, i: number) => {
@@ -127,18 +109,19 @@ export const StarMapScreen = ({ gameState, onGo, onBack }: StarMapScreenProps) =
                 y2={toNode.y}
                 className={isActive ? 'star-map-edge star-map-edge--route' : 'star-map-edge'}
                 data-testid={isActive ? 'route-edge-active' : undefined}
-                stroke={isActive ? 'var(--color-star-route)' : 'var(--color-star-edge)'}
+                stroke={isActive ? 'var(--color-accent)' : 'var(--color-star-edge)'}
                 strokeWidth={isActive ? '0.5' : '0.3'}
               />
             );
           })}
+
           {/* Render route path polyline over edges */}
           {routeNodeIds.length > 1 && (
             <polyline
               points={getRoutePoints()}
               className="star-map-route"
               fill="none"
-              stroke="var(--color-star-route)"
+              stroke="var(--color-accent)"
               strokeWidth="0.5"
             />
           )}
@@ -151,13 +134,7 @@ export const StarMapScreen = ({ gameState, onGo, onBack }: StarMapScreenProps) =
               ? 'star-map-node star-map-node--current'
               : `star-map-node star-map-node--${node.status}`;
             return (
-              <g
-                key={node.id}
-                className={nodeClass}
-                data-testid={`node-${node.id}`}
-                onClick={() => dispatch({ type: 'TOGGLE_NODE', nodeId: node.id })}
-                style={{ cursor: isCurrent ? 'default' : 'pointer' }}
-              >
+              <g key={node.id} className={nodeClass} data-testid={`node-${node.id}`}>
                 {isCurrent ? (
                   <rect
                     data-testid="current-location-marker"
@@ -169,34 +146,32 @@ export const StarMapScreen = ({ gameState, onGo, onBack }: StarMapScreenProps) =
                   />
                 ) : (
                   <>
-                    {/* Transparent hit-area: 20px diameter (~78px) for 44px
-                        touch-target compliance (Issue 3, DESIGN_BIBLE §4.1) */}
-                    <circle cx={node.x} cy={node.y} r={10} fill="transparent" />
                     <circle
                       cx={node.x}
-                      cy={node.y - 3}
-                      r={isInRoute ? 4 : 3.5}
+                      cy={node.y}
+                      r={isInRoute ? '3.5' : '2.5'}
                       fill={
-                        node.status === 'visited'
-                          ? 'var(--color-star-visited)'
-                          : isInRoute
-                            ? 'var(--color-star-route)'
+                        isInRoute
+                          ? 'var(--color-accent)'
+                          : node.status === 'visited'
+                            ? 'var(--color-star-visited)'
                             : 'var(--color-star-unknown)'
                       }
+                      onClick={() => dispatch({ type: 'TOGGLE_NODE', nodeId: node.id })}
+                      style={{ cursor: 'pointer' }}
+                      data-testid={`node-circle-${node.id}`}
                     />
+                    <text
+                      x={node.x}
+                      y={node.y + 9}
+                      textAnchor="middle"
+                      className="star-map-label"
+                      fontSize="5"
+                      fill="var(--color-text-secondary)"
+                    >
+                      {node.name}
+                    </text>
                   </>
-                )}
-                {!isCurrent && (
-                  <text
-                    x={node.x}
-                    y={node.y + 9}
-                    textAnchor="middle"
-                    className="star-map-label"
-                    fontSize="5"
-                    fill="var(--color-text-secondary)"
-                  >
-                    {node.name}
-                  </text>
                 )}
               </g>
             );
@@ -204,7 +179,7 @@ export const StarMapScreen = ({ gameState, onGo, onBack }: StarMapScreenProps) =
         </svg>
       </div>
 
-      {/* Bottom drawer: route panel (Issue 7) */}
+      {/* Route planning panel (collapsible) */}
       <div
         className={`route-drawer ${drawerOpen ? 'route-drawer--open' : 'route-drawer--closed'}`}
         data-testid="route-panel"
@@ -212,7 +187,7 @@ export const StarMapScreen = ({ gameState, onGo, onBack }: StarMapScreenProps) =
         <div
           className="route-drawer-handle"
           data-testid="route-drawer-handle"
-          onClick={() => setDrawerOpen(!drawerOpen)}
+          onClick={handleToggleDrawer}
           role="button"
           aria-label={drawerOpen ? 'Collapse route panel' : 'Expand route panel'}
         >
@@ -263,7 +238,7 @@ export const StarMapScreen = ({ gameState, onGo, onBack }: StarMapScreenProps) =
                 onClick={() => onGo(plannedRoute)}
                 disabled={plannedRoute.length === 0}
               >
-                Go!
+                Set Course
               </button>
             </>
           )}
@@ -271,6 +246,6 @@ export const StarMapScreen = ({ gameState, onGo, onBack }: StarMapScreenProps) =
       </div>
     </section>
   );
-};
+}
 
-export default StarMapScreen;
+export default StarMapContent;

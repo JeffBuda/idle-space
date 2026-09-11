@@ -70,9 +70,9 @@ const enterStarMap = (state: GameState): GameState => {
   // node to 'visited' so the star map always highlights the system the
   // player is actually on (per Issue 1: highlight current location).
   const updatedNodes = state.starMap.nodes.map((n) => {
-    if (n.id === state.currentLocation) return { ...n, status: 'current' };
+    if (n.id === state.currentLocation) return { ...n, status: 'current' as const };
     if (n.status === 'current' && state.currentLocation !== null) {
-      return { ...n, status: 'visited' };
+      return { ...n, status: 'visited' as const };
     }
     return n;
   });
@@ -269,7 +269,7 @@ export const selectOre = (
   };
 };
 
-export const completeAction = (state: GameState): GameState => {
+export const completeAction = (state: GameState, currentTime: number): GameState => {
   const timer = state.idleTimer;
   if (!timer || timer.screen !== state.screen || timer.remainingSeconds > 0) {
     return { ...state, lastError: `Cannot complete on ${state.screen}: gate not expired` };
@@ -292,13 +292,24 @@ export const completeAction = (state: GameState): GameState => {
     case 'LANDING':
       return { ...state, screen: 'MINING', idleTimer: null, selectedOre: null, lastError: null };
     case 'MINING': {
+      // Manual "Collect" — award 1 ore for the completed cycle and restart the
+      // gate in place (stay on MINING). The auto-loop in processMiningGate also
+      // handles passive accrual on every tick; this gives the player an immediate
+      // collect + reset when they tap the expired gate, rather than exiting them
+      // to PLANET (which broke the mining loop — the previous behaviour forced the
+      // player to navigate Land → LANDING → Touchdown! → ORE_SELECTED to resume).
       const ore = state.selectedOre;
       if (!ore) return { ...state, lastError: 'Cannot mine: no ore selected' };
+      const target = timer.targetSeconds;
       return {
         ...state,
-        screen: 'PLANET',
-        idleTimer: null,
-        selectedOre: null,
+        screen: 'MINING',
+        idleTimer: {
+          screen: 'MINING',
+          targetSeconds: target,
+          remainingSeconds: target,
+          startedAt: currentTime,
+        },
         oreCounts: { ...state.oreCounts, [ore]: state.oreCounts[ore] + 1 },
         lastError: null,
       };
@@ -324,7 +335,7 @@ export const processFlowAction = (
     case 'HURRY':
       return hurry(state, action.bySeconds ?? 1);
     case 'COMPLETE_ACTION':
-      return completeAction(state);
+      return completeAction(state, currentTime);
     case 'ORE_SELECTED':
       return selectOre(state, action, currentTime);
     default:

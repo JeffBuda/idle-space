@@ -1,13 +1,14 @@
 // tests/e2e/debug-console.spec.ts
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type TestInfo } from '@playwright/test';
+import { captureScreenshot, dismissIOSInstallBanner } from './screenshot-helpers';
 
 /**
  * E2E tests for the diagnostic logging system.
  *
  * These tests verify:
- *   - The gear icon (ΓÜÖ∩╕Å) appears in the app header
- *   - Clicking the gear opens the settings card
- *   - The debug console toggle and panel work end-to-end
+ *   - The drawer handle appears in the app header
+ *   - Clicking the handle opens the drawer panel
+ *   - The debug console tab and panel work end-to-end
  *   - Log entries from app events (wake/suspend) appear in the console
  *
  * Serial block is used because idle progression writes to IndexedDB
@@ -78,37 +79,44 @@ const waitForLogEntries = async (page: Page, minCount = 1, timeout = 10000) => {
 // ---------------------------------------------------------------------------
 // Basic UI tests (no IDB mutation)
 // ---------------------------------------------------------------------------
-test('gear icon is visible in the app header', async ({ page }) => {
+test('drawer handle is visible in the app header', async ({ page }, testInfo: TestInfo) => {
   await page.goto('/');
-  const gear = page.getByTestId('settings-gear');
+  const gear = page.getByTestId('drawer-handle');
   await expect(gear).toBeVisible();
-  console.log('Settings gear icon is visible in header');
+  console.log('Drawer handle is visible in header');
+  await captureScreenshot(page, testInfo, 'drawer-handle-visible', 1);
 });
 
-test('clicking the gear icon opens the settings card', async ({ page }) => {
+test('clicking the drawer handle opens the drawer panel', async ({ page }, testInfo: TestInfo) => {
   await page.goto('/');
-  const gear = page.getByTestId('settings-gear');
+  await dismissIOSInstallBanner(page);
+  const gear = page.getByTestId('drawer-handle');
   await expect(gear).toBeVisible();
   await gear.click();
 
-  const card = page.getByTestId('settings-card');
+  const card = page.getByTestId('drawer-panel');
   await expect(card).toBeVisible();
-  console.log('Settings card opened after clicking gear');
+  console.log('Drawer panel opened after clicking handle');
+  await captureScreenshot(page, testInfo, 'drawer-opened', 1);
 });
 
-test('clicking outside the settings card closes it', async ({ page }) => {
+test('clicking the handle again closes the drawer panel', async ({ page }, testInfo: TestInfo) => {
   await page.goto('/');
-  await page.getByTestId('settings-gear').click();
-  await expect(page.getByTestId('settings-card')).toBeVisible();
+  await dismissIOSInstallBanner(page);
+  await page.getByTestId('drawer-handle').click();
+  await expect(page.getByTestId('drawer-panel')).toBeVisible();
 
-  // Click at a position far from the settings card
-  await page.mouse.click(20, 20);
+  await captureScreenshot(page, testInfo, 'drawer-open', 1);
+
+  // Click the handle again to collapse the drawer
+  await page.getByTestId('drawer-handle').click();
   await page.waitForTimeout(200);
 
-  const card = page.getByTestId('settings-card');
+  const card = page.getByTestId('drawer-panel');
   const isVisible = await card.isVisible();
   expect(isVisible).toBeFalsy();
-  console.log('Settings card closed after clicking outside');
+  console.log('Drawer panel closed after clicking handle again');
+  await captureScreenshot(page, testInfo, 'drawer-closed', 2);
 });
 
 // ---------------------------------------------------------------------------
@@ -118,31 +126,40 @@ test.describe.serial('debug console toggle flow', () => {
   test.beforeEach(async ({ page }) => {
     await clearIndexedDB(page);
     await page.goto('/');
+    // Dismiss iOS install banner so it doesn't intercept clicks on the
+    // drawer handle (the banner has z-index: 9999 and covers the bottom).
+    await dismissIOSInstallBanner(page);
     // Wait for the app to finish loading (game state loaded via handleWake).
     // This ensures the APP_WAKE log entry has been dispatched before tests run.
-    await page.waitForSelector('[data-testid="settings-gear"]', {
+    await page.waitForSelector('[data-testid="drawer-handle"]', {
       timeout: 10000,
     });
   });
 
-  test('toggling "Show Debug Console" reveals the console panel', async ({ page }) => {
-    // Open settings
-    await page.getByTestId('settings-gear').click();
-    await expect(page.getByTestId('settings-card')).toBeVisible();
+  test('toggling "Show Debug Console" reveals the console panel', async ({
+    page,
+  }, testInfo: TestInfo) => {
+    // Open drawer
+    await page.getByTestId('drawer-handle').click();
+    await expect(page.getByTestId('drawer-panel')).toBeVisible();
 
-    // The toggle button should say "Show Debug Console" initially
-    const toggle = page.getByTestId('toggle-debug-console');
-    await expect(toggle).toBeVisible();
-    const toggleText = await toggle.textContent();
-    expect(toggleText).toContain('Show Debug Console');
+    await captureScreenshot(page, testInfo, 'drawer-opened', 1);
 
-    // Toggle debug console on
-    await toggle.click();
+    // The tab button should say "Debug Console"
+    const debugTab = page.getByTestId('drawer-tab-debug-console');
+    await expect(debugTab).toBeVisible();
+    const tabText = await debugTab.textContent();
+    expect(tabText).toContain('Debug Console');
+
+    // Click the Debug Console tab
+    await debugTab.click();
 
     // Debug console should appear
     const consolePanel = page.getByTestId('debug-console');
     await expect(consolePanel).toBeVisible();
     console.log('Debug console is visible after toggle');
+
+    await captureScreenshot(page, testInfo, 'debug-console-visible', 2);
 
     // Verify control elements are present
     await expect(page.getByTestId('debug-filter')).toBeVisible();
@@ -152,14 +169,17 @@ test.describe.serial('debug console toggle flow', () => {
     console.log('All debug console controls are present');
   });
 
-  test('debug console displays log entries from app events (not game ticks)', async ({ page }) => {
-    // Open settings and toggle debug console on
-    await page.getByTestId('settings-gear').click();
-    await page.getByTestId('toggle-debug-console').click();
+  test('debug console displays log entries from app events (not game ticks)', async ({
+    page,
+  }, testInfo: TestInfo) => {
+    // Open drawer and switch to debug console tab
+    await page.getByTestId('drawer-handle').click();
+    await page.getByTestId('drawer-tab-debug-console').click();
 
     const consolePanel = page.getByTestId('debug-console');
     await expect(consolePanel).toBeVisible();
     console.log('Debug console visible');
+    await captureScreenshot(page, testInfo, 'debug-console-opened', 1);
 
     // The page load in beforeEach triggered handleWake(), which produced
     // an APP_WAKE log entry via the loggedReducer. Wait for it to appear.
@@ -180,12 +200,15 @@ test.describe.serial('debug console toggle flow', () => {
     expect(entryText).toBeTruthy();
     expect(entryText).toContain('APP_WAKE');
     console.log(`First log entry content: ${entryText}`);
+    await captureScreenshot(page, testInfo, 'debug-console-with-logs', 2);
   });
 
-  test('debug console shows empty state when no logs exist', async ({ page }) => {
-    // Open settings and toggle debug console on
-    await page.getByTestId('settings-gear').click();
-    await page.getByTestId('toggle-debug-console').click();
+  test('debug console shows empty state when no logs exist', async ({
+    page,
+  }, testInfo: TestInfo) => {
+    // Open drawer and switch to debug console tab
+    await page.getByTestId('drawer-handle').click();
+    await page.getByTestId('drawer-tab-debug-console').click();
 
     await expect(page.getByTestId('debug-console')).toBeVisible();
 
@@ -198,11 +221,14 @@ test.describe.serial('debug console toggle flow', () => {
     const emptyState = page.getByTestId('debug-empty');
     await expect(emptyState).toBeVisible({ timeout: 5000 });
     console.log('Debug console shows empty state after clearing logs');
+    await captureScreenshot(page, testInfo, 'debug-console-empty-state', 1);
   });
 
-  test('debug console filter dropdown filters by category', async ({ page }) => {
-    await page.getByTestId('settings-gear').click();
-    await page.getByTestId('toggle-debug-console').click();
+  test('debug console filter dropdown filters by category', async ({
+    page,
+  }, testInfo: TestInfo) => {
+    await page.getByTestId('drawer-handle').click();
+    await page.getByTestId('drawer-tab-debug-console').click();
 
     await expect(page.getByTestId('debug-console')).toBeVisible();
     // Wait for at least one APP_WAKE entry from page load before filtering
@@ -231,12 +257,13 @@ test.describe.serial('debug console toggle flow', () => {
     await page.waitForTimeout(500);
     const allCount = await page.locator('[data-testid^="log-entry-"]').count();
     console.log(`All categories: ${allCount} entries visible`);
+    await captureScreenshot(page, testInfo, 'debug-console-filtered-all', 2);
   });
 
-  test('debug console logs suspend and resume events', async ({ page }) => {
+  test('debug console logs suspend and resume events', async ({ page }, testInfo: TestInfo) => {
     // Open debug console -- page load already produced an APP_WAKE entry
-    await page.getByTestId('settings-gear').click();
-    await page.getByTestId('toggle-debug-console').click();
+    await page.getByTestId('drawer-handle').click();
+    await page.getByTestId('drawer-tab-debug-console').click();
     await expect(page.getByTestId('debug-console')).toBeVisible();
     // Wait for at least one APP_WAKE entry from page load
     await waitForLogEntries(page);
@@ -278,11 +305,12 @@ test.describe.serial('debug console toggle flow', () => {
     const updatedCount = await entries.count();
     console.log('Updated log entries (after suspend/resume cycle):', updatedCount);
     expect(updatedCount).toBeGreaterThanOrEqual(initialCount + 2);
+    await captureScreenshot(page, testInfo, 'debug-console-suspend-resume', 1);
   });
 
-  test('debug console refresh button reloads entries', async ({ page }) => {
-    await page.getByTestId('settings-gear').click();
-    await page.getByTestId('toggle-debug-console').click();
+  test('debug console refresh button reloads entries', async ({ page }, testInfo: TestInfo) => {
+    await page.getByTestId('drawer-handle').click();
+    await page.getByTestId('drawer-tab-debug-console').click();
 
     await expect(page.getByTestId('debug-console')).toBeVisible();
 
@@ -296,5 +324,6 @@ test.describe.serial('debug console toggle flow', () => {
     }
 
     console.log('Refresh button clicked successfully');
+    await captureScreenshot(page, testInfo, 'debug-console-refreshed', 1);
   });
 });
